@@ -713,20 +713,105 @@ export default function HealthCalculator() {
                         <p className="small">Each metric is scored 1 to 5. Weights help you decide what matters most instead of pretending every issue carries the same impact.</p>
                     </section>
 
-                    <section className="card">
-                        <h2>Scoring Guide</h2>
+                    <section class="card">
+                        <h2>Scoring Guide – What Each Score Really Means</h2>
+
+                        {/* Quick Reference Table */}
                         <table>
                             <thead>
-                                <tr><th>Score</th><th>Meaning</th></tr>
+                                <tr><th>Score</th><th>Label</th><th>Meaning</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>1</td><td>Critical concern</td></tr>
-                                <tr><td>2</td><td>Weak / inconsistent</td></tr>
-                                <tr><td>3</td><td>Adequate / functional</td></tr>
-                                <tr><td>4</td><td>Strong</td></tr>
-                                <tr><td>5</td><td>Excellent / healthy</td></tr>
+                                <tr><td><strong>5</strong></td><td>Excellent / Healthy</td><td>Fully thriving, mission-aligned, sustainable excellence</td></tr>
+                                <tr><td><strong>4</strong></td><td>Strong</td><td>Solid and reliable with only minor gaps</td></tr>
+                                <tr><td><strong>3</strong></td><td>Adequate / Functional</td><td>Meets basic expectations but not thriving</td></tr>
+                                <tr><td><strong>2</strong></td><td>Weak / Inconsistent</td><td>Noticeable problems causing concern</td></tr>
+                                <tr><td><strong>1</strong></td><td>Critical Concern</td><td>Major breakdown requiring immediate intervention</td></tr>
                             </tbody>
                         </table>
+
+                        <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>
+                            Detailed rubric with biblical anchors for each domain:
+                        </p>
+
+                        {/* Detailed Rubric */}
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details open>
+                                <summary><strong>Enrollment & Retention</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others <em>(Psalm 92:12)</em></li>
+                                    <li><strong>4</strong> – Stable growth, 90–94% retention <em>(Psalm 1:3)</em></li>
+                                    <li><strong>3</strong> – Flat enrollment, 85–89% retention <em>(Jeremiah 17:8)</em></li>
+                                    <li><strong>2</strong> – Declining enrollment, visible anxiety <em>(Psalm 1:4)</em></li>
+                                    <li><strong>1</strong> – Sharp decline, high attrition <em>(Hosea 14:4–7)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Academic Program</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Christ-centered, rigorous, students thriving <em>(Proverbs 22:6)</em></li>
+                                    <li><strong>4</strong> – Strong academics with consistent integration <em>(Colossians 2:6–7)</em></li>
+                                    <li><strong>3</strong> – Adequate academics, uneven integration <em>(Matthew 7:24–25)</em></li>
+                                    <li><strong>2</strong> – Noticeable gaps, worldview feels added-on <em>(Matthew 7:26–27)</em></li>
+                                    <li><strong>1</strong> – Significant struggles <em>(Nehemiah 2:17)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Culture & Mission</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Mission alive, deep belonging <em>(Ephesians 4:4–6)</em></li>
+                                    <li><strong>4</strong> – Mission understood and mostly lived out <em>(Ephesians 4:3)</em></li>
+                                    <li><strong>3</strong> – Mission known but not deeply felt <em>(2 Timothy 3:5)</em></li>
+                                    <li><strong>2</strong> – Mission drift or tension <em>(Mark 3:25)</em></li>
+                                    <li><strong>1</strong> – Toxic or divided culture <em>(Revelation 2:4–5)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Finance & Operations</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Healthy budget, strong reserves <em>(Luke 16:10)</em></li>
+                                    <li><strong>4</strong> – Balanced budget, reliable operations <em>(1 Corinthians 4:2)</em></li>
+                                    <li><strong>3</strong> – Tight but manageable <em>(Philippians 4:11–13)</em></li>
+                                    <li><strong>2</strong> – Frequent stress, deferred maintenance <em>(Matthew 11:28)</em></li>
+                                    <li><strong>1</strong> – Financial instability <em>(James 1:5)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Leadership & Staffing</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Trusted, unified, staff feel valued <em>(1 Peter 5:2–4)</em></li>
+                                    <li><strong>4</strong> – Strong leadership and good morale <em>(Proverbs 27:17)</em></li>
+                                    <li><strong>3</strong> – Adequate but some fatigue <em>(Matthew 9:37–38)</em></li>
+                                    <li><strong>2</strong> – Trust issues or high turnover <em>(Ezekiel 34:1–10)</em></li>
+                                    <li><strong>1</strong> – Leadership vacuum or conflict <em>(Galatians 6:1)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain">
+                            <details>
+                                <summary><strong>Marketing & Community Presence</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Compelling story, strong visibility <em>(Matthew 5:16)</em></li>
+                                    <li><strong>4</strong> – Clear brand and good awareness <em>(Matthew 5:14)</em></li>
+                                    <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
+                                    <li><strong>2</strong> – Outdated or unclear messaging <em>(Mark 4:21)</em></li>
+                                    <li><strong>1</strong> – Almost no presence or negative perception <em>(2 Corinthians 8:21)</em></li>
+                                </ul>
+                            </details>
+                        </div>
                     </section>
 
                     <section className="card">
