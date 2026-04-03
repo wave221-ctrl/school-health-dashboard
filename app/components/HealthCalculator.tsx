@@ -658,6 +658,25 @@ export default function HealthCalculator() {
         alert(`Loaded assessment from ${item.review_date}`);
     };
 
+    // =============== DELETE ASSESSMENT ===============
+    const deleteAssessment = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this saved assessment? This cannot be undone.')) {
+            return;
+        }
+
+        const { error } = await supabase
+            .from('assessments')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert('Delete failed: ' + error.message);
+        } else {
+            alert('✅ Assessment deleted');
+            loadHistory();   // refresh the list
+        }
+    };
+
     return (
         <div className="wrap">
 
@@ -931,27 +950,47 @@ export default function HealthCalculator() {
                     {history.length === 0 ? (
                         <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
                     ) : (
-                        history.map((item) => (
-                            <div
-                                key={item.id}
-                                onClick={() => loadPastAssessment(item)}
-                                style={{
-                                    padding: '14px',
-                                    borderBottom: '1px solid #ddd',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <div>
-                                    <strong>{item.review_date}</strong>
+                            history.map((item) => (
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        padding: '14px',
+                                        borderBottom: '1px solid #ddd',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <div
+                                        onClick={() => loadPastAssessment(item)}
+                                        style={{ cursor: 'pointer', flex: 1 }}
+                                    >
+                                        <strong>{item.review_date}</strong>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <span style={{ fontWeight: 700, color: '#166534' }}>
+                                            {item.overall_score}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();   // prevent loading the assessment when clicking delete
+                                                deleteAssessment(item.id);
+                                            }}
+                                            style={{
+                                                background: '#991b1b',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '4px 10px',
+                                                borderRadius: '6px',
+                                                fontSize: '0.85rem',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
-                                    Overall Score: <span className="good" style={{ fontWeight: 700 }}>{item.overall_score}</span>
-                                </div>
-                            </div>
-                        ))
+                            ))
                     )}
                 </div>
             </div>
