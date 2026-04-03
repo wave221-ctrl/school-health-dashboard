@@ -616,6 +616,13 @@ export default function HealthCalculator() {
         }, 1000);   // keep 1000ms
     }, []);
 
+    // Auto-redraw when domains state changes (this fixes Load button)
+    useEffect(() => {
+        if (domains.length > 0 && typeof window.renderDomains === 'function') {
+            window.renderDomains();
+            if (typeof window.calculate === 'function') window.calculate();
+        }
+    }, [domains]);
     
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
