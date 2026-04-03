@@ -669,9 +669,12 @@ const loadHistory = async () => {
 
     const loadPastAssessment = (item) => {
         if (item.data && item.data.domains) {
-            setDomains(item.data.domains);   // ← only use React state
+            // Use the window version we already exposed - this avoids the closure error
+            if (typeof window.setDomains === 'function') {
+                window.setDomains(item.data.domains);
+            }
 
-            // Force the legacy calculator to redraw
+            // Force redraw
             setTimeout(() => {
                 if (typeof window.renderDomains === 'function') window.renderDomains();
                 if (typeof window.calculate === 'function') window.calculate();
