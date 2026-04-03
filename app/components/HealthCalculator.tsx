@@ -939,8 +939,8 @@ export default function HealthCalculator() {
                 </button>
             </div>
 
+            
             {/* History Panel */}
-            {/* HISTORY PANEL */}
             <div className="card" style={{ marginTop: '30px' }}>
                 <h2>📅 Year-over-Year History</h2>
                 <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>
@@ -950,50 +950,62 @@ export default function HealthCalculator() {
                     {history.length === 0 ? (
                         <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
                     ) : (
-                            history.map((item) => (
-                                <div
-                                    key={item.id}
-                                    style={{
-                                        padding: '14px',
-                                        borderBottom: '1px solid #ddd',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    <div
-                                        onClick={() => loadPastAssessment(item)}
-                                        style={{ cursor: 'pointer', flex: 1 }}
-                                    >
-                                        <strong>{item.review_date}</strong>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <span style={{ fontWeight: 700, color: '#166534' }}>
-                                            {item.overall_score}
-                                        </span>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();   // prevent loading the assessment when clicking delete
-                                                deleteAssessment(item.id);
-                                            }}
-                                            style={{
-                                                background: '#991b1b',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '4px 10px',
-                                                borderRadius: '6px',
-                                                fontSize: '0.85rem',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
+                        history.map((item) => (
+                            <div
+                                key={item.id}
+                                style={{
+                                    padding: '14px',
+                                    borderBottom: '1px solid #ddd',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <div style={{ flex: 1 }}>
+                                    <strong>{item.review_date}</strong>
                                 </div>
-                            ))
+                                <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
+                                    {item.overall_score}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => loadPastAssessment(item)}
+                                        style={{
+                                            background: '#2563eb',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '6px 14px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Load
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteAssessment(item.id);
+                                        }}
+                                        style={{
+                                            background: '#991b1b',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '6px 14px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))
                     )}
                 </div>
             </div>
+
             {/* Logout / User Button */}
             <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
                 <UserButton
