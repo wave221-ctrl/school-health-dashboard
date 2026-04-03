@@ -761,16 +761,58 @@ export default function HealthCalculator() {
                             </details>
                         </div>
 
-                        <div class="domain" style={{
-                            margin
+                        <div class="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Culture & Mission</strong></summary>
+                                <ul class="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Mission alive, deep belonging <em>(Ephesians 4:4–6)</em></li>
+                                    <li><strong>4</strong> – Mission understood and mostly lived out <em>(Ephesians 4:3)</em></li>
+                                    <li><strong>3</strong> – Mission known but not deeply felt <em>(2 Timothy 3:5)</em></li>
+                                    <li><strong>2</strong> – Mission drift or tension <em>(Mark 3:25)</em></li>
+                                    <li><strong>1</strong> – Toxic or divided culture <em>(Revelation 2:4–5)</em></li>
+                                </ul>
+                            </details>
+                        </div>
 
-                        <section className="card">
-                            <h2>Notes</h2>
-                            <div className="field">
-                                <label htmlFor="notes">Leadership Notes</label>
-                                <textarea id="notes" rows={8} placeholder="Add key findings, assumptions, concerns, and next steps."></textarea>
-                            </div>
-                        </section>
+                        <div class="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Finance & Operations</strong></summary>
+                                <ul class="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Healthy budget, strong reserves <em>(Luke 16:10)</em></li>
+                                    <li><strong>4</strong> – Balanced budget, reliable operations <em>(1 Corinthians 4:2)</em></li>
+                                    <li><strong>3</strong> – Tight but manageable <em>(Philippians 4:11–13)</em></li>
+                                    <li><strong>2</strong> – Frequent stress, deferred maintenance <em>(Matthew 11:28)</em></li>
+                                    <li><strong>1</strong> – Financial instability <em>(James 1:5)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div class="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Leadership & Staffing</strong></summary>
+                                <ul class="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Trusted, unified, staff feel valued <em>(1 Peter 5:2–4)</em></li>
+                                    <li><strong>4</strong> – Strong leadership and good morale <em>(Proverbs 27:17)</em></li>
+                                    <li><strong>3</strong> – Adequate but some fatigue <em>(Matthew 9:37–38)</em></li>
+                                    <li><strong>2</strong> – Trust issues or high turnover <em>(Ezekiel 34:1–10)</em></li>
+                                    <li><strong>1</strong> – Leadership vacuum or conflict <em>(Galatians 6:1)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div class="domain">
+                            <details>
+                                <summary><strong>Marketing & Community Presence</strong></summary>
+                                <ul class="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Compelling story, strong visibility <em>(Matthew 5:16)</em></li>
+                                    <li><strong>4</strong> – Clear brand and good awareness <em>(Matthew 5:14)</em></li>
+                                    <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
+                                    <li><strong>2</strong> – Outdated or unclear messaging <em>(Mark 4:21)</em></li>
+                                    <li><strong>1</strong> – Almost no presence or negative perception <em>(2 Corinthians 8:21)</em></li>
+                                </ul>
+                            </details>
+                        </div>
+                    </section>
                     </aside>
 
                     <main className="section-stack">
