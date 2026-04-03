@@ -614,15 +614,7 @@ export default function HealthCalculator() {
         }, 1000);   // keep 1000ms
     }, []);
 
-    // Redraw calculator when domains are loaded from history
-    useEffect(() => {
-        if (domains.length > 0) {
-            setTimeout(() => {
-                if (typeof window.renderDomains === 'function') window.renderDomains();
-                if (typeof window.calculate === 'function') window.calculate();
-            }, 100);
-        }
-    }, [domains]);
+
     
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
@@ -679,7 +671,7 @@ const loadHistory = async () => {
         if (item.data && item.data.domains) {
             setDomains(item.data.domains);   // ← only use React state
 
-            // Force redraw after React updates
+            // Force the legacy calculator to redraw
             setTimeout(() => {
                 if (typeof window.renderDomains === 'function') window.renderDomains();
                 if (typeof window.calculate === 'function') window.calculate();
