@@ -607,6 +607,8 @@ export default function HealthCalculator() {
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
+            window.renderDomains = renderDomains;
+            window.calculate = calculate;
 
         }, 0);
     }, []);
@@ -655,7 +657,16 @@ export default function HealthCalculator() {
 
 
     const loadPastAssessment = (item) => {
-        alert(`Loaded assessment from ${item.review_date}`);
+        if (item.data && item.data.domains) {
+            setDomains(item.data.domains);           // Update React state
+            window.domains = item.data.domains;      // Update legacy script
+
+            // Force the legacy script to re-render everything
+            if (typeof window.renderDomains === 'function') window.renderDomains();
+            if (typeof window.calculate === 'function') window.calculate();
+
+            alert(`✅ Loaded assessment from ${item.review_date}`);
+        }
     };
 
     // =============== DELETE ASSESSMENT ===============
