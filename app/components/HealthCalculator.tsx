@@ -604,13 +604,26 @@ export default function HealthCalculator() {
             setToday();
             renderDomains();
             calculate();
+
+            // === EXPOSE EVERYTHING TO REACT & WINDOW ===
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
+            window.setDomains = setDomains;
             window.renderDomains = renderDomains;
             window.calculate = calculate;
+            window.loadSample = loadSample;
+            window.resetTool = resetTool;
+            window.downloadReport = downloadReport;
+            window.loadPastAssessment = loadPastAssessment;
 
-        }, 0);
+            // === RE-ATTACH ALL BOTTOM BUTTONS ===
+            document.getElementById('loadSampleBtn').addEventListener('click', loadSample);
+            document.getElementById('resetBtn').addEventListener('click', resetTool);
+            document.getElementById('printBtn').addEventListener('click', () => window.print());
+            document.getElementById('downloadBtn').addEventListener('click', downloadReport);
+
+        }, 1000);   // increased timeout for safety
     }, []);
 
     // =============== SAVE ASSESSMENT ===============
@@ -658,8 +671,8 @@ export default function HealthCalculator() {
 
     const loadPastAssessment = (item) => {
         if (item.data && item.data.domains) {
-            setDomains(item.data.domains);           // Update React state
-            window.domains = item.data.domains;      // Update legacy script
+            setDomains(item.data.domains);
+            window.domains = item.data.domains;
 
             if (typeof window.renderDomains === 'function') window.renderDomains();
             if (typeof window.calculate === 'function') window.calculate();
