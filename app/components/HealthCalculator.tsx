@@ -608,11 +608,12 @@ export default function HealthCalculator() {
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
-            window.setDomains = setDomains;
+            window.setDomains = setDomains;           // ← add this line
             window.renderDomains = renderDomains;
             window.calculate = calculate;
-            window.loadPastAssessment = loadPastAssessment;   // ← added
-        }, 1000);   // ← changed to 1000ms for safety
+            window.loadPastAssessment = loadPastAssessment;
+
+        }, 1000);   // keep 1000ms
     }, []);
 
     
@@ -669,15 +670,14 @@ const loadHistory = async () => {
 
     const loadPastAssessment = (item) => {
         if (item.data && item.data.domains) {
-            // Update both React state and the legacy script
-            setDomains(item.data.domains);
-            window.domains = item.data.domains;
+            window.domains = item.data.domains;          // update legacy script
+            window.setDomains(item.data.domains);        // update React state
 
-            // Force full re-render of the calculator
+            // Force re-render
             setTimeout(() => {
                 if (typeof window.renderDomains === 'function') window.renderDomains();
                 if (typeof window.calculate === 'function') window.calculate();
-            }, 100);
+            }, 50);
 
             alert(`✅ Loaded assessment from ${item.review_date}`);
         } else {
