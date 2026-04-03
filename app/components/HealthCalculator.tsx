@@ -212,7 +212,6 @@ export default function HealthCalculator() {
         return () => clearTimeout(timer);
     }, []);
 
-    // Save Assessment
     const saveAssessment = async () => {
         if (!user) {
             alert('Please sign in to save');
@@ -253,7 +252,6 @@ export default function HealthCalculator() {
 
     return (
         <div className="wrap">
-            {/* User Button */}
             <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 50 }}>
                 <UserButton afterSignOutUrl="/" />
             </div>
@@ -369,7 +367,6 @@ export default function HealthCalculator() {
                 </main>
             </div>
 
-            {/* Controls */}
             <div className="controls no-print" style={{ marginTop: '20px' }}>
                 <button id="loadSampleBtn">Load Sample Data</button>
                 <button className="secondary" id="resetBtn">Reset</button>
@@ -378,7 +375,6 @@ export default function HealthCalculator() {
                 <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', fontWeight: '700' }}>💾 Save Assessment</button>
             </div>
 
-            {/* History Panel */}
             <div className="card" style={{ marginTop: '30px' }}>
                 <h2>📅 Year-over-Year History</h2>
                 <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
