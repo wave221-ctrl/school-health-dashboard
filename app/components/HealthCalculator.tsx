@@ -680,11 +680,15 @@ const loadHistory = async () => {
 
     const loadPastAssessment = (item) => {
         if (item.data && item.data.domains) {
+            // Update both React state and the legacy script
             setDomains(item.data.domains);
             window.domains = item.data.domains;
 
-            if (typeof window.renderDomains === 'function') window.renderDomains();
-            if (typeof window.calculate === 'function') window.calculate();
+            // Force full re-render of the calculator
+            setTimeout(() => {
+                if (typeof window.renderDomains === 'function') window.renderDomains();
+                if (typeof window.calculate === 'function') window.calculate();
+            }, 100);
 
             alert(`✅ Loaded assessment from ${item.review_date}`);
         } else {
