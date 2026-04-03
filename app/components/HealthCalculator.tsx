@@ -636,6 +636,29 @@ export default function HealthCalculator() {
         const results = window.calculateResults();
         const weightTotal = results.reduce((sum, r) => sum + Number(r.weight || 1), 0) || 1;
         const overall = results.reduce((sum, r) => sum + r.weighted, 0) / weightTotal;
+
+        const payload = {
+            user_id: user.id,                    // ← THIS IS THE KEY LINE
+            school_id: null,
+            review_date: els.reviewDate.value || new Date().toISOString().split('T')[0],
+            reviewer: els.reviewer.value || user.fullName || 'Leadership Team',
+            notes: els.notes.value || '',
+            overall_score: Math.round(overall * 100) / 100,
+            data: { domains, results, overallScore: Math.round(overall * 100) / 100 }
+        };
+
+        const { error } = await supabase.from('assessments').insert(payload);
+
+        if (error) alert('Save failed: ' + error.message);
+        else {
+            alert('✅ Assessment saved successfully!');
+            loadHistory();   // refresh the list
+        }
+    };
+
+        const results = window.calculateResults();
+        const weightTotal = results.reduce((sum, r) => sum + Number(r.weight || 1), 0) || 1;
+        const overall = results.reduce((sum, r) => sum + r.weighted, 0) / weightTotal;
         const payload = {
             school_id: null, // we'll add proper school selection later
             review_date: els.reviewDate.value || new Date().toISOString().split('T')[0],
@@ -652,18 +675,21 @@ export default function HealthCalculator() {
     };
 
     // =============== LOAD HISTORY ===============
-    const loadHistory = async () => {
-        const { data, error } = await supabase
-            .from('assessments')
-            .select('id, review_date, overall_score, data')
-            .order('review_date', { ascending: false });
+const loadHistory = async () => {
+    if (!user) return;
 
-        if (error) {
-            console.error(error);
-            return;
-        }
-        setHistory(data || []);
-    };
+    const { data, error } = await supabase
+        .from('assessments')
+        .select('id, review_date, overall_score, data')
+        .eq('user_id', user.id)           // ← ONLY SHOW THIS USER'S DATA
+        .order('review_date', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+    setHistory(data || []);
+};
 
 
     // =============== HISTORY FUNCTIONS ===============
@@ -684,23 +710,25 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this saved assessment? This cannot be undone.')) {
-            return;
-        }
+const deleteAssessment = async (id) => {
+    if (!user) return;
+    if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
+        return;
+    }
 
-        const { error } = await supabase
-            .from('assessments')
-            .delete()
-            .eq('id', id);
+    const { error } = await supabase
+        .from('assessments')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);   // ← only delete own records
 
-        if (error) {
-            alert('Delete failed: ' + error.message);
-        } else {
-            alert('✅ Assessment deleted');
-            loadHistory();   // refresh the list
-        }
-    };
+    if (error) {
+        alert('Delete failed: ' + error.message);
+    } else {
+        alert('✅ Assessment deleted');
+        loadHistory();
+    }
+};
 
     return (
         <div className="wrap">
