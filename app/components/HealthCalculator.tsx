@@ -616,13 +616,6 @@ export default function HealthCalculator() {
         }, 1000);   // keep 1000ms
     }, []);
 
-    // Auto-redraw when domains state changes (this fixes Load button)
-    useEffect(() => {
-        if (domains.length > 0 && typeof window.renderDomains === 'function') {
-            window.renderDomains();
-            if (typeof window.calculate === 'function') window.calculate();
-        }
-    }, [domains]);
     
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
@@ -677,15 +670,7 @@ const loadHistory = async () => {
 
     const loadPastAssessment = (item) => {
         if (item.data && item.data.domains) {
-            window.domains = item.data.domains;          // update legacy script
-            window.setDomains(item.data.domains);        // update React state
-
-            // Force re-render
-            setTimeout(() => {
-                if (typeof window.renderDomains === 'function') window.renderDomains();
-                if (typeof window.calculate === 'function') window.calculate();
-            }, 50);
-
+            setDomains(item.data.domains);
             alert(`✅ Loaded assessment from ${item.review_date}`);
         } else {
             alert('No data found in this assessment');
