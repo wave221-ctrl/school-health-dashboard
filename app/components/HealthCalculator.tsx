@@ -627,6 +627,7 @@ export default function HealthCalculator() {
     }, []);
 
     // =============== SAVE ASSESSMENT ===============
+    // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
         if (!user) {
             alert('Please sign in to save');
@@ -638,42 +639,24 @@ export default function HealthCalculator() {
         const overall = results.reduce((sum, r) => sum + r.weighted, 0) / weightTotal;
 
         const payload = {
-            user_id: user.id,                    // ← THIS IS THE KEY LINE
+            user_id: user.id,
             school_id: null,
-            review_date: els.reviewDate.value || new Date().toISOString().split('T')[0],
-            reviewer: els.reviewer.value || user.fullName || 'Leadership Team',
-            notes: els.notes.value || '',
+            review_date: document.getElementById('reviewDate')?.value || new Date().toISOString().split('T')[0],
+            reviewer: document.getElementById('reviewer')?.value || user.fullName || 'Leadership Team',
+            notes: document.getElementById('notes')?.value || '',
             overall_score: Math.round(overall * 100) / 100,
             data: { domains, results, overallScore: Math.round(overall * 100) / 100 }
         };
 
-        const { error } = await supabase.from('assessments').insert(payload);
+        const { error: supabaseError } = await supabase.from('assessments').insert(payload);
 
-        if (error) alert('Save failed: ' + error.message);
-        else {
+        if (supabaseError) {
+            alert('Save failed: ' + supabaseError.message);
+        } else {
             alert('✅ Assessment saved successfully!');
-            loadHistory();   // refresh the list
+            loadHistory();        // refresh the history list automatically
         }
     };
-
-        const results = window.calculateResults();
-        const weightTotal = results.reduce((sum, r) => sum + Number(r.weight || 1), 0) || 1;
-        const overall = results.reduce((sum, r) => sum + r.weighted, 0) / weightTotal;
-        const payload = {
-            school_id: null, // we'll add proper school selection later
-            review_date: els.reviewDate.value || new Date().toISOString().split('T')[0],
-            reviewer: els.reviewer.value || user.fullName || 'Leadership Team',
-            notes: els.notes.value || '',
-            overall_score: Math.round(overall * 100) / 100,
-            data: { domains, results, overallScore: Math.round(overall * 100) / 100 }
-        };
-
-        const { error } = await supabase.from('assessments').insert(payload);
-
-        if (error) alert('Save failed: ' + error.message);
-        else alert('✅ Assessment saved successfully!');
-    };
-
     // =============== LOAD HISTORY ===============
 const loadHistory = async () => {
     if (!user) return;
