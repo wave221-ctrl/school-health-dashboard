@@ -611,7 +611,9 @@ export default function HealthCalculator() {
             window.setDomains = setDomains;
             window.domains = domains;
 
-        }, 300);
+        }, 800);
+
+        return () => clearTimeout(timer);
     }, []);
 
     // =============== SAVE ASSESSMENT ===============
