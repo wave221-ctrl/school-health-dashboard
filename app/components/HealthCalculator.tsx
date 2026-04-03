@@ -605,28 +605,17 @@ export default function HealthCalculator() {
             renderDomains();
             calculate();
 
-            // === EXPOSE EVERYTHING TO REACT & WINDOW ===
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
             window.setDomains = setDomains;
             window.renderDomains = renderDomains;
             window.calculate = calculate;
-            window.loadSample = loadSample;
-            window.resetTool = resetTool;
-            window.downloadReport = downloadReport;
-            window.loadPastAssessment = loadPastAssessment;
-
-            // === RE-ATTACH ALL BOTTOM BUTTONS ===
-            document.getElementById('loadSampleBtn').addEventListener('click', loadSample);
-            document.getElementById('resetBtn').addEventListener('click', resetTool);
-            document.getElementById('printBtn').addEventListener('click', () => window.print());
-            document.getElementById('downloadBtn').addEventListener('click', downloadReport);
-
-        }, 1000);   // increased timeout for safety
+            window.loadPastAssessment = loadPastAssessment;   // ← added
+        }, 1000);   // ← changed to 1000ms for safety
     }, []);
 
-    // =============== SAVE ASSESSMENT ===============
+    
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
         if (!user) {
