@@ -661,11 +661,12 @@ export default function HealthCalculator() {
             setDomains(item.data.domains);           // Update React state
             window.domains = item.data.domains;      // Update legacy script
 
-            // Force the legacy script to re-render everything
             if (typeof window.renderDomains === 'function') window.renderDomains();
             if (typeof window.calculate === 'function') window.calculate();
 
             alert(`✅ Loaded assessment from ${item.review_date}`);
+        } else {
+            alert('No data found in this assessment');
         }
     };
 
@@ -691,7 +692,7 @@ export default function HealthCalculator() {
     return (
         <div className="wrap">
 
-            {/* ←←← YOUR FULL ORIGINAL HTML GOES HERE (unchanged) */}
+            {/* ←←← ORIGINAL HTML GOES HERE (unchanged) */}
             <section className="hero">
                 <div className="print-only">
                     <h1>School Health Calculator</h1>
@@ -936,6 +937,7 @@ export default function HealthCalculator() {
                     </section>
                 </main>
             </div>
+
             {/* Controls with real Save button */}
             <div className="controls no-print" style={{ marginTop: '20px' }}>
                 <button id="loadSampleBtn">Load Sample Data</button>
