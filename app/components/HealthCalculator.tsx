@@ -10,6 +10,7 @@ import { UserButton } from '@clerk/nextjs';
 export default function HealthCalculator() {
     const { user } = useUser();
     const [history, setHistory] = useState([]);
+    const [domains, setDomains] = useState([]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -607,6 +608,8 @@ export default function HealthCalculator() {
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
+            window.setDomains = setDomains;
+            window.domains = domains;
 
         }, 0);
     }, []);
@@ -655,7 +658,12 @@ export default function HealthCalculator() {
     
 
     const loadPastAssessment = (item) => {
-        alert(`Loaded assessment from ${item.review_date}`);
+        if (item.data && item.data.domains) {
+            setDomains(item.data.domains);
+            // Trigger the original calculate function
+            calculate();
+            alert(`✅ Loaded assessment from ${item.review_date}`);
+        }
     };
 
     return (
