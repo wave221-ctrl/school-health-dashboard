@@ -126,7 +126,7 @@ export default function HealthCalculator() {
                 printNotes: document.getElementById('printNotes')
             };
 
-            function average(arr) {
+            function average(arr: number[]) {
                 return arr.reduce((a, b) => a + b, 0) / arr.length;
             }
 
