@@ -6,7 +6,11 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
-import html2pdf from 'html2pdf.js';
+
+// Remove the old import and add this instead
+import dynamic from 'next/dynamic';
+
+const html2pdf = dynamic(() => import('html2pdf.js'), { ssr: false });
 
 export default function HealthCalculator() {
     const { user } = useUser();
@@ -688,7 +692,7 @@ const loadHistory = async () => {
     };
 
     // =============== DOWNLOAD SAVED REPORT AS PDF ===============
-    const downloadSavedReport = (item) => {
+    const downloadSavedReport = async (item) => {
         if (!item.data || !item.data.results) {
             alert('No report data found in this assessment');
             return;
@@ -781,7 +785,7 @@ const loadHistory = async () => {
 </body>
 </html>`;
 
-        // Convert HTML to PDF and download
+        // Generate PDF
         const opt = {
             margin: 10,
             filename: `school-health-report-${item.review_date}.pdf`,
