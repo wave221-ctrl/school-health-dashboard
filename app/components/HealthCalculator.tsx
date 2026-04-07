@@ -7,6 +7,47 @@ import { useUser } from '@clerk/nextjs';
 import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
 
+// ==================== HELPER FUNCTIONS (moved outside) ====================
+function average(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function scoreLabel(score) {
+    if (score >= 4.5) return 'Excellent';
+    if (score >= 3.75) return 'Strong';
+    if (score >= 3) return 'Stable';
+    if (score >= 2) return 'At Risk';
+    return 'Critical';
+}
+
+function riskClass(score) {
+    if (score >= 3.75) return 'good';
+    if (score >= 3) return 'warn';
+    return 'bad';
+}
+
+function bandClass(score) {
+    if (score >= 4.5) return 'band-excellent';
+    if (score >= 3.75) return 'band-strong';
+    if (score >= 3) return 'band-stable';
+    if (score >= 2) return 'band-risk';
+    return 'band-critical';
+}
+
+function recommendationForDomain(name) {
+    if (name.includes('Enrollment')) return 'Tighten admissions follow-up, retention conversations, family re-enrollment strategy, and visit-to-application conversion.';
+    if (name.includes('Academic')) return 'Review curriculum alignment, classroom support, assessment use, and intervention consistency.';
+    if (name.includes('Culture')) return 'Clarify mission, strengthen culture habits, and improve family and student connection points.';
+    if (name.includes('Finance')) return 'Audit budget pressure points, maintenance backlog, operational bottlenecks, and cash-flow visibility.';
+    if (name.includes('Leadership')) return 'Address staff morale, role clarity, accountability, coaching rhythms, and development pathways.';
+    if (name.includes('Marketing')) return 'Improve website clarity, school storytelling, inquiry response, and community-facing communication.';
+    return 'Review leadership assumptions and build a concrete 90-day improvement plan.';
+}
+
+// ==================== END HELPER FUNCTIONS ====================
+
+export default function HealthCalculator() {
+
 // Remove the old import and add this instead
 import dynamic from 'next/dynamic';
 
