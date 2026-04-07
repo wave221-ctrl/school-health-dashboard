@@ -7,11 +7,11 @@ import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
 
 // ==================== HELPER FUNCTIONS (moved outside) ====================
-function average(arr: number[]) {
+function average(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-function scoreLabel(score: number) {
+function scoreLabel(score) {
     if (score >= 4.5) return 'Excellent';
     if (score >= 3.75) return 'Strong';
     if (score >= 3) return 'Stable';
@@ -19,13 +19,13 @@ function scoreLabel(score: number) {
     return 'Critical';
 }
 
-function riskClass(score: number) {
+function riskClass(score) {
     if (score >= 3.75) return 'good';
     if (score >= 3) return 'warn';
     return 'bad';
 }
 
-function bandClass(score: number) {
+function bandClass(score) {
     if (score >= 4.5) return 'band-excellent';
     if (score >= 3.75) return 'band-strong';
     if (score >= 3) return 'band-stable';
@@ -33,7 +33,7 @@ function bandClass(score: number) {
     return 'band-critical';
 }
 
-function recommendationForDomain(name: string) {
+function recommendationForDomain(name) {
     if (name.includes('Enrollment')) return 'Tighten admissions follow-up, retention conversations, family re-enrollment strategy, and visit-to-application conversion.';
     if (name.includes('Academic')) return 'Review curriculum alignment, classroom support, assessment use, and intervention consistency.';
     if (name.includes('Culture')) return 'Clarify mission, strengthen culture habits, and improve family and student connection points.';
@@ -126,11 +126,11 @@ export default function HealthCalculator() {
                 printNotes: document.getElementById('printNotes')
             };
 
-            function average(arr: number[]) {
+            function average(arr) {
                 return arr.reduce((a, b) => a + b, 0) / arr.length;
             }
 
-            function scoreLabel(score: number) {
+            function scoreLabel(score) {
                 if (score >= 4.5) return 'Excellent';
                 if (score >= 3.75) return 'Strong';
                 if (score >= 3) return 'Stable';
@@ -138,13 +138,13 @@ export default function HealthCalculator() {
                 return 'Critical';
             }
 
-            function riskClass(score: number) {
+            function riskClass(score) {
                 if (score >= 3.75) return 'good';
                 if (score >= 3) return 'warn';
                 return 'bad';
             }
 
-            function bandClass(score: number) {
+            function bandClass(score) {
                 if (score >= 4.5) return 'band-excellent';
                 if (score >= 3.75) return 'band-strong';
                 if (score >= 3) return 'band-stable';
@@ -152,7 +152,7 @@ export default function HealthCalculator() {
                 return 'band-critical';
             }
 
-            function recommendationForDomain(name: string) {
+            function recommendationForDomain(name) {
                 if (name.includes('Enrollment')) return 'Tighten admissions follow-up, retention conversations, family re-enrollment strategy, and visit-to-application conversion.';
                 if (name.includes('Academic')) return 'Review curriculum alignment, classroom support, assessment use, and intervention consistency.';
                 if (name.includes('Culture')) return 'Clarify mission, strengthen culture habits, and improve family and student connection points.';
