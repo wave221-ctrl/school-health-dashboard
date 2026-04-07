@@ -163,6 +163,7 @@ export default function HealthCalculator() {
             }
 
             function renderDomains() {
+                if (!els.domainsContainer) return;
                 els.domainsContainer.innerHTML = '';
 
                 domains.forEach((domain, dIndex) => {
