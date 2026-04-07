@@ -829,8 +829,8 @@ const loadHistory = async () => {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdfLib().set(opt).from(reportHtml).save();
-    };
+        const html2pdf = (await import('html2pdf.js')).default;
+        html2pdf().set(opt).from(reportHtml).save();
 
 
     // =============== DELETE ASSESSMENT ===============
