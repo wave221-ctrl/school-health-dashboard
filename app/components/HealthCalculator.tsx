@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
 
 // ==================== HELPER FUNCTIONS (moved outside) ====================
-function average(arr) {
+function average(arr: number[]) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
