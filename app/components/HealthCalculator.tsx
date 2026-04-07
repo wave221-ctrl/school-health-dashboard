@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
+import html2pdf from 'html2pdf.js';
 
 export default function HealthCalculator() {
     const { user } = useUser();
@@ -686,7 +687,7 @@ const loadHistory = async () => {
         }
     };
 
-    // =============== DOWNLOAD SAVED REPORT ===============
+    // =============== DOWNLOAD SAVED REPORT AS PDF ===============
     const downloadSavedReport = (item) => {
         if (!item.data || !item.data.results) {
             alert('No report data found in this assessment');
@@ -700,8 +701,8 @@ const loadHistory = async () => {
         const weakestThree = [...rows].sort((a, b) => a.avg - b.avg).slice(0, 3);
 
         let actionItems = '';
-        weakestThree.forEach(item => {
-            actionItems += `<li><strong>${item.name}</strong>: ${recommendationForDomain(item.name)}</li>`;
+        weakestThree.forEach(r => {
+            actionItems += `<li><strong>${r.name}</strong>: ${recommendationForDomain(r.name)}</li>`;
         });
 
         const reportHtml = `<!DOCTYPE html>
@@ -711,31 +712,28 @@ const loadHistory = async () => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>School Health Report</title>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; margin: 0; padding: 32px; background: #ffffff; line-height: 1.45; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; margin: 0; padding: 40px; background: #ffffff; line-height: 1.5; }
     .wrap { max-width: 1000px; margin: 0 auto; }
-    h1, h2, h3 { margin: 0 0 10px; }
-    h1 { font-size: 28px; }
-    h2 { font-size: 20px; margin-top: 28px; }
-    p { margin: 0 0 10px; }
-    .meta, .box { border: 1px solid #d1d5db; border-radius: 14px; padding: 16px; margin-bottom: 18px; background: #f8fafc; }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
-    .stat { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; background: #fff; }
-    .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
-    .value { font-size: 24px; font-weight: 700; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #d1d5db; padding: 10px 8px; text-align: left; vertical-align: top; font-size: 14px; }
+    h1, h2 { margin: 0 0 12px; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 22px; margin-top: 30px; }
+    .meta { border: 1px solid #d1d5db; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f8fafc; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
+    .stat { border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; background: #fff; text-align: center; }
+    .label { font-size: 13px; color: #6b7280; }
+    .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid #d1d5db; padding: 12px 10px; text-align: left; }
     th { background: #f3f4f6; }
-    ul, ol { margin: 8px 0 0 20px; }
-    .domain-block, .plan-card { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; margin-top: 12px; background: #fff; }
-    .band { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid transparent; }
-    .band-excellent { background: #dcfce7; color: #166534; border-color: #86efac; }
-    .band-strong { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
-    .band-stable { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-    .band-risk { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-    .band-critical { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
-    .improvement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .footer { margin-top: 28px; font-size: 12px; color: #6b7280; }
-    @media print { body { padding: 0; } .wrap { max-width: 100%; } }
+    .band { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 700; }
+    .band-excellent { background: #dcfce7; color: #166534; }
+    .band-strong { background: #dbeafe; color: #1d4ed8; }
+    .band-stable { background: #fef3c7; color: #92400e; }
+    .band-risk { background: #fee2e2; color: #991b1b; }
+    .band-critical { background: #e5e7eb; color: #374151; }
+    .improvement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .plan-card { border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; background: #fff; }
+    .footer { margin-top: 40px; font-size: 13px; color: #6b7280; text-align: center; }
   </style>
 </head>
 <body>
@@ -758,42 +756,42 @@ const loadHistory = async () => {
     <table>
       <thead><tr><th>Domain</th><th>Average</th><th>Weight</th><th>Weighted Score</th><th>Risk Level</th></tr></thead>
       <tbody>
-        ${rows.map(r => `<tr><td>${r.name}</td><td>${r.avg.toFixed(2)}</td><td>${r.weight}</td><td>${r.weighted.toFixed(2)}</td><td><span class="band ${bandClass(r.avg)}">${r.risk}</span></td></tr>`).join('')}
+        ${rows.map(r => `<tr><td>${r.name}</td><td>${r.avg.toFixed(2)}</td><td>${r.weight}</td><td>${r.weighted.toFixed(2)}</td><td><span class="band band-${r.risk.toLowerCase()}">${r.risk}</span></td></tr>`).join('')}
       </tbody>
     </table>
 
     <h2>Priority Actions</h2>
     <div class="box"><ul>${actionItems}</ul></div>
 
-    <h2>Optional 30 / 60 / 90 Day Improvement Plan</h2>
+    <h2>30 / 60 / 90 Day Improvement Plan</h2>
     <div class="improvement-grid">
-      ${weakestThree.map((item, index) => {
+      ${weakestThree.map((r, index) => {
             const windows = ['30 Days', '60 Days', '90 Days'];
-            const actions = [
-                `Clarify the immediate issue in ${item.name.toLowerCase()} and assign one owner.`,
-                `Implement a focused improvement step: ${recommendationForDomain(item.name)}`,
-                `Measure results and decide whether to scale, refine, or intervene further.`
-            ];
-            return `<div class="plan-card"><h3>${windows[index]}</h3><p><strong>Focus Area:</strong> ${item.name}</p><p><span class="band ${bandClass(item.avg)}">${scoreLabel(item.avg)} (${item.avg.toFixed(2)})</span></p><ol>${actions.map(action => `<li>${action}</li>`).join('')}</ol></div>`;
+            return `
+          <div class="plan-card">
+            <h3>${windows[index]}</h3>
+            <p><strong>Focus Area:</strong> ${r.name}</p>
+            <p><span class="band band-${r.risk.toLowerCase()}">${r.risk} (${r.avg.toFixed(2)})</span></p>
+          </div>`;
         }).join('')}
     </div>
 
-    <div class="footer">Generated by the School Health Calculator on ${item.review_date}</div>
+    <div class="footer">Generated by the School Health Calculator • ${item.review_date}</div>
   </div>
 </body>
 </html>`;
 
-        const blob = new Blob([reportHtml], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `school-health-report-${item.review_date}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
+        // Convert HTML to PDF and download
+        const opt = {
+            margin: 10,
+            filename: `school-health-report-${item.review_date}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
+        html2pdf().set(opt).from(reportHtml).save();
+    };
     // =============== DELETE ASSESSMENT ===============
 const deleteAssessment = async (id) => {
     if (!user) return;
