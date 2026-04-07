@@ -1,6 +1,5 @@
-// @ts-nocheck
-
 'use client';
+// @ts-nocheck
 
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
