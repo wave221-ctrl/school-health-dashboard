@@ -11,7 +11,7 @@ function average(arr: number[]) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-function scoreLabel(score) {
+function scoreLabel(score: number) {
     if (score >= 4.5) return 'Excellent';
     if (score >= 3.75) return 'Strong';
     if (score >= 3) return 'Stable';
@@ -19,13 +19,13 @@ function scoreLabel(score) {
     return 'Critical';
 }
 
-function riskClass(score) {
+function riskClass(score: number) {
     if (score >= 3.75) return 'good';
     if (score >= 3) return 'warn';
     return 'bad';
 }
 
-function bandClass(score) {
+function bandClass(score: number) {
     if (score >= 4.5) return 'band-excellent';
     if (score >= 3.75) return 'band-strong';
     if (score >= 3) return 'band-stable';
@@ -33,7 +33,7 @@ function bandClass(score) {
     return 'band-critical';
 }
 
-function recommendationForDomain(name) {
+function recommendationForDomain(name: string) {
     if (name.includes('Enrollment')) return 'Tighten admissions follow-up, retention conversations, family re-enrollment strategy, and visit-to-application conversion.';
     if (name.includes('Academic')) return 'Review curriculum alignment, classroom support, assessment use, and intervention consistency.';
     if (name.includes('Culture')) return 'Clarify mission, strengthen culture habits, and improve family and student connection points.';
