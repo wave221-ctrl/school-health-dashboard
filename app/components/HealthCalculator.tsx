@@ -44,12 +44,6 @@ function recommendationForDomain(name) {
 }
 
 // ==================== END HELPER FUNCTIONS ====================
-
-export default function HealthCalculator() {
-
-
-
-
 export default function HealthCalculator() {
     const { user } = useUser();
     const [history, setHistory] = useState([]);
