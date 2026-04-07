@@ -48,8 +48,6 @@ function recommendationForDomain(name) {
 
 export default function HealthCalculator() {
 
-// Remove the old import and add this instead
-import dynamic from 'next/dynamic';
 
 
 
@@ -828,8 +826,6 @@ const loadHistory = async () => {
 </body>
 </html>`;
 
-        // Correct runtime import for html2pdf (this fixes the error)
-        const html2pdfLib = (await import('html2pdf.js')).default;
 
         const opt = {
             margin: 10,
