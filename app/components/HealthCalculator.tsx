@@ -691,8 +691,9 @@ const loadHistory = async () => {
         }
     };
 
+
     // =============== DOWNLOAD SAVED REPORT AS PDF ===============
-    const downloadSavedReport = async (item) => {
+    const downloadSavedReport = (item) => {
         if (!item.data || !item.data.results) {
             alert('No report data found in this assessment');
             return;
@@ -785,7 +786,6 @@ const loadHistory = async () => {
 </body>
 </html>`;
 
-        // Generate PDF
         const opt = {
             margin: 10,
             filename: `school-health-report-${item.review_date}.pdf`,
@@ -796,6 +796,8 @@ const loadHistory = async () => {
 
         html2pdf().set(opt).from(reportHtml).save();
     };
+
+
     // =============== DELETE ASSESSMENT ===============
 const deleteAssessment = async (id) => {
     if (!user) return;
@@ -1112,7 +1114,7 @@ const deleteAssessment = async (id) => {
                                         <button
                                             onClick={() => downloadSavedReport(item)}
                                             style={{
-                                                background: '#2563eb',
+                                                background: '#166534',
                                                 color: 'white',
                                                 border: 'none',
                                                 padding: '6px 14px',
@@ -1121,7 +1123,7 @@ const deleteAssessment = async (id) => {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            📄 Download Report
+                                            📄 Download PDF
                                         </button>
                                         <button
                                             onClick={(e) => {
