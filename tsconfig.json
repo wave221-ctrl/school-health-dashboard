@@ -32,3 +32,10 @@
   ],
   "exclude": ["node_modules"]
 }
+
+{
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitAny": false
+  }
+}
