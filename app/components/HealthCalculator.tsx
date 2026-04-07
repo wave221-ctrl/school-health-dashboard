@@ -686,6 +686,114 @@ const loadHistory = async () => {
         }
     };
 
+    // =============== DOWNLOAD SAVED REPORT ===============
+    const downloadSavedReport = (item) => {
+        if (!item.data || !item.data.results) {
+            alert('No report data found in this assessment');
+            return;
+        }
+
+        const rows = item.data.results;
+        const roundedOverall = item.data.overallScore || 0;
+        const strongest = [...rows].sort((a, b) => b.avg - a.avg)[0];
+        const weakest = [...rows].sort((a, b) => a.avg - b.avg)[0];
+        const weakestThree = [...rows].sort((a, b) => a.avg - b.avg).slice(0, 3);
+
+        let actionItems = '';
+        weakestThree.forEach(item => {
+            actionItems += `<li><strong>${item.name}</strong>: ${recommendationForDomain(item.name)}</li>`;
+        });
+
+        const reportHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>School Health Report</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; margin: 0; padding: 32px; background: #ffffff; line-height: 1.45; }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    h1, h2, h3 { margin: 0 0 10px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; margin-top: 28px; }
+    p { margin: 0 0 10px; }
+    .meta, .box { border: 1px solid #d1d5db; border-radius: 14px; padding: 16px; margin-bottom: 18px; background: #f8fafc; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+    .stat { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; background: #fff; }
+    .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+    .value { font-size: 24px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #d1d5db; padding: 10px 8px; text-align: left; vertical-align: top; font-size: 14px; }
+    th { background: #f3f4f6; }
+    ul, ol { margin: 8px 0 0 20px; }
+    .domain-block, .plan-card { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; margin-top: 12px; background: #fff; }
+    .band { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid transparent; }
+    .band-excellent { background: #dcfce7; color: #166534; border-color: #86efac; }
+    .band-strong { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+    .band-stable { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+    .band-risk { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+    .band-critical { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
+    .improvement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .footer { margin-top: 28px; font-size: 12px; color: #6b7280; }
+    @media print { body { padding: 0; } .wrap { max-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>School Health Report</h1>
+    <div class="meta">
+      <p><strong>School:</strong> ${item.data.schoolName || 'Saved School'}</p>
+      <p><strong>Review Date:</strong> ${item.review_date}</p>
+      <p><strong>Reviewer:</strong> ${item.reviewer || 'Leadership Team'}</p>
+    </div>
+
+    <div class="summary-grid">
+      <div class="stat"><div class="label">Overall Health Score</div><div class="value">${roundedOverall.toFixed(2)}</div></div>
+      <div class="stat"><div class="label">Health Rating</div><div class="value">${scoreLabel(roundedOverall)}</div></div>
+      <div class="stat"><div class="label">Strongest Domain</div><div class="value" style="font-size:18px;">${strongest ? strongest.name : '—'}</div></div>
+      <div class="stat"><div class="label">Biggest Risk Area</div><div class="value" style="font-size:18px;">${weakest ? weakest.name : '—'}</div></div>
+    </div>
+
+    <h2>Domain Summary</h2>
+    <table>
+      <thead><tr><th>Domain</th><th>Average</th><th>Weight</th><th>Weighted Score</th><th>Risk Level</th></tr></thead>
+      <tbody>
+        ${rows.map(r => `<tr><td>${r.name}</td><td>${r.avg.toFixed(2)}</td><td>${r.weight}</td><td>${r.weighted.toFixed(2)}</td><td><span class="band ${bandClass(r.avg)}">${r.risk}</span></td></tr>`).join('')}
+      </tbody>
+    </table>
+
+    <h2>Priority Actions</h2>
+    <div class="box"><ul>${actionItems}</ul></div>
+
+    <h2>Optional 30 / 60 / 90 Day Improvement Plan</h2>
+    <div class="improvement-grid">
+      ${weakestThree.map((item, index) => {
+            const windows = ['30 Days', '60 Days', '90 Days'];
+            const actions = [
+                `Clarify the immediate issue in ${item.name.toLowerCase()} and assign one owner.`,
+                `Implement a focused improvement step: ${recommendationForDomain(item.name)}`,
+                `Measure results and decide whether to scale, refine, or intervene further.`
+            ];
+            return `<div class="plan-card"><h3>${windows[index]}</h3><p><strong>Focus Area:</strong> ${item.name}</p><p><span class="band ${bandClass(item.avg)}">${scoreLabel(item.avg)} (${item.avg.toFixed(2)})</span></p><ol>${actions.map(action => `<li>${action}</li>`).join('')}</ol></div>`;
+        }).join('')}
+    </div>
+
+    <div class="footer">Generated by the School Health Calculator on ${item.review_date}</div>
+  </div>
+</body>
+</html>`;
+
+        const blob = new Blob([reportHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `school-health-report-${item.review_date}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     // =============== DELETE ASSESSMENT ===============
 const deleteAssessment = async (id) => {
     if (!user) return;
@@ -981,58 +1089,58 @@ const deleteAssessment = async (id) => {
                     {history.length === 0 ? (
                         <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
                     ) : (
-                        history.map((item) => (
-                            <div
-                                key={item.id}
-                                style={{
-                                    padding: '14px',
-                                    borderBottom: '1px solid #ddd',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <div style={{ flex: 1 }}>
-                                    <strong>{item.review_date}</strong>
+                            history.map((item) => (
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        padding: '14px',
+                                        borderBottom: '1px solid #ddd',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <div style={{ flex: 1 }}>
+                                        <strong>{item.review_date}</strong>
+                                    </div>
+                                    <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
+                                        {item.overall_score}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button
+                                            onClick={() => downloadSavedReport(item)}
+                                            style={{
+                                                background: '#2563eb',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            📄 Download Report
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteAssessment(item.id);
+                                            }}
+                                            style={{
+                                                background: '#991b1b',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
-                                    {item.overall_score}
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        onClick={() => loadPastAssessment(item)}
-                                        style={{
-                                            background: '#2563eb',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '6px 14px',
-                                            borderRadius: '8px',
-                                            fontSize: '0.9rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Load
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteAssessment(item.id);
-                                        }}
-                                        style={{
-                                            background: '#991b1b',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '6px 14px',
-                                            borderRadius: '8px',
-                                            fontSize: '0.9rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        ))
+                            ))
                     )}
                 </div>
             </div>
