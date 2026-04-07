@@ -10,7 +10,7 @@ import { UserButton } from '@clerk/nextjs';
 // Remove the old import and add this instead
 import dynamic from 'next/dynamic';
 
-const html2pdf = dynamic(() => import('html2pdf.js'), { ssr: false });
+
 
 export default function HealthCalculator() {
     const { user } = useUser();
@@ -693,7 +693,8 @@ const loadHistory = async () => {
 
 
     // =============== DOWNLOAD SAVED REPORT AS PDF ===============
-    const downloadSavedReport = (item) => {
+    // =============== DOWNLOAD SAVED REPORT AS PDF ===============
+    const downloadSavedReport = async (item) => {
         if (!item.data || !item.data.results) {
             alert('No report data found in this assessment');
             return;
@@ -761,7 +762,7 @@ const loadHistory = async () => {
     <table>
       <thead><tr><th>Domain</th><th>Average</th><th>Weight</th><th>Weighted Score</th><th>Risk Level</th></tr></thead>
       <tbody>
-        ${rows.map(r => `<tr><td>${r.name}</td><td>${r.avg.toFixed(2)}</td><td>${r.weight}</td><td>${r.weighted.toFixed(2)}</td><td><span class="band band-${r.risk.toLowerCase()}">${r.risk}</span></td></tr>`).join('')}
+        ${rows.map(r => `<tr><td>${r.name}</td><td>${r.avg.toFixed(2)}</td><td>${r.weight}</td><td>${r.weighted.toFixed(2)}</td><td><span class="band ${bandClass(r.avg)}">${r.risk}</span></td></tr>`).join('')}
       </tbody>
     </table>
 
@@ -776,7 +777,7 @@ const loadHistory = async () => {
           <div class="plan-card">
             <h3>${windows[index]}</h3>
             <p><strong>Focus Area:</strong> ${r.name}</p>
-            <p><span class="band band-${r.risk.toLowerCase()}">${r.risk} (${r.avg.toFixed(2)})</span></p>
+            <p><span class="band ${bandClass(r.avg)}">${r.risk} (${r.avg.toFixed(2)})</span></p>
           </div>`;
         }).join('')}
     </div>
@@ -786,6 +787,9 @@ const loadHistory = async () => {
 </body>
 </html>`;
 
+        // Correct runtime import for html2pdf (this fixes the error)
+        const html2pdfLib = (await import('html2pdf.js')).default;
+
         const opt = {
             margin: 10,
             filename: `school-health-report-${item.review_date}.pdf`,
@@ -794,7 +798,7 @@ const loadHistory = async () => {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdf().set(opt).from(reportHtml).save();
+        html2pdfLib().set(opt).from(reportHtml).save();
     };
 
 
