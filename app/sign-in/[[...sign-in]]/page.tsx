@@ -14,6 +14,9 @@ export default function SignInPage() {
                 </div>
 
                 <SignIn
+                    redirectUrl="/calculator"
+                    afterSignInUrl="/calculator"
+                    afterSignUpUrl="/calculator"
                     appearance={{
                         elements: {
                             rootBox: "mx-auto",
@@ -24,8 +27,6 @@ export default function SignInPage() {
                             footerActionLink: "text-emerald-700 hover:text-emerald-800",
                         }
                     }}
-                    afterSignInUrl="/calculator"
-                    afterSignUpUrl="/calculator"
                 />
             </div>
         </div>
