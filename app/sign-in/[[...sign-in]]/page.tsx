@@ -6,6 +6,7 @@ export default function SignInPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
+                {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-3 justify-center mx-auto">
                         <div className="w-10 h-10 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold text-3xl">S</div>
@@ -14,9 +15,6 @@ export default function SignInPage() {
                 </div>
 
                 <SignIn
-                    redirectUrl="/calculator"
-                    afterSignInUrl="/calculator"
-                    afterSignUpUrl="/calculator"
                     appearance={{
                         elements: {
                             rootBox: "mx-auto",
