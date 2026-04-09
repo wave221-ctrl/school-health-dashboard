@@ -831,10 +831,10 @@ export default function HealthCalculator() {
 
         const html2pdf = (await import('html2pdf.js')).default;
         html2pdf().set(opt).from(reportHtml).save();
-    };
 
-    // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
+
+        // =============== DELETE ASSESSMENT ===============
+        const deleteAssessment = async (id) => {
             if (!user) return;
             if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
                 return;
@@ -1195,4 +1195,5 @@ export default function HealthCalculator() {
                 </div>
             </div>
         );
+    }
 }
