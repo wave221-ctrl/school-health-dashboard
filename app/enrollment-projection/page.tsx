@@ -87,9 +87,14 @@ export default function EnrollmentProjection() {
     };
 
     const drawChart = (labels, currentData, projectedData) => {
-        const canvas = document.getElementById('chart');
-        if (!canvas) return;
+        const canvasElement = document.getElementById('chart');
+        if (!canvasElement) return;
+
+        // Cast to HTMLCanvasElement so TypeScript knows it has getContext
+        const canvas = canvasElement as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
         const w = canvas.width;
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
@@ -101,20 +106,23 @@ export default function EnrollmentProjection() {
         const groupW = chartW / Math.max(labels.length, 1);
         const barW = Math.min(26, groupW * 0.28);
 
-        // Grid
+        // Grid lines
         ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#111827';
+        ctx.font = '12px Arial';
+
         for (let i = 0; i <= 5; i++) {
             const y = padding.top + (chartH / 5) * i;
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
             ctx.lineTo(w - padding.right, y);
             ctx.stroke();
-            ctx.fillStyle = '#64748b';
-            ctx.font = '12px Arial';
-            ctx.fillText((5 - i).toString(), 8, y + 4);
+            const value = Math.round(maxValue - (maxValue / 5) * i);
+            ctx.fillText(String(value), 8, y + 4);
         }
 
-        // Current bars
+        // Current bars (blue)
         ctx.fillStyle = '#3b82f6';
         currentData.forEach((value, i) => {
             const x = padding.left + i * groupW + groupW * 0.18;
@@ -123,7 +131,7 @@ export default function EnrollmentProjection() {
             ctx.fillRect(x, y, barW, barH);
         });
 
-        // Projected bars
+        // Projected bars (light blue)
         ctx.fillStyle = '#93c5fd';
         projectedData.forEach((value, i) => {
             const x = padding.left + i * groupW + groupW * 0.18 + barW + 6;
