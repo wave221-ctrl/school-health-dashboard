@@ -952,7 +952,7 @@ export default function HealthCalculator() {
                                         <li><strong>4</strong> – Strong academics with consistent integration </li>
                                         <li><strong>3</strong> – Adequate academics, uneven integration </li>
                                         <li><strong>2</strong> – Noticeable gaps, worldview feels added-on </li>
-                                        <li><strong>1</strong> – Significant struggles <</li>
+                                        <li><strong>1</strong> – Significant struggles </li>
                                     </ul>
                                 </details>
                             </div>
