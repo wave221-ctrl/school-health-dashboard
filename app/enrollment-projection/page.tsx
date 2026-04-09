@@ -1,24 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
+
+interface GradeRow {
+    grade: string;
+    current: number;
+    retention: number;
+    newStudents: number;
+    projected?: number;   // ← this was missing
+}
 
 export default function EnrollmentProjection() {
     const { user } = useUser();
 
-    const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
-    const [baseYear, setBaseYear] = useState('2026-2027');
-    const [projectionYear, setProjectionYear] = useState('2027-2028');
-    const [projectionMode, setProjectionMode] = useState('grade-progress');
-
-    const [defaultRetention, setDefaultRetention] = useState(85);
-    const [defaultNewStudents, setDefaultNewStudents] = useState(0);
-    const [simpleGrowthRate, setSimpleGrowthRate] = useState(3);
-    const [capacityTarget, setCapacityTarget] = useState(250);
-    const [notes, setNotes] = useState('');
-
-    const [grades, setGrades] = useState([
+    const [grades, setGrades] = useState<GradeRow[]>([
         { grade: 'PK', current: 18, retention: 0, newStudents: 20 },
         { grade: 'K', current: 22, retention: 85, newStudents: 8 },
         { grade: '1', current: 24, retention: 88, newStudents: 2 },
@@ -31,14 +28,25 @@ export default function EnrollmentProjection() {
         { grade: '8', current: 17, retention: 0, newStudents: 0 }
     ]);
 
-    const round = (num) => Math.round(num * 10) / 10;
+    const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
+    const [baseYear, setBaseYear] = useState('2026-2027');
+    const [projectionYear, setProjectionYear] = useState('2027-2028');
+    const [projectionMode, setProjectionMode] = useState<'grade-progress' | 'simple-growth'>('grade-progress');
+
+    const [defaultRetention, setDefaultRetention] = useState(85);
+    const [defaultNewStudents, setDefaultNewStudents] = useState(0);
+    const [simpleGrowthRate, setSimpleGrowthRate] = useState(3);
+    const [capacityTarget, setCapacityTarget] = useState(250);
+    const [notes, setNotes] = useState('');
+
+    const round = (num: number) => Math.round(num * 10) / 10;
 
     const calculate = () => {
         let currentTotal = 0;
         let projectedTotal = 0;
-        const chartCurrent = [];
-        const chartProjected = [];
-        const labels = [];
+        const chartCurrent: number[] = [];
+        const chartProjected: number[] = [];
+        const labels: string[] = [];
 
         const updatedGrades = grades.map((row, index) => {
             currentTotal += Number(row.current || 0);
@@ -57,6 +65,7 @@ export default function EnrollmentProjection() {
 
             projected = round(projected);
             projectedTotal += projected;
+
             labels.push(row.grade);
             chartCurrent.push(Number(row.current || 0));
             chartProjected.push(projected);
@@ -66,32 +75,31 @@ export default function EnrollmentProjection() {
 
         setGrades(updatedGrades);
 
-        // FIXED: Convert numbers to strings for .textContent
-        document.getElementById('currentTotal').textContent = round(currentTotal).toString();
-        document.getElementById('projectedTotal').textContent = round(projectedTotal).toString();
-        document.getElementById('netChange').textContent = round(projectedTotal - currentTotal).toString();
+        // Update summary
+        document.getElementById('currentTotal')!.textContent = round(currentTotal).toString();
+        document.getElementById('projectedTotal')!.textContent = round(projectedTotal).toString();
+        document.getElementById('netChange')!.textContent = round(projectedTotal - currentTotal).toString();
 
         const capacity = Number(capacityTarget || 1);
         const capacityPct = capacity > 0 ? round((projectedTotal / capacity) * 100) : 0;
-        document.getElementById('capacityUsed').textContent = `${capacityPct}%`;
+        document.getElementById('capacityUsed')!.textContent = `${capacityPct}%`;
 
-        // Update health tag
+        // Health tag
         const netChange = round(projectedTotal - currentTotal);
         const healthTag = document.getElementById('healthTag');
-        if (netChange >= 10) healthTag.textContent = 'Strong projected growth';
-        else if (netChange > 0) healthTag.textContent = 'Modest projected growth';
-        else if (netChange === 0) healthTag.textContent = 'Stable projection';
-        else healthTag.textContent = 'Projected decline — review assumptions';
+        if (healthTag) {
+            if (netChange >= 10) healthTag.textContent = 'Strong projected growth';
+            else if (netChange > 0) healthTag.textContent = 'Modest projected growth';
+            else if (netChange === 0) healthTag.textContent = 'Stable projection';
+            else healthTag.textContent = 'Projected decline — review assumptions';
+        }
 
         drawChart(labels, chartCurrent, chartProjected);
     };
 
-    const drawChart = (labels, currentData, projectedData) => {
-        const canvasElement = document.getElementById('chart');
-        if (!canvasElement) return;
-
-        // Cast to HTMLCanvasElement so TypeScript knows it has getContext
-        const canvas = canvasElement as HTMLCanvasElement;
+    const drawChart = (labels: string[], currentData: number[], projectedData: number[]) => {
+        const canvas = document.getElementById('chart') as HTMLCanvasElement;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
@@ -106,23 +114,20 @@ export default function EnrollmentProjection() {
         const groupW = chartW / Math.max(labels.length, 1);
         const barW = Math.min(26, groupW * 0.28);
 
-        // Grid lines
+        // Grid
         ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 1;
-        ctx.fillStyle = '#111827';
-        ctx.font = '12px Arial';
-
         for (let i = 0; i <= 5; i++) {
             const y = padding.top + (chartH / 5) * i;
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
             ctx.lineTo(w - padding.right, y);
             ctx.stroke();
-            const value = Math.round(maxValue - (maxValue / 5) * i);
-            ctx.fillText(String(value), 8, y + 4);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Arial';
+            ctx.fillText((5 - i).toString(), 8, y + 4);
         }
 
-        // Current bars (blue)
+        // Current bars
         ctx.fillStyle = '#3b82f6';
         currentData.forEach((value, i) => {
             const x = padding.left + i * groupW + groupW * 0.18;
@@ -131,7 +136,7 @@ export default function EnrollmentProjection() {
             ctx.fillRect(x, y, barW, barH);
         });
 
-        // Projected bars (light blue)
+        // Projected bars
         ctx.fillStyle = '#93c5fd';
         projectedData.forEach((value, i) => {
             const x = padding.left + i * groupW + groupW * 0.18 + barW + 6;
@@ -164,7 +169,7 @@ export default function EnrollmentProjection() {
         ctx.fillText('Projected', w - 90, 24);
     };
 
-    // Initial calculation
+    // Run calculation whenever data changes
     useEffect(() => {
         calculate();
     }, [grades, projectionMode, defaultRetention, defaultNewStudents, simpleGrowthRate, capacityTarget]);
@@ -178,12 +183,9 @@ export default function EnrollmentProjection() {
                     <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
                 </div>
                 <div className="controls no-print">
-                    <button onClick={() => {
-                        setGrades([...grades, { grade: 'New Grade', current: 0, retention: 85, newStudents: 0 }]);
-                    }}>Add Grade</button>
-                    <button className="secondary" onClick={() => {/* load sample */ }}>Load Sample Data</button>
-                    <button className="secondary" onClick={() => {/* reset */ }}>Reset</button>
-                    <button onClick={() => window.print()}>Print / Save PDF</button>
+                    <button onClick={() => setGrades([...grades, { grade: 'New Grade', current: 0, retention: 85, newStudents: 0 }])}>Add Grade</button>
+                    <button className="secondary" onClick={() => { /* load sample later */ }}>Load Sample Data</button>
+                    <button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
                 </div>
             </section>
 
