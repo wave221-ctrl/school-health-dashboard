@@ -2,6 +2,7 @@
 
 import HealthCalculator from '../components/HealthCalculator';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 
 export default function CalculatorPage() {
     return (
@@ -9,6 +10,7 @@ export default function CalculatorPage() {
             {/* Top Navigation Bar */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+
                     <div className="flex items-center gap-8">
                         {/* Logo */}
                         <div className="flex items-center gap-3">
@@ -41,10 +43,9 @@ export default function CalculatorPage() {
                         </div>
                     </div>
 
-                    {/* User */}
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm text-slate-500">Welcome back</span>
-                    </div>
+                    {/* User Button (Logout + Profile) */}
+                    <UserButton afterSignOutUrl="/" />
+
                 </div>
             </div>
 
