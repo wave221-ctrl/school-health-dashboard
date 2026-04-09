@@ -652,6 +652,25 @@ export default function HealthCalculator() {
         }, 1000);   // keep 1000ms
     }, []);
 
+    // =============== BUTTON LISTENERS (React-safe) ===============
+    useEffect(() => {
+        const attachButtons = () => {
+            const loadSampleBtn = document.getElementById('loadSampleBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const printBtn = document.getElementById('printBtn');
+
+            if (loadSampleBtn) loadSampleBtn.addEventListener('click', loadSample);
+            if (resetBtn) resetBtn.addEventListener('click', resetTool);
+            if (downloadBtn) downloadBtn.addEventListener('click', downloadReport);
+            if (printBtn) printBtn.addEventListener('click', () => window.print());
+        };
+
+        attachButtons();
+        const timer = setTimeout(attachButtons, 800);
+
+        return () => clearTimeout(timer);
+    }, []);
 
 
     // =============== SAVE ASSESSMENT ===============
