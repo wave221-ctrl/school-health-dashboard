@@ -21,14 +21,14 @@ export default function Home() {
                         <Link href="/calculator" className="font-medium text-slate-700 hover:text-slate-900">
                             Open Dashboard
                         </Link>
-                        <UserButton />   {/* ← afterSignOutUrl removed to fix build error */}
+                        <UserButton />
                     </div>
                 )}
             </nav>
 
             <div className="max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-16 items-center">
 
-                {/* Left - Text Content */}
+                {/* Left - Text */}
                 <div>
                     <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight mb-6">
                         Know the true health of your school.
@@ -50,7 +50,7 @@ export default function Home() {
                         ) : (
                             <Link
                                 href="/calculator"
-                                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
+                                className="bg-emerald-700 hover:bg-emerald-800 hover:scale-105 active:scale-95 text-white text-2xl font-bold px-14 py-6 rounded-full shadow-xl shadow-emerald-700/30 transition-all text-center"
                             >
                                 Open Dashboard →
                             </Link>
@@ -68,7 +68,7 @@ export default function Home() {
                 {/* Right - Hero Image */}
                 <div className="relative">
                     <img
-                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1"
+                        src="https://imgur.com/a/DA4CPGd"
                         alt="Christian school leaders collaborating"
                         className="rounded-3xl shadow-2xl w-full object-cover aspect-video"
                     />
