@@ -649,31 +649,9 @@ export default function HealthCalculator() {
             window.setDomains = setDomains;           // ← add this line
             window.renderDomains = renderDomains;
             window.calculate = calculate;
-            window.loadSample = loadSample;
-            window.resetTool = resetTool;
-            window.downloadReport = downloadReport;
         }, 1000);   // keep 1000ms
     }, []);
 
-    // =============== BUTTON LISTENERS (React-safe) ===============
-    useEffect(() => {
-        const attachButtons = () => {
-            const loadSampleBtn = document.getElementById('loadSampleBtn');
-            const resetBtn = document.getElementById('resetBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const printBtn = document.getElementById('printBtn');
-
-            if (loadSampleBtn) loadSampleBtn.addEventListener('click', loadSample);
-            if (resetBtn) resetBtn.addEventListener('click', resetTool);
-            if (downloadBtn) downloadBtn.addEventListener('click', downloadReport);
-            if (printBtn) printBtn.addEventListener('click', () => window.print());
-        };
-
-        attachButtons();
-        const timer = setTimeout(attachButtons, 800);
-
-        return () => clearTimeout(timer);
-    }, []);
 
 
     // =============== SAVE ASSESSMENT ===============
@@ -974,7 +952,7 @@ export default function HealthCalculator() {
                                         <li><strong>4</strong> – Strong academics with consistent integration </li>
                                         <li><strong>3</strong> – Adequate academics, uneven integration </li>
                                         <li><strong>2</strong> – Noticeable gaps, worldview feels added-on </li>
-                                        <li><strong>1</strong> – Significant struggles </li>
+                                        <li><strong>1</strong> – Significant struggles <</li>
                                     </ul>
                                 </details>
                             </div>
