@@ -18,15 +18,17 @@ export default function CalculatorPage() {
                             <span className="font-semibold text-xl">School Health Score</span>
                         </div>
 
-                        {/* My Tools Dropdown */}
+                        {/* My Tools Dropdown - Fixed hover area */}
                         <div className="relative group">
-                            <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-4 py-2 rounded-2xl hover:bg-slate-100 transition">
+                            <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
                                 My Tools
                                 <span className="text-xs">▼</span>
                             </button>
 
-                            {/* Dropdown Menu */}
-                            <div className="absolute hidden group-hover:block mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50">
+                            {/* Dropdown with better hover tolerance */}
+                            <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 
+                            opacity-0 invisible group-hover:opacity-100 group-hover:visible 
+                            transition-all duration-200">
                                 <Link
                                     href="/calculator"
                                     className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium"
@@ -41,6 +43,13 @@ export default function CalculatorPage() {
                                 </Link>
                             </div>
                         </div>
+                    </div>
+
+                    {/* User Button */}
+                    <UserButton />
+
+                </div>
+            </div>
                     </div>
 
                     {/* User Button - Logout/Profile */}
