@@ -1,11 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
 
 export default function EnrollmentProjection() {
     const { user } = useUser();
+
+    const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
+    const [baseYear, setBaseYear] = useState('2026-2027');
+    const [projectionYear, setProjectionYear] = useState('2027-2028');
+    const [projectionMode, setProjectionMode] = useState('grade-progress');
+
+    const [defaultRetention, setDefaultRetention] = useState(85);
+    const [defaultNewStudents, setDefaultNewStudents] = useState(0);
+    const [simpleGrowthRate, setSimpleGrowthRate] = useState(3);
+    const [capacityTarget, setCapacityTarget] = useState(250);
+    const [notes, setNotes] = useState('');
 
     const [grades, setGrades] = useState([
         { grade: 'PK', current: 18, retention: 0, newStudents: 20 },
@@ -20,17 +31,7 @@ export default function EnrollmentProjection() {
         { grade: '8', current: 17, retention: 0, newStudents: 0 }
     ]);
 
-    const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
-    const [baseYear, setBaseYear] = useState('2026-2027');
-    const [projectionYear, setProjectionYear] = useState('2027-2028');
-    const [projectionMode, setProjectionMode] = useState('grade-progress');
-    const [defaultRetention, setDefaultRetention] = useState(85);
-    const [defaultNewStudents, setDefaultNewStudents] = useState(0);
-    const [simpleGrowthRate, setSimpleGrowthRate] = useState(3);
-    const [capacityTarget, setCapacityTarget] = useState(250);
-    const [notes, setNotes] = useState('');
-
-    const round = (value) => Math.round(value * 10) / 10;
+    const round = (num) => Math.round(num * 10) / 10;
 
     const calculate = () => {
         let currentTotal = 0;
@@ -39,23 +40,24 @@ export default function EnrollmentProjection() {
         const chartProjected = [];
         const labels = [];
 
-        const updatedGrades = grades.map((row, index) => {
+        const updated = grades.map((row, i) => {
             currentTotal += Number(row.current || 0);
             let projected = 0;
 
             if (projectionMode === 'simple-growth') {
-                projected = Number(row.current || 0) * (1 + Number(simpleGrowthRate || 0) / 100) + Number(row.newStudents || 0);
+                projected = Number(row.current || 0) * (1 + Number(simpleGrowthRate) / 100) + Number(row.newStudents || 0);
             } else {
-                if (index === 0) {
+                if (i === 0) {
                     projected = Number(row.newStudents || 0);
                 } else {
-                    const previous = grades[index - 1];
-                    projected = (Number(previous.current || 0) * (Number(row.retention || 0) / 100)) + Number(row.newStudents || 0);
+                    const prev = grades[i - 1];
+                    projected = (Number(prev.current || 0) * (Number(row.retention || 0) / 100)) + Number(row.newStudents || 0);
                 }
             }
 
             projected = round(projected);
             projectedTotal += projected;
+
             labels.push(row.grade);
             chartCurrent.push(Number(row.current || 0));
             chartProjected.push(projected);
@@ -63,43 +65,117 @@ export default function EnrollmentProjection() {
             return { ...row, projected };
         });
 
-        setGrades(updatedGrades);
+        setGrades(updated);
 
-        // Update summary (fixed)
-        document.getElementById('currentTotal').textContent = round(currentTotal).toString();
-        document.getElementById('projectedTotal').textContent = round(projectedTotal).toString();
-        document.getElementById('netChange').textContent = round(projectedTotal - currentTotal).toString();
-
-        const capacity = Number(capacityTarget || 1);   // ← fixed here
+        // Update summary
+        const netChange = round(projectedTotal - currentTotal);
+        const capacity = Number(capacityTarget || 1);
         const capacityPct = capacity > 0 ? round((projectedTotal / capacity) * 100) : 0;
+
+        document.getElementById('currentTotal').textContent = round(currentTotal);
+        document.getElementById('projectedTotal').textContent = round(projectedTotal);
+        document.getElementById('netChange').textContent = netChange >= 0 ? `+${netChange}` : netChange;
         document.getElementById('capacityUsed').textContent = `${capacityPct}%`;
 
-        // Update health tag
-        const netChange = round(projectedTotal - currentTotal);
-        const healthTag = document.getElementById('healthTag');
-        if (netChange >= 10) healthTag.textContent = 'Strong projected growth';
-        else if (netChange > 0) healthTag.textContent = 'Modest projected growth';
-        else if (netChange === 0) healthTag.textContent = 'Stable projection';
-        else healthTag.textContent = 'Projected decline — review assumptions';
+        // Health tag
+        const tag = document.getElementById('healthTag');
+        if (netChange >= 10) tag.textContent = 'Strong projected growth';
+        else if (netChange > 0) tag.textContent = 'Modest projected growth';
+        else if (netChange === 0) tag.textContent = 'Stable projection';
+        else tag.textContent = 'Projected decline — review assumptions';
 
         drawChart(labels, chartCurrent, chartProjected);
     };
 
-    const renderTable = () => {
-        // This will be handled with React state in the JSX
+    const drawChart = (labels, currentData, projectedData) => {
+        const canvas = document.getElementById('chart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const padding = { top: 30, right: 20, bottom: 60, left: 50 };
+        const chartW = w - padding.left - padding.right;
+        const chartH = h - padding.top - padding.bottom;
+        const maxValue = Math.max(10, ...currentData, ...projectedData);
+        const groupW = chartW / Math.max(labels.length, 1);
+        const barW = Math.min(26, groupW * 0.28);
+
+        // Grid
+        ctx.strokeStyle = '#cbd5e1';
+        for (let i = 0; i <= 5; i++) {
+            const y = padding.top + (chartH / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(w - padding.right, y);
+            ctx.stroke();
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Arial';
+            ctx.fillText((5 - i).toString(), 8, y + 4);
+        }
+
+        // Current bars
+        ctx.fillStyle = '#3b82f6';
+        currentData.forEach((value, i) => {
+            const x = padding.left + i * groupW + groupW * 0.18;
+            const barH = (value / maxValue) * chartH;
+            const y = padding.top + chartH - barH;
+            ctx.fillRect(x, y, barW, barH);
+        });
+
+        // Projected bars
+        ctx.fillStyle = '#93c5fd';
+        projectedData.forEach((value, i) => {
+            const x = padding.left + i * groupW + groupW * 0.18 + barW + 6;
+            const barH = (value / maxValue) * chartH;
+            const y = padding.top + chartH - barH;
+            ctx.fillRect(x, y, barW, barH);
+        });
+
+        // Labels
+        ctx.fillStyle = '#111827';
+        ctx.font = '12px Arial';
+        labels.forEach((label, i) => {
+            const x = padding.left + i * groupW + groupW * 0.18;
+            ctx.save();
+            ctx.translate(x + 8, h - 20);
+            ctx.rotate(-0.4);
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+        });
+
+        // Legend
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(w - 200, 12, 14, 14);
+        ctx.fillStyle = '#111827';
+        ctx.fillText('Current', w - 180, 24);
+
+        ctx.fillStyle = '#93c5fd';
+        ctx.fillRect(w - 110, 12, 14, 14);
+        ctx.fillStyle = '#111827';
+        ctx.fillText('Projected', w - 90, 24);
     };
 
-    // Full table rendering is in the return statement below
+    // Initial calculation
+    useEffect(() => {
+        calculate();
+    }, [grades, projectionMode, defaultRetention, defaultNewStudents, simpleGrowthRate, capacityTarget]);
 
     return (
         <div className="wrap">
             <section className="hero">
-                <h1>Enrollment Projection Tool</h1>
-                <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
+                <div className="print-only"><h1>Enrollment Projection Tool</h1></div>
+                <div className="no-print">
+                    <h1>Enrollment Projection Tool</h1>
+                    <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
+                </div>
                 <div className="controls no-print">
-                    <button onClick={() => { /* add row logic */ }}>Add Grade</button>
-                    <button className="secondary" onClick={() => { /* load sample */ }}>Load Sample Data</button>
-                    <button className="secondary" onClick={() => { /* reset */ }}>Reset</button>
+                    <button onClick={() => {
+                        setGrades([...grades, { grade: 'New Grade', current: 0, retention: 85, newStudents: 0 }]);
+                    }}>Add Grade</button>
+                    <button className="secondary" onClick={() => {/* load sample */ }}>Load Sample Data</button>
+                    <button className="secondary" onClick={() => {/* reset */ }}>Reset</button>
                     <button onClick={() => window.print()}>Print / Save PDF</button>
                 </div>
             </section>
@@ -126,14 +202,44 @@ export default function EnrollmentProjection() {
 
                     <section className="card">
                         <h2>Global Assumptions</h2>
-                        {/* Global fields here */}
+                        <div className="inline-2">
+                            <div className="field">
+                                <label>Default Retention %</label>
+                                <input type="number" value={defaultRetention} onChange={(e) => setDefaultRetention(Number(e.target.value))} />
+                            </div>
+                            <div className="field">
+                                <label>Default New Students</label>
+                                <input type="number" value={defaultNewStudents} onChange={(e) => setDefaultNewStudents(Number(e.target.value))} />
+                            </div>
+                        </div>
+                        <div className="inline-2">
+                            <div className="field">
+                                <label>Simple Growth %</label>
+                                <input type="number" value={simpleGrowthRate} onChange={(e) => setSimpleGrowthRate(Number(e.target.value))} />
+                            </div>
+                            <div className="field">
+                                <label>Building Capacity</label>
+                                <input type="number" value={capacityTarget} onChange={(e) => setCapacityTarget(Number(e.target.value))} />
+                            </div>
+                        </div>
                     </section>
                 </aside>
 
                 <main className="section-stack">
                     <section className="card">
+                        <h2>Projection Summary</h2>
+                        <div className="summary-grid">
+                            <div className="stat"><div className="label">Current Enrollment</div><div className="value" id="currentTotal">0</div></div>
+                            <div className="stat"><div className="label">Projected Enrollment</div><div className="value" id="projectedTotal">0</div></div>
+                            <div className="stat"><div className="label">Net Change</div><div className="value" id="netChange">0</div></div>
+                            <div className="stat"><div className="label">Capacity Used</div><div className="value" id="capacityUsed">0%</div></div>
+                        </div>
+                        <span className="pill" id="healthTag">Waiting for data</span>
+                    </section>
+
+                    <section className="card">
                         <h2>Enrollment by Grade</h2>
-                        <table>
+                        <table id="projectionTable">
                             <thead>
                                 <tr>
                                     <th>Grade</th>
@@ -147,10 +253,26 @@ export default function EnrollmentProjection() {
                             <tbody>
                                 {grades.map((row, index) => (
                                     <tr key={index}>
-                                        <td>{row.grade}</td>
-                                        <td>{row.current}</td>
-                                        <td>{row.retention}</td>
-                                        <td>{row.newStudents}</td>
+                                        <td><input value={row.grade} onChange={(e) => {
+                                            const newGrades = [...grades];
+                                            newGrades[index].grade = e.target.value;
+                                            setGrades(newGrades);
+                                        }} /></td>
+                                        <td><input type="number" value={row.current} onChange={(e) => {
+                                            const newGrades = [...grades];
+                                            newGrades[index].current = Number(e.target.value);
+                                            setGrades(newGrades);
+                                        }} /></td>
+                                        <td><input type="number" value={row.retention} onChange={(e) => {
+                                            const newGrades = [...grades];
+                                            newGrades[index].retention = Number(e.target.value);
+                                            setGrades(newGrades);
+                                        }} /></td>
+                                        <td><input type="number" value={row.newStudents} onChange={(e) => {
+                                            const newGrades = [...grades];
+                                            newGrades[index].newStudents = Number(e.target.value);
+                                            setGrades(newGrades);
+                                        }} /></td>
                                         <td>{row.projected || 0}</td>
                                         <td>{(row.projected || 0) - row.current}</td>
                                     </tr>
