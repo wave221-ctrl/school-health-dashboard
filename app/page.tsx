@@ -45,7 +45,7 @@ export default function Home() {
                                 href="/sign-in"
                                 className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
-                                Get Started / Sign In
+                                Sign in to access tools
                             </Link>
                         ) : (
                             <Link
@@ -60,15 +60,19 @@ export default function Home() {
                             href="/billing"
                             className="border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                         >
-                            Coming Soon
+                            See Pricing
                         </Link>
                     </div>
+
+                    <p className="text-xs text-slate-500 mt-8">
+                        Sign in required to use the calculators and generate reports
+                    </p>
                 </div>
 
                 {/* Right - Hero Image */}
                 <div className="relative">
                     <img
-                        src="https://i.imgur.com/BeqNXWh.jpeg"
+                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1"
                         alt="Christian school leaders collaborating"
                         className="rounded-3xl shadow-2xl w-full object-cover aspect-video"
                     />
@@ -91,14 +95,13 @@ export default function Home() {
                             and generate clean reports for budgeting and board presentations.
                         </p>
                         <Link
-                            href="/enrollment-projection"
+                            href={isSignedIn ? "/enrollment-projection" : "/sign-in"}
                             className="inline-block mt-6 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-8 py-4 rounded-3xl transition-all"
                         >
-                            Try Enrollment Projection Tool →
+                            {isSignedIn ? 'Try Enrollment Projection Tool →' : 'Sign in to try'}
                         </Link>
                     </div>
 
-                    {/* Visual icon / teaser */}
                     <div className="flex-1 flex justify-center">
                         <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 text-center max-w-xs">
                             <div className="text-6xl mb-4">📈</div>
