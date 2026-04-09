@@ -32,7 +32,7 @@ export default function EnrollmentProjection() {
 
     const round = (value) => Math.round(value * 10) / 10;
 
-    function calculate() {
+    const calculate = () => {
         let currentTotal = 0;
         let projectedTotal = 0;
         const chartCurrent = [];
@@ -65,11 +65,14 @@ export default function EnrollmentProjection() {
 
         setGrades(updatedGrades);
 
-        // Fix: Convert numbers to strings for textContent
+        // Update summary (fixed)
         document.getElementById('currentTotal').textContent = round(currentTotal).toString();
         document.getElementById('projectedTotal').textContent = round(projectedTotal).toString();
         document.getElementById('netChange').textContent = round(projectedTotal - currentTotal).toString();
-        document.getElementById('capacityUsed').textContent = round((projectedTotal / Number(capacityTarget.value || 1)) * 100).toString() + '%';
+
+        const capacity = Number(capacityTarget || 1);   // ← fixed here
+        const capacityPct = capacity > 0 ? round((projectedTotal / capacity) * 100) : 0;
+        document.getElementById('capacityUsed').textContent = `${capacityPct}%`;
 
         // Update health tag
         const netChange = round(projectedTotal - currentTotal);
@@ -80,7 +83,7 @@ export default function EnrollmentProjection() {
         else healthTag.textContent = 'Projected decline — review assumptions';
 
         drawChart(labels, chartCurrent, chartProjected);
-    }
+    };
 
     const renderTable = () => {
         // This will be handled with React state in the JSX
