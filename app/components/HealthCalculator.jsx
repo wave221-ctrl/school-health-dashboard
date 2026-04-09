@@ -654,6 +654,12 @@ export default function HealthCalculator() {
         }, 1000);   // keep 1000ms
     }, []);
 
+    // =============== AUTO-LOAD HISTORY ===============
+    useEffect(() => {
+        if (user) {
+            loadHistory();
+        }
+    }, [user]);
 
 
     // =============== SAVE ASSESSMENT ===============
