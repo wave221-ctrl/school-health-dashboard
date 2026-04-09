@@ -72,7 +72,7 @@ export default function Home() {
                 {/* Right - Hero Image */}
                 <div className="relative">
                     <img
-                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1"
+                        src="https://i.imgur.com/BeqNXWh.jpeg"
                         alt="Christian school leaders collaborating"
                         className="rounded-3xl shadow-2xl w-full object-cover aspect-video"
                     />
