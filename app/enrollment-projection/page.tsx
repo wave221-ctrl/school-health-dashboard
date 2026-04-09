@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
 
 interface GradeRow {
     grade: string;
     current: number;
     retention: number;
     newStudents: number;
-    projected?: number;   // ← this was missing
+    projected?: number;
 }
 
 export default function EnrollmentProjection() {
@@ -65,7 +66,6 @@ export default function EnrollmentProjection() {
 
             projected = round(projected);
             projectedTotal += projected;
-
             labels.push(row.grade);
             chartCurrent.push(Number(row.current || 0));
             chartProjected.push(projected);
@@ -84,7 +84,6 @@ export default function EnrollmentProjection() {
         const capacityPct = capacity > 0 ? round((projectedTotal / capacity) * 100) : 0;
         document.getElementById('capacityUsed')!.textContent = `${capacityPct}%`;
 
-        // Health tag
         const netChange = round(projectedTotal - currentTotal);
         const healthTag = document.getElementById('healthTag');
         if (healthTag) {
@@ -169,143 +168,176 @@ export default function EnrollmentProjection() {
         ctx.fillText('Projected', w - 90, 24);
     };
 
-    // Run calculation whenever data changes
+    // Run calculation when data changes
     useEffect(() => {
         calculate();
     }, [grades, projectionMode, defaultRetention, defaultNewStudents, simpleGrowthRate, capacityTarget]);
 
     return (
-        <div className="wrap">
-            <section className="hero">
-                <div className="print-only"><h1>Enrollment Projection Tool</h1></div>
-                <div className="no-print">
-                    <h1>Enrollment Projection Tool</h1>
-                    <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
+        <div className="min-h-screen bg-slate-50">
+            {/* Top Navigation Bar */}
+            <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
+                <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+                    <div className="flex items-center gap-8">
+                        {/* Logo */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold">S</div>
+                            <span className="font-semibold text-xl">School Health Score</span>
+                        </div>
+
+                        {/* My Tools Dropdown */}
+                        <div className="relative group">
+                            <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
+                                My Tools
+                                <span className="text-xs">▼</span>
+                            </button>
+
+                            <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 
+                            opacity-0 invisible group-hover:opacity-100 group-hover:visible 
+                            transition-all duration-200">
+                                <Link href="/calculator" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
+                                    School Health Calculator
+                                </Link>
+                                <Link href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
+                                    Enrollment Projection Calculator
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* User Button */}
+                    <UserButton />
                 </div>
-                <div className="controls no-print">
-                    <button
-                        onClick={() => {
-                            setGrades(prev => [...prev, {
-                                grade: 'New Grade',
-                                current: 0,
-                                retention: 85,
-                                newStudents: 0
-                            }]);
-                        }}
-                    >
-                        Add Grade
-                    </button>
-                    <button className="secondary" onClick={() => { /* load sample later */ }}>Load Sample Data</button>
-                    <button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
+            </div>
+
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-8 py-8">
+                <div className="wrap">
+                    <section className="hero">
+                        <div className="print-only"><h1>Enrollment Projection Tool</h1></div>
+                        <div className="no-print">
+                            <h1>Enrollment Projection Tool</h1>
+                            <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
+                        </div>
+                        <div className="controls no-print">
+                            <button
+                                onClick={() => setGrades(prev => [...prev, { grade: 'New Grade', current: 0, retention: 85, newStudents: 0 }])}
+                            >
+                                Add Grade
+                            </button>
+                            <button className="secondary" onClick={() => {/* load sample later */ }}>Load Sample Data</button>
+                            <button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
+                        </div>
+                    </section>
+
+                    <div className="grid">
+                        <aside className="section-stack">
+                            <section className="card">
+                                <h2>School Information</h2>
+                                <div className="field">
+                                    <label>School Name</label>
+                                    <input value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
+                                </div>
+                                <div className="inline-2">
+                                    <div className="field">
+                                        <label>Current Year</label>
+                                        <input value={baseYear} onChange={(e) => setBaseYear(e.target.value)} />
+                                    </div>
+                                    <div className="field">
+                                        <label>Projection Year</label>
+                                        <input value={projectionYear} onChange={(e) => setProjectionYear(e.target.value)} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="card">
+                                <h2>Global Assumptions</h2>
+                                <div className="inline-2">
+                                    <div className="field">
+                                        <label>Default Retention %</label>
+                                        <input type="number" value={defaultRetention} onChange={(e) => setDefaultRetention(Number(e.target.value))} />
+                                    </div>
+                                    <div className="field">
+                                        <label>Default New Students</label>
+                                        <input type="number" value={defaultNewStudents} onChange={(e) => setDefaultNewStudents(Number(e.target.value))} />
+                                    </div>
+                                </div>
+                                <div className="inline-2">
+                                    <div className="field">
+                                        <label>Simple Growth %</label>
+                                        <input type="number" value={simpleGrowthRate} onChange={(e) => setSimpleGrowthRate(Number(e.target.value))} />
+                                    </div>
+                                    <div className="field">
+                                        <label>Building Capacity</label>
+                                        <input type="number" value={capacityTarget} onChange={(e) => setCapacityTarget(Number(e.target.value))} />
+                                    </div>
+                                </div>
+                            </section>
+                        </aside>
+
+                        <main className="section-stack">
+                            <section className="card">
+                                <h2>Projection Summary</h2>
+                                <div className="summary-grid">
+                                    <div className="stat"><div className="label">Current Enrollment</div><div className="value" id="currentTotal">0</div></div>
+                                    <div className="stat"><div className="label">Projected Enrollment</div><div className="value" id="projectedTotal">0</div></div>
+                                    <div className="stat"><div className="label">Net Change</div><div className="value" id="netChange">0</div></div>
+                                    <div className="stat"><div className="label">Capacity Used</div><div className="value" id="capacityUsed">0%</div></div>
+                                </div>
+                                <span className="pill" id="healthTag">Waiting for data</span>
+                            </section>
+
+                            <section className="card">
+                                <h2>Enrollment by Grade</h2>
+                                <table id="projectionTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Grade</th>
+                                            <th>Current</th>
+                                            <th>Retention %</th>
+                                            <th>New Students</th>
+                                            <th>Projected</th>
+                                            <th>Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {grades.map((row, index) => (
+                                            <tr key={index}>
+                                                <td><input value={row.grade} onChange={(e) => {
+                                                    const newGrades = [...grades];
+                                                    newGrades[index].grade = e.target.value;
+                                                    setGrades(newGrades);
+                                                }} /></td>
+                                                <td><input type="number" value={row.current} onChange={(e) => {
+                                                    const newGrades = [...grades];
+                                                    newGrades[index].current = Number(e.target.value);
+                                                    setGrades(newGrades);
+                                                }} /></td>
+                                                <td><input type="number" value={row.retention} onChange={(e) => {
+                                                    const newGrades = [...grades];
+                                                    newGrades[index].retention = Number(e.target.value);
+                                                    setGrades(newGrades);
+                                                }} /></td>
+                                                <td><input type="number" value={row.newStudents} onChange={(e) => {
+                                                    const newGrades = [...grades];
+                                                    newGrades[index].newStudents = Number(e.target.value);
+                                                    setGrades(newGrades);
+                                                }} /></td>
+                                                <td>{row.projected || 0}</td>
+                                                <td>{(row.projected || 0) - row.current}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </section>
+
+                            <section className="card">
+                                <h2>Visual Trend</h2>
+                                <canvas id="chart" width="900" height="320"></canvas>
+                            </section>
+                        </main>
+                    </div>
                 </div>
-            </section>
-
-            <div className="grid">
-                <aside className="section-stack">
-                    <section className="card">
-                        <h2>School Information</h2>
-                        <div className="field">
-                            <label>School Name</label>
-                            <input value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
-                        </div>
-                        <div className="inline-2">
-                            <div className="field">
-                                <label>Current Year</label>
-                                <input value={baseYear} onChange={(e) => setBaseYear(e.target.value)} />
-                            </div>
-                            <div className="field">
-                                <label>Projection Year</label>
-                                <input value={projectionYear} onChange={(e) => setProjectionYear(e.target.value)} />
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Global Assumptions</h2>
-                        <div className="inline-2">
-                            <div className="field">
-                                <label>Default Retention %</label>
-                                <input type="number" value={defaultRetention} onChange={(e) => setDefaultRetention(Number(e.target.value))} />
-                            </div>
-                            <div className="field">
-                                <label>Default New Students</label>
-                                <input type="number" value={defaultNewStudents} onChange={(e) => setDefaultNewStudents(Number(e.target.value))} />
-                            </div>
-                        </div>
-                        <div className="inline-2">
-                            <div className="field">
-                                <label>Simple Growth %</label>
-                                <input type="number" value={simpleGrowthRate} onChange={(e) => setSimpleGrowthRate(Number(e.target.value))} />
-                            </div>
-                            <div className="field">
-                                <label>Building Capacity</label>
-                                <input type="number" value={capacityTarget} onChange={(e) => setCapacityTarget(Number(e.target.value))} />
-                            </div>
-                        </div>
-                    </section>
-                </aside>
-
-                <main className="section-stack">
-                    <section className="card">
-                        <h2>Projection Summary</h2>
-                        <div className="summary-grid">
-                            <div className="stat"><div className="label">Current Enrollment</div><div className="value" id="currentTotal">0</div></div>
-                            <div className="stat"><div className="label">Projected Enrollment</div><div className="value" id="projectedTotal">0</div></div>
-                            <div className="stat"><div className="label">Net Change</div><div className="value" id="netChange">0</div></div>
-                            <div className="stat"><div className="label">Capacity Used</div><div className="value" id="capacityUsed">0%</div></div>
-                        </div>
-                        <span className="pill" id="healthTag">Waiting for data</span>
-                    </section>
-
-                    <section className="card">
-                        <h2>Enrollment by Grade</h2>
-                        <table id="projectionTable">
-                            <thead>
-                                <tr>
-                                    <th>Grade</th>
-                                    <th>Current</th>
-                                    <th>Retention %</th>
-                                    <th>New Students</th>
-                                    <th>Projected</th>
-                                    <th>Change</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {grades.map((row, index) => (
-                                    <tr key={index}>
-                                        <td><input value={row.grade} onChange={(e) => {
-                                            const newGrades = [...grades];
-                                            newGrades[index].grade = e.target.value;
-                                            setGrades(newGrades);
-                                        }} /></td>
-                                        <td><input type="number" value={row.current} onChange={(e) => {
-                                            const newGrades = [...grades];
-                                            newGrades[index].current = Number(e.target.value);
-                                            setGrades(newGrades);
-                                        }} /></td>
-                                        <td><input type="number" value={row.retention} onChange={(e) => {
-                                            const newGrades = [...grades];
-                                            newGrades[index].retention = Number(e.target.value);
-                                            setGrades(newGrades);
-                                        }} /></td>
-                                        <td><input type="number" value={row.newStudents} onChange={(e) => {
-                                            const newGrades = [...grades];
-                                            newGrades[index].newStudents = Number(e.target.value);
-                                            setGrades(newGrades);
-                                        }} /></td>
-                                        <td>{row.projected || 0}</td>
-                                        <td>{(row.projected || 0) - row.current}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section className="card">
-                        <h2>Visual Trend</h2>
-                        <canvas id="chart" width="900" height="320"></canvas>
-                    </section>
-                </main>
             </div>
         </div>
     );
