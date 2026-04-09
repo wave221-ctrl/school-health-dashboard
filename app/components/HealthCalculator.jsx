@@ -935,11 +935,11 @@ export default function HealthCalculator() {
                                 <details open>
                                     <summary><strong>Enrollment & Retention</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others <em>(Psalm 92:12)</em></li>
-                                        <li><strong>4</strong> – Stable growth, 90–94% retention <em>(Psalm 1:3)</em></li>
-                                        <li><strong>3</strong> – Flat enrollment, 85–89% retention <em>(Jeremiah 17:8)</em></li>
-                                        <li><strong>2</strong> – Declining enrollment, visible anxiety <em>(Psalm 1:4)</em></li>
-                                        <li><strong>1</strong> – Sharp decline, high attrition <em>(Hosea 14:4–7)</em></li>
+                                        <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others </li>
+                                        <li><strong>4</strong> – Stable growth, 90–94% retention </li>
+                                        <li><strong>3</strong> – Flat enrollment, 85–89% retention </li>
+                                        <li><strong>2</strong> – Declining enrollment, visible anxiety </li>
+                                        <li><strong>1</strong> – Sharp decline, high attrition </li>
                                     </ul>
                                 </details>
                             </div>
@@ -948,11 +948,11 @@ export default function HealthCalculator() {
                                 <details>
                                     <summary><strong>Academic Program</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Christ-centered, rigorous, students thriving <em>(Proverbs 22:6)</em></li>
-                                        <li><strong>4</strong> – Strong academics with consistent integration <em>(Colossians 2:6–7)</em></li>
-                                        <li><strong>3</strong> – Adequate academics, uneven integration <em>(Matthew 7:24–25)</em></li>
-                                        <li><strong>2</strong> – Noticeable gaps, worldview feels added-on <em>(Matthew 7:26–27)</em></li>
-                                        <li><strong>1</strong> – Significant struggles <em>(Nehemiah 2:17)</em></li>
+                                        <li><strong>5</strong> – Christ-centered, rigorous, students thriving </li>
+                                        <li><strong>4</strong> – Strong academics with consistent integration </li>
+                                        <li><strong>3</strong> – Adequate academics, uneven integration </li>
+                                        <li><strong>2</strong> – Noticeable gaps, worldview feels added-on </li>
+                                        <li><strong>1</strong> – Significant struggles </li>
                                     </ul>
                                 </details>
                             </div>
@@ -961,11 +961,11 @@ export default function HealthCalculator() {
                                 <details>
                                     <summary><strong>Culture & Mission</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Mission alive, deep belonging <em>(Ephesians 4:4–6)</em></li>
-                                        <li><strong>4</strong> – Mission understood and mostly lived out <em>(Ephesians 4:3)</em></li>
-                                        <li><strong>3</strong> – Mission known but not deeply felt <em>(2 Timothy 3:5)</em></li>
-                                        <li><strong>2</strong> – Mission drift or tension <em>(Mark 3:25)</em></li>
-                                        <li><strong>1</strong> – Toxic or divided culture <em>(Revelation 2:4–5)</em></li>
+                                        <li><strong>5</strong> – Mission alive, deep belonging </li>
+                                        <li><strong>4</strong> – Mission understood and mostly lived out </li>
+                                        <li><strong>3</strong> – Mission known but not deeply felt </li>
+                                        <li><strong>2</strong> – Mission drift or tension </li>
+                                        <li><strong>1</strong> – Toxic or divided culture </li>
                                     </ul>
                                 </details>
                             </div>
@@ -974,11 +974,11 @@ export default function HealthCalculator() {
                                 <details>
                                     <summary><strong>Finance & Operations</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Healthy budget, strong reserves <em>(Luke 16:10)</em></li>
-                                        <li><strong>4</strong> – Balanced budget, reliable operations <em>(1 Corinthians 4:2)</em></li>
-                                        <li><strong>3</strong> – Tight but manageable <em>(Philippians 4:11–13)</em></li>
-                                        <li><strong>2</strong> – Frequent stress, deferred maintenance <em>(Matthew 11:28)</em></li>
-                                        <li><strong>1</strong> – Financial instability <em>(James 1:5)</em></li>
+                                        <li><strong>5</strong> – Healthy budget, strong reserves </li>
+                                        <li><strong>4</strong> – Balanced budget, reliable operations </li>
+                                        <li><strong>3</strong> – Tight but manageable </li>
+                                        <li><strong>2</strong> – Frequent stress, deferred maintenance </li>
+                                        <li><strong>1</strong> – Financial instability </li>
                                     </ul>
                                 </details>
                             </div>
@@ -987,11 +987,11 @@ export default function HealthCalculator() {
                                 <details>
                                     <summary><strong>Leadership & Staffing</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Trusted, unified, staff feel valued <em>(1 Peter 5:2–4)</em></li>
-                                        <li><strong>4</strong> – Strong leadership and good morale <em>(Proverbs 27:17)</em></li>
-                                        <li><strong>3</strong> – Adequate but some fatigue <em>(Matthew 9:37–38)</em></li>
-                                        <li><strong>2</strong> – Trust issues or high turnover <em>(Ezekiel 34:1–10)</em></li>
-                                        <li><strong>1</strong> – Leadership vacuum or conflict <em>(Galatians 6:1)</em></li>
+                                        <li><strong>5</strong> – Trusted, unified, staff feel valued </li>
+                                        <li><strong>4</strong> – Strong leadership and good morale </li>
+                                        <li><strong>3</strong> – Adequate but some fatigue </li>
+                                        <li><strong>2</strong> – Trust issues or high turnover </li>
+                                        <li><strong>1</strong> – Leadership vacuum or conflict </li>
                                     </ul>
                                 </details>
                             </div>
@@ -1000,11 +1000,11 @@ export default function HealthCalculator() {
                                 <details>
                                     <summary><strong>Marketing & Community Presence</strong></summary>
                                     <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                        <li><strong>5</strong> – Compelling story, strong visibility <em>(Matthew 5:16)</em></li>
-                                        <li><strong>4</strong> – Clear brand and good awareness <em>(Matthew 5:14)</em></li>
+                                        <li><strong>5</strong> – Compelling story, strong visibility </li>
+                                        <li><strong>4</strong> – Clear brand and good awareness </li>
                                         <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
-                                        <li><strong>2</strong> – Outdated or unclear messaging <em>(Mark 4:21)</em></li>
-                                        <li><strong>1</strong> – Almost no presence or negative perception <em>(2 Corinthians 8:21)</em></li>
+                                        <li><strong>2</strong> – Outdated or unclear messaging </li>
+                                        <li><strong>1</strong> – Almost no presence or negative perception </li>
                                     </ul>
                                 </details>
                             </div>
