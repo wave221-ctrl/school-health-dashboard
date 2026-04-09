@@ -1,9 +1,12 @@
 'use client';
 
-import { SignedIn, SignedOut, RedirectToSignIn, UserButton } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 
 export default function Home() {
+    const { isSignedIn, user } = useUser();
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
             {/* Navigation */}
@@ -13,14 +16,14 @@ export default function Home() {
                     <span className="font-semibold text-2xl text-slate-900">School Health Score</span>
                 </div>
 
-                <SignedIn>
+                {isSignedIn && (
                     <div className="flex items-center gap-6">
                         <Link href="/calculator" className="font-medium text-slate-700 hover:text-slate-900">
                             Open Dashboard
                         </Link>
                         <UserButton afterSignOutUrl="/" />
                     </div>
-                </SignedIn>
+                )}
             </nav>
 
             <div className="max-w-7xl mx-auto px-6 pt-12 pb-24 grid md:grid-cols-2 gap-16 items-center">
@@ -37,26 +40,25 @@ export default function Home() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <SignedOut>
-                            <RedirectToSignIn>
-                                <button className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all flex-1 sm:flex-none">
-                                    Get Started Free
-                                </button>
-                            </RedirectToSignIn>
-                        </SignedOut>
-
-                        <SignedIn>
+                        {!isSignedIn ? (
+                            <Link
+                                href="/sign-in"
+                                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
+                            >
+                                Get Started Free
+                            </Link>
+                        ) : (
                             <Link
                                 href="/calculator"
-                                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all flex-1 sm:flex-none text-center"
+                                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
                                 Open Dashboard →
                             </Link>
-                        </SignedIn>
+                        )}
 
                         <Link
                             href="/billing"
-                            className="border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xl font-semibold px-10 py-5 rounded-3xl transition-all flex-1 sm:flex-none text-center"
+                            className="border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                         >
                             See Pricing
                         </Link>
@@ -67,7 +69,7 @@ export default function Home() {
                 <div className="relative">
                     <img
                         src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1"
-                        alt="Christian school leaders in discussion"
+                        alt="Christian school leaders collaborating"
                         className="rounded-3xl shadow-2xl w-full object-cover aspect-video"
                     />
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-700/10 to-transparent rounded-3xl"></div>
