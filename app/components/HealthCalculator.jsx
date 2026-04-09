@@ -670,9 +670,11 @@ export default function HealthCalculator() {
             window.calculateResults = calculateResults;
             window.els = els;
             window.domains = domains;
-            window.setDomains = setDomains;           // ← add this line
+            window.setDomains = setDomains;     
             window.renderDomains = renderDomains;
             window.calculate = calculate;
+            window.drawBarChart = drawBarChart;
+            window.drawRadarChart = drawRadarChart;
         }, 1000);   // keep 1000ms
     }, []);
 
@@ -684,11 +686,18 @@ export default function HealthCalculator() {
         }
     }, [user]);
 
-    // Prepare comparison data for charts (current + last 3 saved)
+    
+    // Prepare comparison data for charts (last 4 assessments)
     useEffect(() => {
         if (history.length > 0) {
-            const latest = history.slice(0, 4); // last 4 assessments
+            const latest = history.slice(0, 4);
             setComparisonData(latest);
+
+            // Force charts to redraw after data is ready
+            setTimeout(() => {
+                if (typeof window.drawBarChart === 'function') window.drawBarChart();
+                if (typeof window.drawRadarChart === 'function') window.drawRadarChart();
+            }, 300);
         }
     }, [history]);
 
