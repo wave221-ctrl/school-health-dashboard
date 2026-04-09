@@ -272,6 +272,7 @@ export default function HealthCalculator() {
                     els.healthTag.textContent = 'Needs focused intervention';
                 }
 
+                // Update summary table
                 els.summaryBody.innerHTML = '';
                 results.forEach((r, i) => {
                     const tr = document.createElement('tr');
@@ -295,8 +296,10 @@ export default function HealthCalculator() {
 
                 renderPriorityActions(results);
                 renderImprovementPlan(results);
-                drawBarChart(results);
-                drawRadarChart(results);
+
+                // NEW: Call the multi-year charts (no arguments needed)
+                drawBarChart();
+                drawRadarChart();
             }
 
             function renderPriorityActions(results) {
