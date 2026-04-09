@@ -337,11 +337,11 @@ export default function HealthCalculator() {
             }
 
             function drawBarChart() {
-                console.log('🔍 drawBarChart called - comparisonData length:', window.comparisonData ? window.comparisonData.length : 0);
-
                 const canvas = document.getElementById('barChart');
-                if (!canvas) return;
+                if (!canvas) return;                    // ← safety check
                 const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
                 const w = canvas.width;
                 const h = canvas.height;
                 ctx.clearRect(0, 0, w, h);
@@ -350,27 +350,13 @@ export default function HealthCalculator() {
                     ? window.comparisonData
                     : [{ review_date: 'Current', data: { results: calculateResults() } }];
 
-                console.log('📊 Number of years being drawn:', datasets.length);
-
-                const canvas = document.getElementById('barChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-                ctx.clearRect(0, 0, w, h);
-
-                // Use comparisonData if available, otherwise just current assessment
-                const datasets = (window.comparisonData && window.comparisonData.length > 0)
-                    ? window.comparisonData
-                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
-
-                const padding = { top: 40, right: 40, bottom: 140, left: 60 }; // ← increased bottom padding
+                const padding = { top: 40, right: 40, bottom: 140, left: 60 };
                 const chartW = w - padding.left - padding.right;
                 const chartH = h - padding.top - padding.bottom;
 
                 const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
 
-                // Grid lines
+                // Grid
                 ctx.strokeStyle = '#e2e8f0';
                 for (let i = 0; i <= 5; i++) {
                     const y = padding.top + (chartH / 5) * i;
@@ -403,7 +389,7 @@ export default function HealthCalculator() {
                     });
                 });
 
-                // Domain labels (with more space)
+                // Labels
                 ctx.fillStyle = '#1e2937';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
@@ -418,24 +404,11 @@ export default function HealthCalculator() {
             }
 
             function drawRadarChart() {
-                console.log('🔍 drawRadarChart called - comparisonData length:', window.comparisonData ? window.comparisonData.length : 0);
-
                 const canvas = document.getElementById('radarChart');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-                ctx.clearRect(0, 0, w, h);
+                if (!ctx) return;
 
-                const datasets = (window.comparisonData && window.comparisonData.length > 0)
-                    ? window.comparisonData
-                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
-
-                console.log('📊 Number of years being drawn:', datasets.length);
-
-                const canvas = document.getElementById('radarChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
                 const w = canvas.width;
                 const h = canvas.height;
                 ctx.clearRect(0, 0, w, h);
