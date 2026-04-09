@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 
 export default function Home() {
-    const { isSignedIn, user } = useUser();
+    const { isSignedIn } = useUser();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
@@ -21,7 +21,7 @@ export default function Home() {
                         <Link href="/calculator" className="font-medium text-slate-700 hover:text-slate-900">
                             Open Dashboard
                         </Link>
-                        <UserButton afterSignOutUrl="/" />
+                        <UserButton />   {/* ← afterSignOutUrl removed to fix build error */}
                     </div>
                 )}
             </nav>
