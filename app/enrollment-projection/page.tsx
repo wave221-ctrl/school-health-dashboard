@@ -40,24 +40,23 @@ export default function EnrollmentProjection() {
         const chartProjected = [];
         const labels = [];
 
-        const updated = grades.map((row, i) => {
+        const updatedGrades = grades.map((row, index) => {
             currentTotal += Number(row.current || 0);
             let projected = 0;
 
             if (projectionMode === 'simple-growth') {
-                projected = Number(row.current || 0) * (1 + Number(simpleGrowthRate) / 100) + Number(row.newStudents || 0);
+                projected = Number(row.current || 0) * (1 + Number(simpleGrowthRate || 0) / 100) + Number(row.newStudents || 0);
             } else {
-                if (i === 0) {
+                if (index === 0) {
                     projected = Number(row.newStudents || 0);
                 } else {
-                    const prev = grades[i - 1];
-                    projected = (Number(prev.current || 0) * (Number(row.retention || 0) / 100)) + Number(row.newStudents || 0);
+                    const previous = grades[index - 1];
+                    projected = (Number(previous.current || 0) * (Number(row.retention || 0) / 100)) + Number(row.newStudents || 0);
                 }
             }
 
             projected = round(projected);
             projectedTotal += projected;
-
             labels.push(row.grade);
             chartCurrent.push(Number(row.current || 0));
             chartProjected.push(projected);
@@ -65,24 +64,24 @@ export default function EnrollmentProjection() {
             return { ...row, projected };
         });
 
-        setGrades(updated);
+        setGrades(updatedGrades);
 
-        // Update summary
-        const netChange = round(projectedTotal - currentTotal);
+        // FIXED: Convert numbers to strings for .textContent
+        document.getElementById('currentTotal').textContent = round(currentTotal).toString();
+        document.getElementById('projectedTotal').textContent = round(projectedTotal).toString();
+        document.getElementById('netChange').textContent = round(projectedTotal - currentTotal).toString();
+
         const capacity = Number(capacityTarget || 1);
         const capacityPct = capacity > 0 ? round((projectedTotal / capacity) * 100) : 0;
-
-        document.getElementById('currentTotal').textContent = round(currentTotal);
-        document.getElementById('projectedTotal').textContent = round(projectedTotal);
-        document.getElementById('netChange').textContent = netChange >= 0 ? `+${netChange}` : netChange;
         document.getElementById('capacityUsed').textContent = `${capacityPct}%`;
 
-        // Health tag
-        const tag = document.getElementById('healthTag');
-        if (netChange >= 10) tag.textContent = 'Strong projected growth';
-        else if (netChange > 0) tag.textContent = 'Modest projected growth';
-        else if (netChange === 0) tag.textContent = 'Stable projection';
-        else tag.textContent = 'Projected decline — review assumptions';
+        // Update health tag
+        const netChange = round(projectedTotal - currentTotal);
+        const healthTag = document.getElementById('healthTag');
+        if (netChange >= 10) healthTag.textContent = 'Strong projected growth';
+        else if (netChange > 0) healthTag.textContent = 'Modest projected growth';
+        else if (netChange === 0) healthTag.textContent = 'Stable projection';
+        else healthTag.textContent = 'Projected decline — review assumptions';
 
         drawChart(labels, chartCurrent, chartProjected);
     };
