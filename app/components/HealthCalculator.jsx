@@ -48,7 +48,8 @@ function recommendationForDomain(name) {
 export default function HealthCalculator() {
     const { user } = useUser();
     const [history, setHistory] = useState([]);
-    const [toast, setToast] = useState(null);   // ← NEW
+    const [toast, setToast] = useState(null);
+    const [comparisonData, setComparisonData] = useState([]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -332,60 +333,77 @@ export default function HealthCalculator() {
                 }).join('');
             }
 
-            function drawBarChart(results) {
+            function drawBarChart() {
                 const canvas = document.getElementById('barChart');
+                if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 const w = canvas.width;
                 const h = canvas.height;
                 ctx.clearRect(0, 0, w, h);
 
-                const padding = { top: 30, right: 20, bottom: 90, left: 55 };
+                // Use comparisonData if available, otherwise fall back to current results
+                const datasets = comparisonData.length > 0
+                    ? comparisonData.map((entry, i) => ({
+                        label: entry.review_date || `Year ${i + 1}`,
+                        results: entry.data?.results || entry.results,
+                        color: ['#166534', '#2563eb', '#9333ea', '#ca8a04'][i % 4]
+                    }))
+                    : [{ label: 'Current', results: calculateResults(), color: '#166534' }];
+
+                const padding = { top: 40, right: 30, bottom: 100, left: 60 };
                 const chartW = w - padding.left - padding.right;
                 const chartH = h - padding.top - padding.bottom;
-                const maxValue = 5;
-                const barArea = chartW / Math.max(results.length, 1);
-                const barW = Math.min(70, barArea * 0.55);
 
-                ctx.strokeStyle = '#cbd5e1';
+                // Draw grid lines
+                ctx.strokeStyle = '#e2e8f0';
                 ctx.lineWidth = 1;
-                ctx.fillStyle = '#111827';
-                ctx.font = '12px Arial';
-
                 for (let i = 0; i <= 5; i++) {
                     const y = padding.top + (chartH / 5) * i;
                     ctx.beginPath();
                     ctx.moveTo(padding.left, y);
                     ctx.lineTo(w - padding.right, y);
                     ctx.stroke();
-                    const label = (maxValue - i).toString();
-                    ctx.fillText(label, 18, y + 4);
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '12px Arial';
+                    ctx.fillText((5 - i).toString(), padding.left - 25, y + 4);
                 }
 
-                results.forEach((result, i) => {
-                    const x = padding.left + i * barArea + (barArea - barW) / 2;
-                    const barH = (result.avg / maxValue) * chartH;
-                    const y = padding.top + chartH - barH;
+                const barWidth = Math.max(25, chartW / (datasets[0].results.length * datasets.length + 2));
 
-                    if (result.avg >= 4.5) ctx.fillStyle = '#86efac';
-                    else if (result.avg >= 3.75) ctx.fillStyle = '#93c5fd';
-                    else if (result.avg >= 3) ctx.fillStyle = '#fcd34d';
-                    else if (result.avg >= 2) ctx.fillStyle = '#fca5a5';
-                    else ctx.fillStyle = '#d1d5db';
+                datasets.forEach((dataset, yearIndex) => {
+                    dataset.results.forEach((result, domainIndex) => {
+                        const x = padding.left + domainIndex * (barWidth * datasets.length + 12) + (yearIndex * barWidth);
+                        const barHeight = (result.avg / 5) * chartH;
+                        const y = padding.top + chartH - barHeight;
 
-                    ctx.fillRect(x, y, barW, barH);
-                    ctx.fillStyle = '#111827';
-                    ctx.fillText(result.avg.toFixed(2), x + 10, y - 8);
+                        ctx.fillStyle = dataset.color;
+                        ctx.fillRect(x, y, barWidth, barHeight);
 
+                        // Value on top of bar
+                        ctx.fillStyle = '#1e2937';
+                        ctx.font = '11px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(result.avg.toFixed(1), x + barWidth / 2, y - 6);
+                    });
+                });
+
+                // X-axis labels
+                ctx.fillStyle = '#1e2937';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                datasets[0].results.forEach((result, i) => {
+                    const x = padding.left + i * (barWidth * datasets.length + 12) + (datasets.length * barWidth / 2);
                     ctx.save();
-                    ctx.translate(x + 10, h - 18);
-                    ctx.rotate(-0.42);
+                    ctx.translate(x, h - 30);
+                    ctx.rotate(-0.6);
                     ctx.fillText(result.name, 0, 0);
                     ctx.restore();
                 });
             }
 
-            function drawRadarChart(results) {
+            function drawRadarChart() {
                 const canvas = document.getElementById('radarChart');
+                if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 const w = canvas.width;
                 const h = canvas.height;
@@ -393,59 +411,61 @@ export default function HealthCalculator() {
 
                 const cx = w / 2;
                 const cy = h / 2 + 10;
-                const radius = Math.min(w, h) * 0.32;
-                const levels = 5;
-                const count = results.length;
+                const radius = Math.min(w, h) * 0.35;
 
-                ctx.strokeStyle = '#d1d5db';
+                const datasets = comparisonData.length > 0
+                    ? comparisonData.map((entry, i) => ({
+                        label: entry.review_date || `Year ${i + 1}`,
+                        results: entry.data?.results || entry.results,
+                        color: ['#166534', '#2563eb', '#9333ea', '#ca8a04'][i % 4]
+                    }))
+                    : [{ label: 'Current', results: calculateResults(), color: '#166534' }];
+
+                // Draw radar grid
+                ctx.strokeStyle = '#e2e8f0';
                 ctx.lineWidth = 1;
-                ctx.fillStyle = '#111827';
-                ctx.font = '12px Arial';
-
-                for (let level = 1; level <= levels; level++) {
-                    const r = radius * (level / levels);
+                for (let level = 1; level <= 5; level++) {
+                    const r = radius * (level / 5);
                     ctx.beginPath();
-                    for (let i = 0; i < count; i++) {
-                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / count);
+                    datasets[0].results.forEach((_, i) => {
+                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].results.length);
                         const x = cx + Math.cos(angle) * r;
                         const y = cy + Math.sin(angle) * r;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
-                    }
+                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    });
                     ctx.closePath();
                     ctx.stroke();
                 }
 
-                results.forEach((result, i) => {
-                    const angle = (-Math.PI / 2) + (Math.PI * 2 * i / count);
-                    const x = cx + Math.cos(angle) * radius;
-                    const y = cy + Math.sin(angle) * radius;
+                // Draw each year's radar
+                datasets.forEach(dataset => {
                     ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(x, y);
+                    dataset.results.forEach((result, i) => {
+                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / dataset.results.length);
+                        const r = radius * (result.avg / 5);
+                        const x = cx + Math.cos(angle) * r;
+                        const y = cy + Math.sin(angle) * r;
+                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    });
+                    ctx.closePath();
+                    ctx.strokeStyle = dataset.color;
+                    ctx.lineWidth = 3;
                     ctx.stroke();
 
-                    const labelX = cx + Math.cos(angle) * (radius + 26);
-                    const labelY = cy + Math.sin(angle) * (radius + 26);
-                    ctx.fillStyle = '#111827';
-                    ctx.fillText(result.name, labelX - 40, labelY);
+                    ctx.fillStyle = dataset.color + '30'; // light fill
+                    ctx.fill();
                 });
 
-                ctx.beginPath();
-                results.forEach((result, i) => {
-                    const angle = (-Math.PI / 2) + (Math.PI * 2 * i / count);
-                    const r = radius * (result.avg / 5);
-                    const x = cx + Math.cos(angle) * r;
-                    const y = cy + Math.sin(angle) * r;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
+                // Labels
+                ctx.fillStyle = '#1e2937';
+                ctx.font = '13px Arial';
+                ctx.textAlign = 'center';
+                datasets[0].results.forEach((result, i) => {
+                    const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].results.length);
+                    const x = cx + Math.cos(angle) * (radius + 40);
+                    const y = cy + Math.sin(angle) * (radius + 40);
+                    ctx.fillText(result.name, x, y);
                 });
-                ctx.closePath();
-                ctx.fillStyle = 'rgba(37, 99, 235, 0.18)';
-                ctx.strokeStyle = '#2563eb';
-                ctx.lineWidth = 2;
-                ctx.fill();
-                ctx.stroke();
             }
 
             function setToday() {
@@ -655,11 +675,20 @@ export default function HealthCalculator() {
     }, []);
 
     // =============== AUTO-LOAD HISTORY ===============
+    // Auto-load history + prepare comparison data (last 4 assessments)
     useEffect(() => {
         if (user) {
             loadHistory();
         }
     }, [user]);
+
+    // Prepare comparison data for charts (current + last 3 saved)
+    useEffect(() => {
+        if (history.length > 0) {
+            const latest = history.slice(0, 4); // last 4 assessments
+            setComparisonData(latest);
+        }
+    }, [history]);
 
 
     // =============== SAVE ASSESSMENT ===============
