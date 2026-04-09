@@ -183,7 +183,18 @@ export default function EnrollmentProjection() {
                     <p>Build year-over-year enrollment projections by grade, estimate retention and new student growth, and generate clean reports.</p>
                 </div>
                 <div className="controls no-print">
-                    <button onClick={() => setGrades([...grades, { grade: 'New Grade', current: 0, retention: 85, newStudents: 0 }])}>Add Grade</button>
+                    <button
+                        onClick={() => {
+                            setGrades(prev => [...prev, {
+                                grade: 'New Grade',
+                                current: 0,
+                                retention: 85,
+                                newStudents: 0
+                            }]);
+                        }}
+                    >
+                        Add Grade
+                    </button>
                     <button className="secondary" onClick={() => { /* load sample later */ }}>Load Sample Data</button>
                     <button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
                 </div>
