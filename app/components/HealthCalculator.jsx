@@ -337,6 +337,21 @@ export default function HealthCalculator() {
             }
 
             function drawBarChart() {
+                console.log('🔍 drawBarChart called - comparisonData length:', window.comparisonData ? window.comparisonData.length : 0);
+
+                const canvas = document.getElementById('barChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                ctx.clearRect(0, 0, w, h);
+
+                const datasets = (window.comparisonData && window.comparisonData.length > 0)
+                    ? window.comparisonData
+                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
+
+                console.log('📊 Number of years being drawn:', datasets.length);
+
                 const canvas = document.getElementById('barChart');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
@@ -403,6 +418,21 @@ export default function HealthCalculator() {
             }
 
             function drawRadarChart() {
+                console.log('🔍 drawRadarChart called - comparisonData length:', window.comparisonData ? window.comparisonData.length : 0);
+
+                const canvas = document.getElementById('radarChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                ctx.clearRect(0, 0, w, h);
+
+                const datasets = (window.comparisonData && window.comparisonData.length > 0)
+                    ? window.comparisonData
+                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
+
+                console.log('📊 Number of years being drawn:', datasets.length);
+
                 const canvas = document.getElementById('radarChart');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
@@ -698,6 +728,16 @@ export default function HealthCalculator() {
         }
     }, [history]);
 
+    // Sync comparisonData to legacy script and force redraw
+    useEffect(() => {
+        window.comparisonData = comparisonData;
+        console.log('✅ comparisonData synced to window. Count:', comparisonData.length);
+
+        setTimeout(() => {
+            if (typeof window.drawBarChart === 'function') window.drawBarChart();
+            if (typeof window.drawRadarChart === 'function') window.drawRadarChart();
+        }, 300);
+    }, [comparisonData]);
 
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
