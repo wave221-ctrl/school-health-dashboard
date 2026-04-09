@@ -821,16 +821,16 @@ const loadHistory = async () => {
 </html>`;
 
 
-        const opt = {
-            margin: 10,
-            filename: `school-health-report-${item.review_date}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+      const opt = {
+    margin: 10,
+    filename: `school-health-report-${item.review_date}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+};
 
-        const html2pdf = (await import('html2pdf.js')).default;
-        html2pdf().set(opt).from(reportHtml).save();
+const html2pdf = (await import('html2pdf.js')).default;
+html2pdf().set(opt).from(reportHtml).save();
 
 
     // =============== DELETE ASSESSMENT ===============
@@ -1195,3 +1195,4 @@ const deleteAssessment = async (id) => {
             </div>
         </div>
     );
+}
