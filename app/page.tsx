@@ -45,7 +45,7 @@ export default function Home() {
                                 href="/sign-in"
                                 className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
-                                Get Started Sign Free
+                                Get Started Sign in
                             </Link>
                         ) : (
                             <Link
