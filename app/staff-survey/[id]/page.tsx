@@ -118,10 +118,11 @@ export default function PublicStaffSurvey() {
                                             <button
                                                 key={score}
                                                 onClick={() => updateScore(dIndex, mIndex, score)}
-                                                className={`w-11 h-11 rounded-2xl font-semibold transition-all ${metric.score === score
-                                                        ? 'bg-yellow-400 text-slate-900 shadow-lg scale-110 ring-2 ring-yellow-500'
-                                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                                    }`}
+                                                className="w-11 h-11 rounded-2xl font-semibold transition-all"
+                                                style={metric.score === score
+                                                    ? { background: '#10b981', color: 'white', transform: 'scale(1.1)', boxShadow: '0 4px 12px rgba(16,185,129,0.4)' }
+                                                    : { background: '#f1f5f9', color: '#334155' }
+                                                }
                                             >
                                                 {score}
                                             </button>
