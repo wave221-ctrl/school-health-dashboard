@@ -6,7 +6,6 @@ import { useUser } from '@clerk/nextjs';
 import { supabase } from '../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
 
-
 // ==================== HELPER FUNCTIONS (moved outside) ====================
 function average(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -48,7 +47,6 @@ function recommendationForDomain(name) {
 export default function HealthCalculator() {
     const { user } = useUser();
     const [history, setHistory] = useState([]);
-    const [toast, setToast] = useState(null);   // ← NEW
 
     useEffect(() => {
         setTimeout(() => {
@@ -680,9 +678,9 @@ export default function HealthCalculator() {
         const { error: supabaseError } = await supabase.from('assessments').insert(payload);
 
         if (supabaseError) {
-            showToast('✅ Assessment saved successfully!' + supabaseError.message);
+            alert('Save failed: ' + supabaseError.message);
         } else {
-            showToast('✅ Assessment saved successfully!');
+            alert('✅ Assessment saved successfully!');
             loadHistory();        // refresh the history list automatically
         }
     };
@@ -848,18 +846,13 @@ export default function HealthCalculator() {
                 .eq('id', id)
                 .eq('user_id', user.id);   // ← only delete own records
 
-        if (error) {
-                showToast('✅ Assessment deleted' + error.message);
+            if (error) {
+                alert('Delete failed: ' + error.message);
             } else {
-                showToast('✅ Assessment deleted');
+                alert('✅ Assessment deleted');
                 loadHistory();
             }
         };
-    // =============== SHOW TOAST ===============
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);   // auto dismiss after 3 seconds
-    };
 
         return (
             <div className="wrap">
@@ -1202,30 +1195,6 @@ export default function HealthCalculator() {
                         }}
                     />
                 </div>
-
-                {/* Toast Banner */}
-                {toast && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: '20px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: toast.type === 'success' ? '#166534' : '#991b1b',
-                        color: 'white',
-                        padding: '16px 24px',
-                        borderRadius: '12px',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        zIndex: 1000,
-                        fontWeight: 600,
-                        maxWidth: '90%',
-                        textAlign: 'center'
-                    }}>
-                        {toast.message}
-                    </div>
-                )}
             </div>
         );
 }
