@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '../../lib/supabase';   // ← same path as your other pages
+import { supabase } from '../../lib/supabase';
 
 export default function PublicStaffSurvey() {
     const params = useParams();
@@ -12,33 +12,33 @@ export default function PublicStaffSurvey() {
         {
             name: 'Leadership Effectiveness',
             metrics: [
-                { name: 'Clarity of vision and communication', help: 'Leaders clearly articulate direction and expectations', score: 3 },
-                { name: 'Trust and approachability', help: 'Staff feel safe bringing concerns to leadership', score: 3 },
-                { name: 'Decision-making transparency', help: 'Decisions are explained and staff feel heard', score: 3 }
+                { name: 'Clarity of vision and communication', help: 'Leaders clearly articulate direction and expectations', score: null },
+                { name: 'Trust and approachability', help: 'Staff feel safe bringing concerns to leadership', score: null },
+                { name: 'Decision-making transparency', help: 'Decisions are explained and staff feel heard', score: null }
             ]
         },
         {
             name: 'Staff Morale & Retention',
             metrics: [
-                { name: 'Overall staff satisfaction', help: 'Staff enjoy coming to work and feel valued', score: 3 },
-                { name: 'Intention to stay next year', help: 'Staff plan to return next school year', score: 3 },
-                { name: 'Work-life balance', help: 'Staff feel supported and not burned out', score: 3 }
+                { name: 'Overall staff satisfaction', help: 'Staff enjoy coming to work and feel valued', score: null },
+                { name: 'Intention to stay next year', help: 'Staff plan to return next school year', score: null },
+                { name: 'Work-life balance', help: 'Staff feel supported and not burned out', score: null }
             ]
         },
         {
             name: 'Professional Development',
             metrics: [
-                { name: 'Growth opportunities', help: 'Staff have access to meaningful training', score: 3 },
-                { name: 'Mentorship and coaching', help: 'New and veteran teachers receive support', score: 3 },
-                { name: 'Feedback culture', help: 'Constructive feedback is given regularly', score: 3 }
+                { name: 'Growth opportunities', help: 'Staff have access to meaningful training', score: null },
+                { name: 'Mentorship and coaching', help: 'New and veteran teachers receive support', score: null },
+                { name: 'Feedback culture', help: 'Constructive feedback is given regularly', score: null }
             ]
         },
         {
             name: 'Spiritual Culture',
             metrics: [
-                { name: 'Faith integration in daily life', help: 'Staff experience spiritual formation at work', score: 3 },
-                { name: 'Prayer and worship culture', help: 'Prayer is regular and meaningful', score: 3 },
-                { name: 'Biblical worldview among staff', help: 'Staff model Christ-like character', score: 3 }
+                { name: 'Faith integration in daily life', help: 'Staff experience spiritual formation at work', score: null },
+                { name: 'Prayer and worship culture', help: 'Prayer is regular and meaningful', score: null },
+                { name: 'Biblical worldview among staff', help: 'Staff model Christ-like character', score: null }
             ]
         }
     ]);
@@ -47,9 +47,11 @@ export default function PublicStaffSurvey() {
     const [loading, setLoading] = useState(false);
 
     const updateScore = (domainIndex: number, metricIndex: number, score: number) => {
-        const newDomains = [...domains];
-        newDomains[domainIndex].metrics[metricIndex].score = score;
-        setDomains(newDomains);
+        setDomains(prevDomains => {
+            const newDomains = [...prevDomains];
+            newDomains[domainIndex].metrics[metricIndex].score = score;
+            return newDomains;
+        });
     };
 
     const submitSurvey = async () => {
@@ -64,14 +66,12 @@ export default function PublicStaffSurvey() {
             data: { domains }
         };
 
-        const { error } = await supabase
-            .from('assessments')
-            .insert(payload);
+        const { error } = await supabase.from('assessments').insert(payload);
 
         setLoading(false);
 
         if (error) {
-            alert('Error submitting survey: ' + error.message);
+            alert('Error submitting: ' + error.message);
         } else {
             setSubmitted(true);
         }
@@ -80,11 +80,10 @@ export default function PublicStaffSurvey() {
     if (submitted) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-                <div className="max-w-md text-center">
+                <div className="max-w-md text-center bg-white rounded-3xl shadow-xl p-12">
                     <div className="text-6xl mb-6">✅</div>
                     <h1 className="text-3xl font-bold mb-3">Thank you!</h1>
                     <p className="text-slate-600">Your anonymous feedback has been recorded.</p>
-                    <p className="text-slate-500 mt-8 text-sm">Your responses will help your school leadership improve.</p>
                 </div>
             </div>
         );
@@ -114,8 +113,8 @@ export default function PublicStaffSurvey() {
                                             <button
                                                 key={score}
                                                 onClick={() => updateScore(dIndex, mIndex, score)}
-                                                className={`w-10 h-10 rounded-2xl font-semibold transition-all ${metric.score === score
-                                                        ? 'bg-emerald-700 text-white'
+                                                className={`w-11 h-11 rounded-2xl font-semibold transition-all ${metric.score === score
+                                                        ? 'bg-emerald-700 text-white shadow-md'
                                                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                                                     }`}
                                             >
@@ -132,7 +131,7 @@ export default function PublicStaffSurvey() {
                         <button
                             onClick={submitSurvey}
                             disabled={loading}
-                            className="bg-emerald-700 hover:bg-emerald-800 text-white px-12 py-5 rounded-3xl font-semibold text-lg disabled:opacity-50"
+                            className="bg-emerald-700 hover:bg-emerald-800 disabled:bg-gray-400 text-white px-12 py-5 rounded-3xl font-semibold text-lg"
                         >
                             {loading ? 'Submitting...' : 'Submit Anonymous Responses'}
                         </button>
