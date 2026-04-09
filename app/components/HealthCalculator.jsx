@@ -344,12 +344,12 @@ export default function HealthCalculator() {
                 const h = canvas.height;
                 ctx.clearRect(0, 0, w, h);
 
-                // Use comparisonData if we have multiple years, otherwise just current
-                const datasets = comparisonData.length > 0
-                    ? comparisonData
+                // Use comparisonData if available, otherwise just current assessment
+                const datasets = (window.comparisonData && window.comparisonData.length > 0)
+                    ? window.comparisonData
                     : [{ review_date: 'Current', data: { results: calculateResults() } }];
 
-                const padding = { top: 40, right: 40, bottom: 110, left: 60 };
+                const padding = { top: 40, right: 40, bottom: 140, left: 60 }; // ← increased bottom padding
                 const chartW = w - padding.left - padding.right;
                 const chartH = h - padding.top - padding.bottom;
 
@@ -369,7 +369,7 @@ export default function HealthCalculator() {
                 }
 
                 const barGroupWidth = chartW / datasets[0].data.results.length;
-                const barWidth = Math.max(18, barGroupWidth / (datasets.length + 1));
+                const barWidth = Math.max(22, barGroupWidth / (datasets.length + 1));
 
                 datasets.forEach((yearData, yearIndex) => {
                     const results = yearData.data?.results || yearData.results || [];
@@ -381,7 +381,6 @@ export default function HealthCalculator() {
                         ctx.fillStyle = colors[yearIndex % colors.length];
                         ctx.fillRect(x, y, barWidth, barHeight);
 
-                        // Value label
                         ctx.fillStyle = '#1e2937';
                         ctx.font = '11px Arial';
                         ctx.textAlign = 'center';
@@ -389,14 +388,14 @@ export default function HealthCalculator() {
                     });
                 });
 
-                // Domain labels
+                // Domain labels (with more space)
                 ctx.fillStyle = '#1e2937';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
                 datasets[0].data.results.forEach((result, i) => {
                     const x = padding.left + i * barGroupWidth + (barGroupWidth / 2);
                     ctx.save();
-                    ctx.translate(x, h - 25);
+                    ctx.translate(x, h - 35);
                     ctx.rotate(-0.65);
                     ctx.fillText(result.name, 0, 0);
                     ctx.restore();
@@ -415,15 +414,14 @@ export default function HealthCalculator() {
                 const cy = h / 2 + 20;
                 const radius = Math.min(w, h) * 0.34;
 
-                const datasets = comparisonData.length > 0
-                    ? comparisonData
+                const datasets = (window.comparisonData && window.comparisonData.length > 0)
+                    ? window.comparisonData
                     : [{ review_date: 'Current', data: { results: calculateResults() } }];
 
                 const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
 
-                // Draw radar grid
+                // Grid
                 ctx.strokeStyle = '#e2e8f0';
-                ctx.lineWidth = 1;
                 for (let level = 1; level <= 5; level++) {
                     const r = radius * (level / 5);
                     ctx.beginPath();
@@ -437,7 +435,7 @@ export default function HealthCalculator() {
                     ctx.stroke();
                 }
 
-                // Draw each year's radar line
+                // Each year's radar
                 datasets.forEach((yearData, i) => {
                     const results = yearData.data?.results || yearData.results || [];
                     ctx.beginPath();
@@ -453,12 +451,11 @@ export default function HealthCalculator() {
                     ctx.lineWidth = 3.5;
                     ctx.stroke();
 
-                    // Light fill
                     ctx.fillStyle = colors[i % colors.length] + '25';
                     ctx.fill();
                 });
 
-                // Domain labels
+                // Labels
                 ctx.fillStyle = '#1e2937';
                 ctx.font = '13px Arial';
                 ctx.textAlign = 'center';
