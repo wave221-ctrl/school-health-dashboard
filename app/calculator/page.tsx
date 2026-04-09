@@ -43,8 +43,8 @@ export default function CalculatorPage() {
                         </div>
                     </div>
 
-                    {/* User Button (Logout + Profile) */}
-                    <UserButton afterSignOutUrl="/" />
+                    {/* User Button - Logout/Profile */}
+                    <UserButton />
 
                 </div>
             </div>
