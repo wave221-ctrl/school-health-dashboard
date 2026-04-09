@@ -45,7 +45,7 @@ export default function Home() {
                                 href="/sign-in"
                                 className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
-                                Get Started Free
+                                Get Started Sign Free
                             </Link>
                         ) : (
                             <Link
@@ -60,7 +60,7 @@ export default function Home() {
                             href="/billing"
                             className="border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                         >
-                            See Pricing
+                            Coming Soon
                         </Link>
                     </div>
                 </div>
