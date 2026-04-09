@@ -1203,25 +1203,27 @@ export default function HealthCalculator() {
                     />
                 </div>
 
-                {/* Toast Banner */}
+                {/* Centered Toast Banner */}
                 {toast && (
                     <div style={{
                         position: 'fixed',
-                        bottom: '20px',
+                        top: '50%',
                         left: '50%',
-                        transform: 'translateX(-50%)',
+                        transform: 'translate(-50%, -50%)',
                         background: toast.type === 'success' ? '#166534' : '#991b1b',
                         color: 'white',
-                        padding: '16px 24px',
-                        borderRadius: '12px',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+                        padding: '20px 28px',
+                        borderRadius: '16px',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px',
-                        zIndex: 1000,
-                        fontWeight: 600,
+                        zIndex: 10000,
+                        fontSize: '1.1rem',
+                        fontWeight: 700,
+                        textAlign: 'center',
                         maxWidth: '90%',
-                        textAlign: 'center'
+                        minWidth: '320px'
                     }}>
                         {toast.message}
                     </div>
