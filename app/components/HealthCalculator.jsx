@@ -878,8 +878,8 @@ export default function HealthCalculator() {
                     <div className="no-print">
                         <h1>School Health Calculator</h1>
                         <p>
-                            A practical website-based tool to help school leaders score overall school health, identify strengths and weak spots,
-                            visualize results, and print or save a clean report for leadership teams, boards, and planning sessions.
+                            A strategic platform for Christian school leaders to assess overall school health,
+                            track year-over-year progress, identify strengths and growth opportunities, and generate clear, board-ready reports.
                         </p>
                     </div>
                     <div className="controls no-print">
