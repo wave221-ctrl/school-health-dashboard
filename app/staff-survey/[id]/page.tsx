@@ -46,10 +46,9 @@ export default function PublicStaffSurvey() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Improved immutable update - this is the fix
     const updateScore = (domainIndex: number, metricIndex: number, score: number) => {
-        setDomains(prevDomains =>
-            prevDomains.map((domain, dIdx) =>
+        setDomains(prev =>
+            prev.map((domain, dIdx) =>
                 dIdx === domainIndex
                     ? {
                         ...domain,
@@ -68,7 +67,6 @@ export default function PublicStaffSurvey() {
         setLoading(true);
 
         const payload = {
-            survey_id: surveyId,
             tool: 'staff-leadership',
             data: { domains }
         };
@@ -77,8 +75,11 @@ export default function PublicStaffSurvey() {
 
         setLoading(false);
 
-        if (error) alert('Error submitting: ' + error.message);
-        else setSubmitted(true);
+        if (error) {
+            alert('Error submitting: ' + error.message);
+        } else {
+            setSubmitted(true);
+        }
     };
 
     if (submitted) {
@@ -118,7 +119,7 @@ export default function PublicStaffSurvey() {
                                                 key={score}
                                                 onClick={() => updateScore(dIndex, mIndex, score)}
                                                 className={`w-11 h-11 rounded-2xl font-semibold transition-all ${metric.score === score
-                                                        ? 'bg-yellow-400 text-slate-900 shadow-lg scale-110'   // Bright yellow + scale
+                                                        ? 'bg-yellow-400 text-slate-900 shadow-lg scale-110 ring-2 ring-yellow-500'
                                                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                                                     }`}
                                             >
