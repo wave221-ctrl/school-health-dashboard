@@ -196,6 +196,9 @@ export default function EnrollmentProjection() {
                                 <Link href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
                                     Enrollment Projection Calculator
                                 </Link>
+                                <Link> button className= "absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                    <Link href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
+                                        Leadership Assessment Tool</Link>
                             </div>
                         </div>
                     </div>

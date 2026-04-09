@@ -25,7 +25,8 @@ export default function CalculatorPage() {
                                 <span className="text-xs">▼</span>
                             </button>
 
-                            <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 
+                            {/* Dropdown Menu */}
+                            <div className="absolute left-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 
                             opacity-0 invisible group-hover:opacity-100 group-hover:visible 
                             transition-all duration-200">
                                 <Link
@@ -39,6 +40,12 @@ export default function CalculatorPage() {
                                     className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium"
                                 >
                                     Enrollment Projection Calculator
+                                </Link>
+                                <Link
+                                    href="/staff-leadership"
+                                    className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium"
+                                >
+                                    Staff & Leadership Health Assessment
                                 </Link>
                             </div>
                         </div>
