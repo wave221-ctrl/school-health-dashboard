@@ -1103,15 +1103,17 @@ export default function HealthCalculator() {
                     </main>
                 </div>
 
-                {/* Controls with real Save button */}
+                {/* Controls - Only Save Assessment button */}
                 <div className="controls no-print" style={{ marginTop: '20px' }}>
-                    <button id="loadSampleBtn">Load Sample Data</button>
-                    <button className="secondary" id="resetBtn">Reset</button>
-                    <button id="downloadBtn">Download Report</button>
-                    <button id="printBtn">Print / Save PDF</button>
                     <button
                         onClick={saveAssessment}
-                        style={{ background: '#166534', color: 'white', fontWeight: '700' }}
+                        style={{
+                            background: '#166534',
+                            color: 'white',
+                            fontWeight: '700',
+                            padding: '12px 24px',
+                            fontSize: '1.1rem'
+                        }}
                     >
                         💾 Save Assessment
                     </button>
