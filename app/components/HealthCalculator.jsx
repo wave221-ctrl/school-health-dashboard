@@ -344,22 +344,19 @@ export default function HealthCalculator() {
                 const h = canvas.height;
                 ctx.clearRect(0, 0, w, h);
 
-                // Use comparisonData if available, otherwise fall back to current results
+                // Use comparisonData if we have multiple years, otherwise just current
                 const datasets = comparisonData.length > 0
-                    ? comparisonData.map((entry, i) => ({
-                        label: entry.review_date || `Year ${i + 1}`,
-                        results: entry.data?.results || entry.results,
-                        color: ['#166534', '#2563eb', '#9333ea', '#ca8a04'][i % 4]
-                    }))
-                    : [{ label: 'Current', results: calculateResults(), color: '#166534' }];
+                    ? comparisonData
+                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
 
-                const padding = { top: 40, right: 30, bottom: 100, left: 60 };
+                const padding = { top: 40, right: 40, bottom: 110, left: 60 };
                 const chartW = w - padding.left - padding.right;
                 const chartH = h - padding.top - padding.bottom;
 
-                // Draw grid lines
+                const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
+
+                // Grid lines
                 ctx.strokeStyle = '#e2e8f0';
-                ctx.lineWidth = 1;
                 for (let i = 0; i <= 5; i++) {
                     const y = padding.top + (chartH / 5) * i;
                     ctx.beginPath();
@@ -368,21 +365,23 @@ export default function HealthCalculator() {
                     ctx.stroke();
                     ctx.fillStyle = '#64748b';
                     ctx.font = '12px Arial';
-                    ctx.fillText((5 - i).toString(), padding.left - 25, y + 4);
+                    ctx.fillText((5 - i).toString(), 25, y + 4);
                 }
 
-                const barWidth = Math.max(25, chartW / (datasets[0].results.length * datasets.length + 2));
+                const barGroupWidth = chartW / datasets[0].data.results.length;
+                const barWidth = Math.max(18, barGroupWidth / (datasets.length + 1));
 
-                datasets.forEach((dataset, yearIndex) => {
-                    dataset.results.forEach((result, domainIndex) => {
-                        const x = padding.left + domainIndex * (barWidth * datasets.length + 12) + (yearIndex * barWidth);
+                datasets.forEach((yearData, yearIndex) => {
+                    const results = yearData.data?.results || yearData.results || [];
+                    results.forEach((result, domainIndex) => {
+                        const x = padding.left + domainIndex * barGroupWidth + (yearIndex * barWidth);
                         const barHeight = (result.avg / 5) * chartH;
                         const y = padding.top + chartH - barHeight;
 
-                        ctx.fillStyle = dataset.color;
+                        ctx.fillStyle = colors[yearIndex % colors.length];
                         ctx.fillRect(x, y, barWidth, barHeight);
 
-                        // Value on top of bar
+                        // Value label
                         ctx.fillStyle = '#1e2937';
                         ctx.font = '11px Arial';
                         ctx.textAlign = 'center';
@@ -390,15 +389,15 @@ export default function HealthCalculator() {
                     });
                 });
 
-                // X-axis labels
+                // Domain labels
                 ctx.fillStyle = '#1e2937';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
-                datasets[0].results.forEach((result, i) => {
-                    const x = padding.left + i * (barWidth * datasets.length + 12) + (datasets.length * barWidth / 2);
+                datasets[0].data.results.forEach((result, i) => {
+                    const x = padding.left + i * barGroupWidth + (barGroupWidth / 2);
                     ctx.save();
-                    ctx.translate(x, h - 30);
-                    ctx.rotate(-0.6);
+                    ctx.translate(x, h - 25);
+                    ctx.rotate(-0.65);
                     ctx.fillText(result.name, 0, 0);
                     ctx.restore();
                 });
@@ -413,16 +412,14 @@ export default function HealthCalculator() {
                 ctx.clearRect(0, 0, w, h);
 
                 const cx = w / 2;
-                const cy = h / 2 + 10;
-                const radius = Math.min(w, h) * 0.35;
+                const cy = h / 2 + 20;
+                const radius = Math.min(w, h) * 0.34;
 
                 const datasets = comparisonData.length > 0
-                    ? comparisonData.map((entry, i) => ({
-                        label: entry.review_date || `Year ${i + 1}`,
-                        results: entry.data?.results || entry.results,
-                        color: ['#166534', '#2563eb', '#9333ea', '#ca8a04'][i % 4]
-                    }))
-                    : [{ label: 'Current', results: calculateResults(), color: '#166534' }];
+                    ? comparisonData
+                    : [{ review_date: 'Current', data: { results: calculateResults() } }];
+
+                const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
 
                 // Draw radar grid
                 ctx.strokeStyle = '#e2e8f0';
@@ -430,8 +427,8 @@ export default function HealthCalculator() {
                 for (let level = 1; level <= 5; level++) {
                     const r = radius * (level / 5);
                     ctx.beginPath();
-                    datasets[0].results.forEach((_, i) => {
-                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].results.length);
+                    datasets[0].data.results.forEach((_, i) => {
+                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].data.results.length);
                         const x = cx + Math.cos(angle) * r;
                         const y = cy + Math.sin(angle) * r;
                         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -440,33 +437,35 @@ export default function HealthCalculator() {
                     ctx.stroke();
                 }
 
-                // Draw each year's radar
-                datasets.forEach(dataset => {
+                // Draw each year's radar line
+                datasets.forEach((yearData, i) => {
+                    const results = yearData.data?.results || yearData.results || [];
                     ctx.beginPath();
-                    dataset.results.forEach((result, i) => {
-                        const angle = (-Math.PI / 2) + (Math.PI * 2 * i / dataset.results.length);
+                    results.forEach((result, j) => {
+                        const angle = (-Math.PI / 2) + (Math.PI * 2 * j / results.length);
                         const r = radius * (result.avg / 5);
                         const x = cx + Math.cos(angle) * r;
                         const y = cy + Math.sin(angle) * r;
-                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                     });
                     ctx.closePath();
-                    ctx.strokeStyle = dataset.color;
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = colors[i % colors.length];
+                    ctx.lineWidth = 3.5;
                     ctx.stroke();
 
-                    ctx.fillStyle = dataset.color + '30'; // light fill
+                    // Light fill
+                    ctx.fillStyle = colors[i % colors.length] + '25';
                     ctx.fill();
                 });
 
-                // Labels
+                // Domain labels
                 ctx.fillStyle = '#1e2937';
                 ctx.font = '13px Arial';
                 ctx.textAlign = 'center';
-                datasets[0].results.forEach((result, i) => {
-                    const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].results.length);
-                    const x = cx + Math.cos(angle) * (radius + 40);
-                    const y = cy + Math.sin(angle) * (radius + 40);
+                datasets[0].data.results.forEach((result, i) => {
+                    const angle = (-Math.PI / 2) + (Math.PI * 2 * i / datasets[0].data.results.length);
+                    const x = cx + Math.cos(angle) * (radius + 45);
+                    const y = cy + Math.sin(angle) * (radius + 45);
                     ctx.fillText(result.name, x, y);
                 });
             }
