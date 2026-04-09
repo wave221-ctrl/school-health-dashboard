@@ -653,7 +653,7 @@ export default function HealthCalculator() {
     }, []);
 
 
-    
+
     // =============== SAVE ASSESSMENT ===============
     const saveAssessment = async () => {
         if (!user) {
@@ -685,21 +685,21 @@ export default function HealthCalculator() {
         }
     };
     // =============== LOAD HISTORY ===============
-const loadHistory = async () => {
-    if (!user) return;
+    const loadHistory = async () => {
+        if (!user) return;
 
-    const { data, error } = await supabase
-        .from('assessments')
-        .select('id, review_date, overall_score, data')
-        .eq('user_id', user.id)           // ← ONLY SHOW THIS USER'S DATA
-        .order('review_date', { ascending: false });
+        const { data, error } = await supabase
+            .from('assessments')
+            .select('id, review_date, overall_score, data')
+            .eq('user_id', user.id)           // ← ONLY SHOW THIS USER'S DATA
+            .order('review_date', { ascending: false });
 
-    if (error) {
-        console.error(error);
-        return;
-    }
-    setHistory(data || []);
-};
+        if (error) {
+            console.error(error);
+            return;
+        }
+        setHistory(data || []);
+    };
 
 
     // =============== HISTORY FUNCTIONS ===============
@@ -821,313 +821,313 @@ const loadHistory = async () => {
 </html>`;
 
 
-      const opt = {
-    margin: 10,
-    filename: `school-health-report-${item.review_date}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-};
+        const opt = {
+            margin: 10,
+            filename: `school-health-report-${item.review_date}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-const html2pdf = (await import('html2pdf.js')).default;
-html2pdf().set(opt).from(reportHtml).save();
+        const html2pdf = (await import('html2pdf.js')).default;
+        html2pdf().set(opt).from(reportHtml).save();
 
 
-    // =============== DELETE ASSESSMENT ===============
-const deleteAssessment = async (id) => {
-    if (!user) return;
-    if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
-        return;
-    }
+        // =============== DELETE ASSESSMENT ===============
+        const deleteAssessment = async (id) => {
+            if (!user) return;
+            if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
+                return;
+            }
 
-    const { error } = await supabase
-        .from('assessments')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);   // ← only delete own records
+            const { error } = await supabase
+                .from('assessments')
+                .delete()
+                .eq('id', id)
+                .eq('user_id', user.id);   // ← only delete own records
 
-    if (error) {
-        alert('Delete failed: ' + error.message);
-    } else {
-        alert('✅ Assessment deleted');
-        loadHistory();
-    }
-};
+            if (error) {
+                alert('Delete failed: ' + error.message);
+            } else {
+                alert('✅ Assessment deleted');
+                loadHistory();
+            }
+        };
 
-    return (
-        <div className="wrap">
+        return (
+            <div className="wrap">
 
-            {/* ←←← ORIGINAL HTML GOES HERE (unchanged) */}
-            <section className="hero">
-                <div className="print-only">
-                    <h1>School Health Calculator</h1>
+                {/* ←←← ORIGINAL HTML GOES HERE (unchanged) */}
+                <section className="hero">
+                    <div className="print-only">
+                        <h1>School Health Calculator</h1>
+                    </div>
+                    <div className="no-print">
+                        <h1>School Health Calculator</h1>
+                        <p>
+                            A practical website-based tool to help school leaders score overall school health, identify strengths and weak spots,
+                            visualize results, and print or save a clean report for leadership teams, boards, and planning sessions.
+                        </p>
+                    </div>
+                    <div className="controls no-print">
+                        <button id="loadSampleBtn">Load Sample Data</button>
+                        <button className="secondary" id="resetBtn">Reset</button>
+                        <button id="downloadBtn">Download Report</button>
+                        <button id="printBtn">Print / Save PDF</button>
+                    </div>
+                </section>
+
+                <div className="grid">
+                    <aside className="section-stack">
+                        <section className="card">
+                            <h2>School Information</h2>
+                            <div className="field">
+                                <label htmlFor="schoolName">School Name</label>
+                                <input id="schoolName" type="text" placeholder="Example Lutheran School" />
+                            </div>
+                            <div className="inline-2">
+                                <div className="field">
+                                    <label htmlFor="reviewDate">Review Date</label>
+                                    <input id="reviewDate" type="date" />
+                                </div>
+                                <div className="field">
+                                    <label htmlFor="reviewer">Reviewer</label>
+                                    <input id="reviewer" type="text" placeholder="Principal or leadership team" />
+                                </div>
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="schoolType">School Type</label>
+                                <select id="schoolType">
+                                    <option>PK-8</option>
+                                    <option>High School</option>
+                                    <option>Early Childhood</option>
+                                    <option>K-12</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <p className="small">Each metric is scored 1 to 5. Weights help you decide what matters most instead of pretending every issue carries the same impact.</p>
+                        </section>
+
+                        <section class="card">
+                            <h2>Scoring Guide – What Each Score Really Means</h2>
+
+                            {/* Quick Reference Table */}
+                            <table>
+                                <thead>
+                                    <tr><th>Score</th><th>Label</th><th>Meaning</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><strong>5</strong></td><td>Excellent / Healthy</td><td>Fully thriving, mission-aligned, sustainable excellence</td></tr>
+                                    <tr><td><strong>4</strong></td><td>Strong</td><td>Solid and reliable with only minor gaps</td></tr>
+                                    <tr><td><strong>3</strong></td><td>Adequate / Functional</td><td>Meets basic expectations but not thriving</td></tr>
+                                    <tr><td><strong>2</strong></td><td>Weak / Inconsistent</td><td>Noticeable problems causing concern</td></tr>
+                                    <tr><td><strong>1</strong></td><td>Critical Concern</td><td>Major breakdown requiring immediate intervention</td></tr>
+                                </tbody>
+                            </table>
+
+                            <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>
+                                Detailed rubric with biblical anchors for each domain:
+                            </p>
+
+                            {/* Detailed Rubric */}
+                            <div className="domain" style={{ marginBottom: '12px' }}>
+                                <details open>
+                                    <summary><strong>Enrollment & Retention</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others <em>(Psalm 92:12)</em></li>
+                                        <li><strong>4</strong> – Stable growth, 90–94% retention <em>(Psalm 1:3)</em></li>
+                                        <li><strong>3</strong> – Flat enrollment, 85–89% retention <em>(Jeremiah 17:8)</em></li>
+                                        <li><strong>2</strong> – Declining enrollment, visible anxiety <em>(Psalm 1:4)</em></li>
+                                        <li><strong>1</strong> – Sharp decline, high attrition <em>(Hosea 14:4–7)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <div className="domain" style={{ marginBottom: '12px' }}>
+                                <details>
+                                    <summary><strong>Academic Program</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Christ-centered, rigorous, students thriving <em>(Proverbs 22:6)</em></li>
+                                        <li><strong>4</strong> – Strong academics with consistent integration <em>(Colossians 2:6–7)</em></li>
+                                        <li><strong>3</strong> – Adequate academics, uneven integration <em>(Matthew 7:24–25)</em></li>
+                                        <li><strong>2</strong> – Noticeable gaps, worldview feels added-on <em>(Matthew 7:26–27)</em></li>
+                                        <li><strong>1</strong> – Significant struggles <em>(Nehemiah 2:17)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <div className="domain" style={{ marginBottom: '12px' }}>
+                                <details>
+                                    <summary><strong>Culture & Mission</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Mission alive, deep belonging <em>(Ephesians 4:4–6)</em></li>
+                                        <li><strong>4</strong> – Mission understood and mostly lived out <em>(Ephesians 4:3)</em></li>
+                                        <li><strong>3</strong> – Mission known but not deeply felt <em>(2 Timothy 3:5)</em></li>
+                                        <li><strong>2</strong> – Mission drift or tension <em>(Mark 3:25)</em></li>
+                                        <li><strong>1</strong> – Toxic or divided culture <em>(Revelation 2:4–5)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <div className="domain" style={{ marginBottom: '12px' }}>
+                                <details>
+                                    <summary><strong>Finance & Operations</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Healthy budget, strong reserves <em>(Luke 16:10)</em></li>
+                                        <li><strong>4</strong> – Balanced budget, reliable operations <em>(1 Corinthians 4:2)</em></li>
+                                        <li><strong>3</strong> – Tight but manageable <em>(Philippians 4:11–13)</em></li>
+                                        <li><strong>2</strong> – Frequent stress, deferred maintenance <em>(Matthew 11:28)</em></li>
+                                        <li><strong>1</strong> – Financial instability <em>(James 1:5)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <div className="domain" style={{ marginBottom: '12px' }}>
+                                <details>
+                                    <summary><strong>Leadership & Staffing</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Trusted, unified, staff feel valued <em>(1 Peter 5:2–4)</em></li>
+                                        <li><strong>4</strong> – Strong leadership and good morale <em>(Proverbs 27:17)</em></li>
+                                        <li><strong>3</strong> – Adequate but some fatigue <em>(Matthew 9:37–38)</em></li>
+                                        <li><strong>2</strong> – Trust issues or high turnover <em>(Ezekiel 34:1–10)</em></li>
+                                        <li><strong>1</strong> – Leadership vacuum or conflict <em>(Galatians 6:1)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <div className="domain">
+                                <details>
+                                    <summary><strong>Marketing & Community Presence</strong></summary>
+                                    <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                        <li><strong>5</strong> – Compelling story, strong visibility <em>(Matthew 5:16)</em></li>
+                                        <li><strong>4</strong> – Clear brand and good awareness <em>(Matthew 5:14)</em></li>
+                                        <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
+                                        <li><strong>2</strong> – Outdated or unclear messaging <em>(Mark 4:21)</em></li>
+                                        <li><strong>1</strong> – Almost no presence or negative perception <em>(2 Corinthians 8:21)</em></li>
+                                    </ul>
+                                </details>
+                            </div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Notes</h2>
+                            <div className="field">
+                                <label htmlFor="notes">Leadership Notes</label>
+                                <textarea id="notes" rows={8} placeholder="Add key findings, assumptions, concerns, and next steps."></textarea>
+                            </div>
+                        </section>
+                    </aside>
+
+                    <main className="section-stack">
+                        <section className="card">
+                            <h2>Overall Summary</h2>
+                            <div className="summary-grid">
+                                <div className="stat">
+                                    <div className="label">Overall Health Score</div>
+                                    <div className="value" id="overallScore">0</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="label">Health Rating</div>
+                                    <div className="value" id="overallRating">—</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="label">Strongest Domain</div>
+                                    <div className="value" id="strongestDomain">—</div>
+                                </div>
+                                <div className="stat">
+                                    <div className="label">Biggest Risk Area</div>
+                                    <div className="value" id="weakestDomain">—</div>
+                                </div>
+                            </div>
+                            <span className="pill" id="healthTag">Waiting for scores</span>
+                            <div className="band-row">
+                                <span className="band band-excellent">Excellent: 4.50–5.00</span>
+                                <span className="band band-strong">Strong: 3.75–4.49</span>
+                                <span className="band band-stable">Stable: 3.00–3.74</span>
+                                <span className="band band-risk">At Risk: 2.00–2.99</span>
+                                <span className="band band-critical">Critical: 1.00–1.99</span>
+                            </div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Domain Scoring</h2>
+                            <div id="domainsContainer"></div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Domain Summary Table</h2>
+                            <table id="summaryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Average</th>
+                                        <th>Weighted Score</th>
+                                        <th>Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </section>
+
+                        <section className="card">
+                            <h2>Health Visualization</h2>
+                            <canvas id="barChart" width="960" height="340"></canvas>
+                            <div className="footer-note">Quick visual comparisons make board conversations slightly less painful.</div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Radar View</h2>
+                            <canvas id="radarChart" width="960" height="420"></canvas>
+                            <div className="footer-note">A quick way to see whether the school is balanced or lopsided across domains.</div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Priority Actions</h2>
+                            <div className="report-box">
+                                <div id="priorityActions"></div>
+                            </div>
+                        </section>
+
+                        <section className="card">
+                            <h2>Optional Improvement Plan</h2>
+                            <div className="improvement-grid" id="improvementPlan"></div>
+                            <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains and can be edited later for your context.</div>
+                        </section>
+
+                        <section className="card print-only">
+                            <h2>Printed Notes</h2>
+                            <p id="printMeta"></p>
+                            <p id="printNotes"></p>
+                        </section>
+                    </main>
                 </div>
-                <div className="no-print">
-                    <h1>School Health Calculator</h1>
-                    <p>
-                        A practical website-based tool to help school leaders score overall school health, identify strengths and weak spots,
-                        visualize results, and print or save a clean report for leadership teams, boards, and planning sessions.
-                    </p>
-                </div>
-                <div className="controls no-print">
+
+                {/* Controls with real Save button */}
+                <div className="controls no-print" style={{ marginTop: '20px' }}>
                     <button id="loadSampleBtn">Load Sample Data</button>
                     <button className="secondary" id="resetBtn">Reset</button>
                     <button id="downloadBtn">Download Report</button>
                     <button id="printBtn">Print / Save PDF</button>
+                    <button
+                        onClick={saveAssessment}
+                        style={{ background: '#166534', color: 'white', fontWeight: '700' }}
+                    >
+                        💾 Save Assessment
+                    </button>
                 </div>
-            </section>
 
-            <div className="grid">
-                <aside className="section-stack">
-                    <section className="card">
-                        <h2>School Information</h2>
-                        <div className="field">
-                            <label htmlFor="schoolName">School Name</label>
-                            <input id="schoolName" type="text" placeholder="Example Lutheran School" />
-                        </div>
-                        <div className="inline-2">
-                            <div className="field">
-                                <label htmlFor="reviewDate">Review Date</label>
-                                <input id="reviewDate" type="date" />
-                            </div>
-                            <div className="field">
-                                <label htmlFor="reviewer">Reviewer</label>
-                                <input id="reviewer" type="text" placeholder="Principal or leadership team" />
-                            </div>
-                        </div>
 
-                        <div className="field">
-                            <label htmlFor="schoolType">School Type</label>
-                            <select id="schoolType">
-                                <option>PK-8</option>
-                                <option>High School</option>
-                                <option>Early Childhood</option>
-                                <option>K-12</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                        <p className="small">Each metric is scored 1 to 5. Weights help you decide what matters most instead of pretending every issue carries the same impact.</p>
-                    </section>
-
-                    <section class="card">
-                        <h2>Scoring Guide – What Each Score Really Means</h2>
-
-                        {/* Quick Reference Table */}
-                        <table>
-                            <thead>
-                                <tr><th>Score</th><th>Label</th><th>Meaning</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td><strong>5</strong></td><td>Excellent / Healthy</td><td>Fully thriving, mission-aligned, sustainable excellence</td></tr>
-                                <tr><td><strong>4</strong></td><td>Strong</td><td>Solid and reliable with only minor gaps</td></tr>
-                                <tr><td><strong>3</strong></td><td>Adequate / Functional</td><td>Meets basic expectations but not thriving</td></tr>
-                                <tr><td><strong>2</strong></td><td>Weak / Inconsistent</td><td>Noticeable problems causing concern</td></tr>
-                                <tr><td><strong>1</strong></td><td>Critical Concern</td><td>Major breakdown requiring immediate intervention</td></tr>
-                            </tbody>
-                        </table>
-
-                        <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>
-                            Detailed rubric with biblical anchors for each domain:
-                        </p>
-
-                        {/* Detailed Rubric */}
-                        <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details open>
-                                <summary><strong>Enrollment & Retention</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others <em>(Psalm 92:12)</em></li>
-                                    <li><strong>4</strong> – Stable growth, 90–94% retention <em>(Psalm 1:3)</em></li>
-                                    <li><strong>3</strong> – Flat enrollment, 85–89% retention <em>(Jeremiah 17:8)</em></li>
-                                    <li><strong>2</strong> – Declining enrollment, visible anxiety <em>(Psalm 1:4)</em></li>
-                                    <li><strong>1</strong> – Sharp decline, high attrition <em>(Hosea 14:4–7)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-
-                        <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Academic Program</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Christ-centered, rigorous, students thriving <em>(Proverbs 22:6)</em></li>
-                                    <li><strong>4</strong> – Strong academics with consistent integration <em>(Colossians 2:6–7)</em></li>
-                                    <li><strong>3</strong> – Adequate academics, uneven integration <em>(Matthew 7:24–25)</em></li>
-                                    <li><strong>2</strong> – Noticeable gaps, worldview feels added-on <em>(Matthew 7:26–27)</em></li>
-                                    <li><strong>1</strong> – Significant struggles <em>(Nehemiah 2:17)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-
-                        <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Culture & Mission</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Mission alive, deep belonging <em>(Ephesians 4:4–6)</em></li>
-                                    <li><strong>4</strong> – Mission understood and mostly lived out <em>(Ephesians 4:3)</em></li>
-                                    <li><strong>3</strong> – Mission known but not deeply felt <em>(2 Timothy 3:5)</em></li>
-                                    <li><strong>2</strong> – Mission drift or tension <em>(Mark 3:25)</em></li>
-                                    <li><strong>1</strong> – Toxic or divided culture <em>(Revelation 2:4–5)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-
-                        <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Finance & Operations</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Healthy budget, strong reserves <em>(Luke 16:10)</em></li>
-                                    <li><strong>4</strong> – Balanced budget, reliable operations <em>(1 Corinthians 4:2)</em></li>
-                                    <li><strong>3</strong> – Tight but manageable <em>(Philippians 4:11–13)</em></li>
-                                    <li><strong>2</strong> – Frequent stress, deferred maintenance <em>(Matthew 11:28)</em></li>
-                                    <li><strong>1</strong> – Financial instability <em>(James 1:5)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-
-                        <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Leadership & Staffing</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Trusted, unified, staff feel valued <em>(1 Peter 5:2–4)</em></li>
-                                    <li><strong>4</strong> – Strong leadership and good morale <em>(Proverbs 27:17)</em></li>
-                                    <li><strong>3</strong> – Adequate but some fatigue <em>(Matthew 9:37–38)</em></li>
-                                    <li><strong>2</strong> – Trust issues or high turnover <em>(Ezekiel 34:1–10)</em></li>
-                                    <li><strong>1</strong> – Leadership vacuum or conflict <em>(Galatians 6:1)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-
-                        <div className="domain">
-                            <details>
-                                <summary><strong>Marketing & Community Presence</strong></summary>
-                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Compelling story, strong visibility <em>(Matthew 5:16)</em></li>
-                                    <li><strong>4</strong> – Clear brand and good awareness <em>(Matthew 5:14)</em></li>
-                                    <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
-                                    <li><strong>2</strong> – Outdated or unclear messaging <em>(Mark 4:21)</em></li>
-                                    <li><strong>1</strong> – Almost no presence or negative perception <em>(2 Corinthians 8:21)</em></li>
-                                </ul>
-                            </details>
-                        </div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Notes</h2>
-                        <div className="field">
-                            <label htmlFor="notes">Leadership Notes</label>
-                            <textarea id="notes" rows={8} placeholder="Add key findings, assumptions, concerns, and next steps."></textarea>
-                        </div>
-                    </section>
-                </aside>
-
-                <main className="section-stack">
-                    <section className="card">
-                        <h2>Overall Summary</h2>
-                        <div className="summary-grid">
-                            <div className="stat">
-                                <div className="label">Overall Health Score</div>
-                                <div className="value" id="overallScore">0</div>
-                            </div>
-                            <div className="stat">
-                                <div className="label">Health Rating</div>
-                                <div className="value" id="overallRating">—</div>
-                            </div>
-                            <div className="stat">
-                                <div className="label">Strongest Domain</div>
-                                <div className="value" id="strongestDomain">—</div>
-                            </div>
-                            <div className="stat">
-                                <div className="label">Biggest Risk Area</div>
-                                <div className="value" id="weakestDomain">—</div>
-                            </div>
-                        </div>
-                        <span className="pill" id="healthTag">Waiting for scores</span>
-                        <div className="band-row">
-                            <span className="band band-excellent">Excellent: 4.50–5.00</span>
-                            <span className="band band-strong">Strong: 3.75–4.49</span>
-                            <span className="band band-stable">Stable: 3.00–3.74</span>
-                            <span className="band band-risk">At Risk: 2.00–2.99</span>
-                            <span className="band band-critical">Critical: 1.00–1.99</span>
-                        </div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Domain Scoring</h2>
-                        <div id="domainsContainer"></div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Domain Summary Table</h2>
-                        <table id="summaryTable">
-                            <thead>
-                                <tr>
-                                    <th>Domain</th>
-                                    <th>Average</th>
-                                    <th>Weighted Score</th>
-                                    <th>Risk Level</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </section>
-
-                    <section className="card">
-                        <h2>Health Visualization</h2>
-                        <canvas id="barChart" width="960" height="340"></canvas>
-                        <div className="footer-note">Quick visual comparisons make board conversations slightly less painful.</div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Radar View</h2>
-                        <canvas id="radarChart" width="960" height="420"></canvas>
-                        <div className="footer-note">A quick way to see whether the school is balanced or lopsided across domains.</div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Priority Actions</h2>
-                        <div className="report-box">
-                            <div id="priorityActions"></div>
-                        </div>
-                    </section>
-
-                    <section className="card">
-                        <h2>Optional Improvement Plan</h2>
-                        <div className="improvement-grid" id="improvementPlan"></div>
-                        <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains and can be edited later for your context.</div>
-                    </section>
-
-                    <section className="card print-only">
-                        <h2>Printed Notes</h2>
-                        <p id="printMeta"></p>
-                        <p id="printNotes"></p>
-                    </section>
-                </main>
-            </div>
-
-            {/* Controls with real Save button */}
-            <div className="controls no-print" style={{ marginTop: '20px' }}>
-                <button id="loadSampleBtn">Load Sample Data</button>
-                <button className="secondary" id="resetBtn">Reset</button>
-                <button id="downloadBtn">Download Report</button>
-                <button id="printBtn">Print / Save PDF</button>
-                <button
-                    onClick={saveAssessment}
-                    style={{ background: '#166534', color: 'white', fontWeight: '700' }}
-                >
-                    💾 Save Assessment
-                </button>
-            </div>
-
-            
-            {/* History Panel */}
-            <div className="card" style={{ marginTop: '30px' }}>
-                <h2>📅 Year-over-Year History</h2>
-                <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>
-                    Refresh History
-                </button>
-                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                    {history.length === 0 ? (
-                        <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
-                    ) : (
+                {/* History Panel */}
+                <div className="card" style={{ marginTop: '30px' }}>
+                    <h2>📅 Year-over-Year History</h2>
+                    <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>
+                        Refresh History
+                    </button>
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        {history.length === 0 ? (
+                            <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
+                        ) : (
                             history.map((item) => (
                                 <div
                                     key={item.id}
@@ -1180,19 +1180,20 @@ const deleteAssessment = async (id) => {
                                     </div>
                                 </div>
                             ))
-                    )}
+                        )}
+                    </div>
+                </div>
+
+                {/* Logout / User Button */}
+                <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
+                    <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                            elements: { avatarBox: { width: '36px', height: '36px' } }
+                        }}
+                    />
                 </div>
             </div>
-
-            {/* Logout / User Button */}
-            <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
-                <UserButton
-                    afterSignOutUrl="/"
-                    appearance={{
-                        elements: { avatarBox: { width: '36px', height: '36px' } }
-                    }}
-                />
-            </div>
-        </div>
-    );
+        );
+    }
 }
