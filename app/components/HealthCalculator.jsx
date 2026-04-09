@@ -649,6 +649,9 @@ export default function HealthCalculator() {
             window.setDomains = setDomains;           // ← add this line
             window.renderDomains = renderDomains;
             window.calculate = calculate;
+            window.loadSample = loadSample;
+            window.resetTool = resetTool;
+            window.downloadReport = downloadReport;
         }, 1000);   // keep 1000ms
     }, []);
 
