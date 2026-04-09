@@ -45,12 +45,12 @@ export default function Home() {
                                 href="/sign-in"
                                 className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
-                                Get Started Sign in
+                                Get Started / Sign In
                             </Link>
                         ) : (
                             <Link
                                 href="/calculator"
-                                className="bg-emerald-700 hover:bg-emerald-800 hover:scale-105 active:scale-95 text-white text-2xl font-bold px-14 py-6 rounded-full shadow-xl shadow-emerald-700/30 transition-all text-center"
+                                className="bg-emerald-700 hover:bg-emerald-800 text-white text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                             >
                                 Open Dashboard →
                             </Link>
@@ -68,11 +68,43 @@ export default function Home() {
                 {/* Right - Hero Image */}
                 <div className="relative">
                     <img
-                        src="https://i.imgur.com/BeqNXWh.jpeg"
+                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1"
                         alt="Christian school leaders collaborating"
                         className="rounded-3xl shadow-2xl w-full object-cover aspect-video"
                     />
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-700/10 to-transparent rounded-3xl"></div>
+                </div>
+            </div>
+
+            {/* Highlighted Enrollment Projection Box */}
+            <div className="max-w-5xl mx-auto px-6 pb-16">
+                <div className="bg-white border border-emerald-200 rounded-3xl p-8 shadow-sm flex flex-col md:flex-row items-center gap-8">
+                    <div className="flex-1">
+                        <div className="inline-block bg-emerald-100 text-emerald-700 text-sm font-semibold px-4 py-1 rounded-2xl mb-3">
+                            NEW TOOL
+                        </div>
+                        <h2 className="text-3xl font-semibold text-slate-900 mb-3">
+                            Enrollment Projection Calculator
+                        </h2>
+                        <p className="text-slate-600 text-lg">
+                            Build accurate year-over-year enrollment forecasts by grade, model retention and new student growth,
+                            and generate clean reports for budgeting and board presentations.
+                        </p>
+                        <Link
+                            href="/enrollment-projection"
+                            className="inline-block mt-6 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-8 py-4 rounded-3xl transition-all"
+                        >
+                            Try Enrollment Projection Tool →
+                        </Link>
+                    </div>
+
+                    {/* Visual icon / teaser */}
+                    <div className="flex-1 flex justify-center">
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 text-center max-w-xs">
+                            <div className="text-6xl mb-4">📈</div>
+                            <p className="font-medium text-emerald-700">See your future enrollment at a glance</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
