@@ -63,10 +63,7 @@ export default function Home() {
                             See Pricing
                         </Link>
                     </div>
-
-                    <p className="text-xs text-slate-500 mt-8">
-                        Sign in required to use the calculators and generate reports
-                    </p>
+                                    
                 </div>
 
                 {/* Right - Hero Image */}
