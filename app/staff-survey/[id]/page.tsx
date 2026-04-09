@@ -46,10 +46,9 @@ export default function PublicStaffSurvey() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Fixed rating update
     const updateScore = (domainIndex: number, metricIndex: number, score: number) => {
         setDomains(prev => {
-            const newDomains = JSON.parse(JSON.stringify(prev)); // deep copy to force React update
+            const newDomains = JSON.parse(JSON.stringify(prev));
             newDomains[domainIndex].metrics[metricIndex].score = score;
             return newDomains;
         });
@@ -63,7 +62,7 @@ export default function PublicStaffSurvey() {
         const payload = {
             survey_id: surveyId,
             tool: 'staff-leadership',
-            data: { domains }   // removed submitted_at to match your table
+            data: { domains }
         };
 
         const { error } = await supabase.from('assessments').insert(payload);
@@ -114,7 +113,7 @@ export default function PublicStaffSurvey() {
                                                 key={score}
                                                 onClick={() => updateScore(dIndex, mIndex, score)}
                                                 className={`w-11 h-11 rounded-2xl font-semibold transition-all ${metric.score === score
-                                                        ? 'bg-emerald-700 text-white shadow-md scale-110'
+                                                        ? 'bg-yellow-400 text-slate-900 shadow-md scale-110'   // ← Yellow when selected
                                                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                                                     }`}
                                             >
