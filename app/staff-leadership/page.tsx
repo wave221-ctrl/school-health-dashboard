@@ -403,7 +403,7 @@ export default function StaffLeadership() {
     const downloadFullPDF = async () => {
         const html2pdf = (await import('html2pdf.js')).default;
 
-        const barImg   = buildBarChartDataUrl(history);
+        const barImg = buildBarChartDataUrl(history);
         const radarImg = buildRadarChartDataUrl(history);
 
         const element = document.createElement('div');
@@ -432,16 +432,16 @@ export default function StaffLeadership() {
                     <th style="padding:10px 12px; border:1px solid #cbd5e1; text-align:left;">Type</th>
                 </tr>
                 ${history.map(item => {
-                    const avg  = itemOverallAvg(item);
-                    const type = item.data?.survey_id ? 'Anonymous Survey' : 'Self Assessment';
-                    return `
+            const avg = itemOverallAvg(item);
+            const type = item.data?.survey_id ? 'Anonymous Survey' : 'Self Assessment';
+            return `
                         <tr>
                             <td style="padding:10px 12px; border:1px solid #e2e8f0;">${item.review_date}</td>
                             <td style="padding:10px 12px; border:1px solid #e2e8f0; text-align:right; font-weight:600; color:#166534;">${avg ? avg.toFixed(1) : '—'}</td>
                             <td style="padding:10px 12px; border:1px solid #e2e8f0; color:#64748b;">${type}</td>
                         </tr>
                     `;
-                }).join('')}
+        }).join('')}
             </table>
 
             <h3 style="margin:0 0 12px; color:#1e2937;">Recommended Strategies</h3>
@@ -459,13 +459,14 @@ export default function StaffLeadership() {
             </p>
         `;
 
-        html2pdf().set({
+        const opt = {
             margin: 15,
             filename: `staff-leadership-report-${new Date().toISOString().slice(0, 10)}.pdf`,
             image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-        }).from(element).save();
+        };
+        html2pdf().set(opt as any).from(element).save();
     };
 
     // ── Effects ───────────────────────────────────────────────────────────────
