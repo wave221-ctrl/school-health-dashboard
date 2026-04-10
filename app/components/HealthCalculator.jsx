@@ -909,16 +909,16 @@ export default function HealthCalculator() {
             .from('assessments')
             .delete()
             .eq('id', id)
-            .eq('user_id', user.id);          // ← extra safety filter
+            .eq('user_id', user.id);   // ← extra strict filter
 
-        console.log('Supabase returned count:', count);   // ← this will tell us the truth
+        console.log('Supabase returned count:', count);
 
         if (error) {
             console.error('❌ Delete error:', error);
             alert('Delete failed: ' + error.message);
         } else if (count === 0) {
-            console.log('⚠️ No rows were deleted (RLS blocked it)');
-            alert('Delete failed — row was not found or you don’t have permission.');
+            console.log('⚠️ No rows were deleted — RLS is blocking it');
+            alert('Delete failed — Supabase could not find or delete the row.');
             loadHistory();
         } else {
             console.log('✅ Delete successful in Supabase!');
