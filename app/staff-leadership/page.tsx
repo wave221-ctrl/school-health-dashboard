@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -8,21 +8,26 @@ import { supabase } from '../lib/supabase';
 
 export default function StaffLeadership() {
     const { user } = useUser();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const [domains, setDomains] = useState([ /* ← keep your exact 4 domains here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
-    const [averages, setAverages] = useState<any>(null);
 
-    // Modal for survey link
+    // Modal
     const [showModal, setShowModal] = useState(false);
     const [surveyLink, setSurveyLink] = useState('');
     const [copied, setCopied] = useState(false);
 
-    const calculateResults = () => { /* keep your existing function */ };
+    const calculateResults = (doms: any[]) => {
+        return doms.map(domain => {
+            const avg = domain.metrics.reduce((sum: number, m: any) => sum + (m.score || 3), 0) / domain.metrics.length;
+            return { name: domain.name, avg: Math.round(avg * 100) / 100 };
+        });
+    };
 
-    const saveAssessment = async () => { /* keep your existing function */ };
+    const saveAssessment = async () => { /* keep your existing save function */ };
 
     const loadHistory = async () => {
         const { data } = await supabase
@@ -32,27 +37,6 @@ export default function StaffLeadership() {
             .order('review_date', { ascending: false });
 
         setHistory(data || []);
-
-        // Calculate averages from ALL survey responses
-        if (data && data.length > 0) {
-            let totalScore = 0;
-            let count = 0;
-
-            data.forEach(record => {
-                if (record.data?.domains) {
-                    const surveyAvg = record.data.domains.reduce((sum: number, domain: any) => {
-                        const domainAvg = domain.metrics.reduce((s: number, m: any) => s + (m.score || 0), 0) / domain.metrics.length;
-                        return sum + domainAvg;
-                    }, 0) / record.data.domains.length;
-
-                    totalScore += surveyAvg;
-                    count++;
-                }
-            });
-
-            const overallAverage = count > 0 ? Math.round((totalScore / count) * 10) / 10 : 0;
-            setAverages({ overall: overallAverage, totalSurveys: count });
-        }
     };
 
     const launchAnonymousSurvey = () => {
@@ -69,13 +53,31 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Draw Radar Chart
+    const drawRadarChart = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || history.length === 0) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Simple radar chart logic can be expanded later
+        ctx.fillStyle = '#10b981';
+        ctx.fillText('Average Scores Across All Surveys (Radar)', 20, 30);
+        // For now we show a placeholder - we can make it full radar next if you like
+    };
+
     useEffect(() => {
-        if (user) loadHistory();
+        loadHistory();
     }, [user]);
+
+    useEffect(() => {
+        drawRadarChart();
+    }, [history]);
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav - unchanged */}
+            {/* Top Nav */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -83,7 +85,6 @@ export default function StaffLeadership() {
                             <div className="w-8 h-8 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold">S</div>
                             <span className="font-semibold text-xl">School Health Score</span>
                         </div>
-
                         <div className="relative group">
                             <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
                                 My Tools <span className="text-xs">▼</span>
@@ -115,49 +116,76 @@ export default function StaffLeadership() {
                     </button>
                 </div>
 
-                {/* Your scoring area stays here */}
+                {/* Scoring area - keep your existing domains here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* Summary Averages */}
-                {averages && (
-                    <div className="mt-8 bg-white rounded-3xl shadow-sm border p-6">
-                        <h2 className="text-xl font-semibold mb-4">Overall Average from {averages.totalSurveys} Surveys</h2>
-                        <div className="text-6xl font-bold text-emerald-700">{averages.overall}</div>
-                    </div>
-                )}
-
-                {/* History Panel */}
+                {/* History + Graph */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-semibold">All Feedback Received</h2>
-                        <button onClick={loadHistory} className="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-2xl">Refresh</button>
-                    </div>
+                    <h2 className="text-2xl font-semibold mb-6">All Feedback Received</h2>
 
                     <div className="space-y-4 max-h-96 overflow-auto">
                         {history.length === 0 ? (
                             <p className="text-slate-500 text-center py-12">No feedback yet.</p>
                         ) : (
-                            history.map(item => (
-                                <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
-                                    <div>
-                                        <strong>{item.review_date}</strong>
-                                        {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>}
+                            history.map(item => {
+                                const avg = item.data?.domains
+                                    ? item.data.domains.reduce((sum: number, d: any) => {
+                                        const domainAvg = d.metrics.reduce((s: number, m: any) => s + (m.score || 0), 0) / d.metrics.length;
+                                        return sum + domainAvg;
+                                    }, 0) / item.data.domains.length
+                                    : null;
+
+                                return (
+                                    <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
+                                        <div>
+                                            <strong>{item.review_date}</strong>
+                                            {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>}
+                                        </div>
+                                        <div className="text-emerald-700 font-semibold">
+                                            Overall: {avg ? avg.toFixed(1) : '—'}
+                                        </div>
                                     </div>
-                                    <div className="text-emerald-700 font-semibold">
-                                        Overall: {item.overall_score || '—'}
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
+                    </div>
+
+                    {/* Radar / Web Graph */}
+                    <div className="mt-12">
+                        <h3 className="font-medium mb-4">Average Scores Across All Surveys</h3>
+                        <canvas ref={canvasRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
+                    </div>
+
+                    {/* Strategies */}
+                    <div className="mt-12">
+                        <h3 className="font-medium mb-4">Potential Strategies to Address Low Areas</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-5 border rounded-2xl bg-amber-50">
+                                <strong>Low Morale / Retention?</strong>
+                                <ul className="text-sm mt-3 space-y-2 text-slate-700">
+                                    <li>• Conduct 1:1 check-ins with staff</li>
+                                    <li>• Review workload and work-life balance</li>
+                                    <li>• Celebrate wins more frequently</li>
+                                </ul>
+                            </div>
+                            <div className="p-5 border rounded-2xl bg-amber-50">
+                                <strong>Low Leadership Effectiveness?</strong>
+                                <ul className="text-sm mt-3 space-y-2 text-slate-700">
+                                    <li>• Improve communication transparency</li>
+                                    <li>• Hold regular all-staff town halls</li>
+                                    <li>• Seek feedback on decision-making</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Copy Link Modal - unchanged */}
+            {/* Copy Link Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
                     <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 p-8">
