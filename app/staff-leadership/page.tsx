@@ -15,7 +15,6 @@ export default function StaffLeadership() {
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
 
-    // Modal
     const [showModal, setShowModal] = useState(false);
     const [surveyLink, setSurveyLink] = useState('');
     const [copied, setCopied] = useState(false);
@@ -52,7 +51,21 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // High-resolution Radar Chart
+    // Overall Average (moved outside JSX to avoid parsing error)
+    const overallAverage = history.length > 0
+        ? history.reduce((sum, item) => {
+            if (item.data?.domains) {
+                const avg = item.data.domains.reduce((s: number, d: any) => {
+                    const domainAvg = d.metrics.reduce((ss: number, m: any) => ss + (m.score || 0), 0) / d.metrics.length;
+                    return s + domainAvg;
+                }, 0) / item.data.domains.length;
+                return sum + avg;
+            }
+            return sum;
+        }, 0) / history.length
+        : 0;
+
+    // Radar Chart
     const drawRadarChart = () => {
         const canvas = canvasRef.current;
         if (!canvas || history.length === 0) return;
@@ -63,7 +76,6 @@ export default function StaffLeadership() {
         canvas.width = 800 * dpr;
         canvas.height = 400 * dpr;
         ctx.scale(dpr, dpr);
-
         ctx.clearRect(0, 0, 800, 400);
 
         const centerX = 400;
@@ -95,7 +107,7 @@ export default function StaffLeadership() {
             return count > 0 ? total / count : 3;
         });
 
-        // Grid
+        // Grid + axes
         ctx.strokeStyle = '#e2e8f0';
         for (let i = 1; i <= 5; i++) {
             const r = (radius * i) / 5;
@@ -209,12 +221,7 @@ export default function StaffLeadership() {
                         <div className="mb-8 p-6 bg-emerald-50 rounded-3xl text-center">
                             <p className="text-sm text-emerald-700 font-medium">Overall Average from {history.length} Surveys</p>
                             <div className="text-6xl font-bold text-emerald-700 mt-2">
-                                {history.reduce((sum, item) => {
-                                    const avg = item.data?.domains
-                                        ? item.data.domains.reduce((s: number, d: any) => s + d.metrics.reduce((ss: number, m: any) => ss + (m.score || 0), 0) / d.metrics.length, 0) / item.data.domains.length
-                                        : 0;
-                                    return sum + avg;
-                                }, 0) / history.length).toFixed(1)}
+                                {overallAverage.toFixed(1)}
                             </div>
                         </div>
                     )}
