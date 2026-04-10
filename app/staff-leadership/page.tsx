@@ -9,57 +9,49 @@ import { supabase } from '../lib/supabase';
 export default function StaffLeadership() {
     const { user } = useUser();
 
-    const [domains, setDomains] = useState([ /* ← keep your exact 4 domains array here */]);
+    const [domains, setDomains] = useState([ /* ← keep your exact 4 domains here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
+    const [averages, setAverages] = useState<any>(null);
 
     // Modal for survey link
     const [showModal, setShowModal] = useState(false);
     const [surveyLink, setSurveyLink] = useState('');
     const [copied, setCopied] = useState(false);
 
-    const calculateResults = () => {
-        return domains.map(domain => {
-            const avg = domain.metrics.reduce((sum, m) => sum + (m.score || 3), 0) / domain.metrics.length;
-            return { name: domain.name, avg: Math.round(avg * 100) / 100 };
-        });
-    };
+    const calculateResults = () => { /* keep your existing function */ };
 
-    const saveAssessment = async () => {
-        if (!user) return alert('Please sign in to save');
-        const results = calculateResults();
-        const overall = results.reduce((sum, r) => sum + r.avg, 0) / results.length;
-
-        const payload = {
-            school_name: schoolName,
-            review_date: reviewDate,
-            tool: 'staff-leadership',
-            overall_score: Math.round(overall * 10) / 10,
-            data: { domains, results, type: 'self-assessment' }
-        };
-
-        const { error } = await supabase.from('assessments').insert(payload);
-        if (error) alert('Save failed: ' + error.message);
-        else {
-            alert('✅ Saved!');
-            loadHistory();
-        }
-    };
+    const saveAssessment = async () => { /* keep your existing function */ };
 
     const loadHistory = async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('assessments')
             .select('*')
-            .eq('tool', 'staff-leadership')           // ← must match exactly what the survey saves
+            .eq('tool', 'staff-leadership')
             .order('review_date', { ascending: false });
 
-        if (error) {
-            console.error('Load history error:', error);
-            alert('Error loading history: ' + error.message);
-        } else {
-            console.log('Loaded', data?.length || 0, 'records');
-            setHistory(data || []);
+        setHistory(data || []);
+
+        // Calculate averages from ALL survey responses
+        if (data && data.length > 0) {
+            let totalScore = 0;
+            let count = 0;
+
+            data.forEach(record => {
+                if (record.data?.domains) {
+                    const surveyAvg = record.data.domains.reduce((sum: number, domain: any) => {
+                        const domainAvg = domain.metrics.reduce((s: number, m: any) => s + (m.score || 0), 0) / domain.metrics.length;
+                        return sum + domainAvg;
+                    }, 0) / record.data.domains.length;
+
+                    totalScore += surveyAvg;
+                    count++;
+                }
+            });
+
+            const overallAverage = count > 0 ? Math.round((totalScore / count) * 10) / 10 : 0;
+            setAverages({ overall: overallAverage, totalSurveys: count });
         }
     };
 
@@ -78,12 +70,12 @@ export default function StaffLeadership() {
     };
 
     useEffect(() => {
-        loadHistory();
-    }, []);
+        if (user) loadHistory();
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav */}
+            {/* Top Nav - unchanged */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -123,23 +115,31 @@ export default function StaffLeadership() {
                     </button>
                 </div>
 
-                {/* Your existing scoring area goes here (keep your domains) */}
+                {/* Your scoring area stays here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* History + Graph */}
+                {/* Summary Averages */}
+                {averages && (
+                    <div className="mt-8 bg-white rounded-3xl shadow-sm border p-6">
+                        <h2 className="text-xl font-semibold mb-4">Overall Average from {averages.totalSurveys} Surveys</h2>
+                        <div className="text-6xl font-bold text-emerald-700">{averages.overall}</div>
+                    </div>
+                )}
+
+                {/* History Panel */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-semibold">Feedback Received</h2>
+                        <h2 className="text-2xl font-semibold">All Feedback Received</h2>
                         <button onClick={loadHistory} className="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-2xl">Refresh</button>
                     </div>
 
                     <div className="space-y-4 max-h-96 overflow-auto">
                         {history.length === 0 ? (
-                            <p className="text-slate-500 text-center py-12">No feedback yet. Submit a survey to see results here.</p>
+                            <p className="text-slate-500 text-center py-12">No feedback yet.</p>
                         ) : (
                             history.map(item => (
                                 <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
@@ -154,16 +154,10 @@ export default function StaffLeadership() {
                             ))
                         )}
                     </div>
-
-                    {/* Simple graph placeholder - we can make it more advanced later */}
-                    <div className="mt-8">
-                        <h3 className="font-medium mb-3">Average Scores Across All Surveys</h3>
-                        <canvas id="staffChart" width="800" height="300" className="w-full"></canvas>
-                    </div>
                 </div>
             </div>
 
-            {/* Copy Link Modal */}
+            {/* Copy Link Modal - unchanged */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
                     <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 p-8">
