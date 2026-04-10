@@ -892,7 +892,6 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    // =============== DELETE ASSESSMENT ===============
     const deleteAssessment = async (id) => {
         console.log('🔴 Delete clicked for ID:', id);
         console.log('Current user ID:', user?.id);
@@ -906,18 +905,25 @@ export default function HealthCalculator() {
 
         console.log('Attempting Supabase delete for ID:', id);
 
-        const { error } = await supabase
+        const { error, count } = await supabase
             .from('assessments')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('user_id', user.id);          // ← extra safety filter
+
+        console.log('Supabase returned count:', count);   // ← this will tell us the truth
 
         if (error) {
             console.error('❌ Delete error:', error);
             alert('Delete failed: ' + error.message);
+        } else if (count === 0) {
+            console.log('⚠️ No rows were deleted (RLS blocked it)');
+            alert('Delete failed — row was not found or you don’t have permission.');
+            loadHistory();
         } else {
             console.log('✅ Delete successful in Supabase!');
             alert('✅ Assessment deleted successfully');
-            loadHistory();   // refresh from server
+            loadHistory();
         }
     };
     // =============== SHOW TOAST ===============
