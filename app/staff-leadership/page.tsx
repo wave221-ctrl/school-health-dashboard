@@ -59,16 +59,28 @@ export default function StaffLeadership() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // High-resolution fix
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = 800 * dpr;
+        canvas.height = 400 * dpr;
+        ctx.scale(dpr, dpr);
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+        const centerX = 400;
+        const centerY = 200;
         const radius = 140;
         const numAxes = 4;
         const angleStep = (Math.PI * 2) / numAxes;
 
+        const domainNames = [
+            'Leadership Effectiveness',
+            'Staff Morale & Retention',
+            'Professional Development',
+            'Spiritual Culture'
+        ];
+
         // Calculate average per domain
-        const domainNames = ['Leadership Effectiveness', 'Staff Morale & Retention', 'Professional Development', 'Spiritual Culture'];
         const averages = domainNames.map(name => {
             let total = 0;
             let count = 0;
@@ -84,6 +96,70 @@ export default function StaffLeadership() {
             });
             return count > 0 ? total / count : 3;
         });
+
+        // Draw grid
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        for (let i = 1; i <= 5; i++) {
+            const r = (radius * i) / 5;
+            ctx.beginPath();
+            for (let j = 0; j < numAxes; j++) {
+                const angle = j * angleStep - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * r;
+                const y = centerY + Math.sin(angle) * r;
+                if (j === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        // Draw axes
+        ctx.strokeStyle = '#cbd5e1';
+        for (let i = 0; i < numAxes; i++) {
+            const angle = i * angleStep - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+            ctx.stroke();
+        }
+
+        // Draw data polygon
+        ctx.beginPath();
+        averages.forEach((value, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const r = (value / 5) * radius;
+            const x = centerX + Math.cos(angle) * r;
+            const y = centerY + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+        ctx.fill();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#1e2937';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        domainNames.forEach((name, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = centerX + Math.cos(angle) * (radius + 45);
+            const y = centerY + Math.sin(angle) * (radius + 45) + 5;
+            ctx.fillText(name, x, y);
+        });
+
+        // Score numbers on axes
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px Arial';
+        for (let i = 1; i <= 5; i++) {
+            const r = (radius * i) / 5;
+            ctx.fillText(i.toString(), centerX - 12, centerY - r + 4);
+        }
+    };
 
         // Draw radar
         ctx.strokeStyle = '#e2e8f0';
