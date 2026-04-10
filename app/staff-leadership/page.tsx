@@ -22,7 +22,7 @@ export default function StaffLeadership() {
 
     const calculateResults = (doms: any[]) => {
         return doms.map(domain => {
-            const avg = domain.metrics.reduce((sum: number, m: any) => sum + (m.score || 3), 0) / domain.metrics.length;
+            const avg = domain.metrics.reduce((sum: number, m: any) => sum + (m.score || 0), 0) / domain.metrics.length;
             return { name: domain.name, avg: Math.round(avg * 100) / 100 };
         });
     };
@@ -35,7 +35,6 @@ export default function StaffLeadership() {
             .select('*')
             .eq('tool', 'staff-leadership')
             .order('review_date', { ascending: false });
-
         setHistory(data || []);
     };
 
@@ -53,7 +52,7 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Draw Radar Chart
+    // Real Radar Chart
     const drawRadarChart = () => {
         const canvas = canvasRef.current;
         if (!canvas || history.length === 0) return;
@@ -61,14 +60,90 @@ export default function StaffLeadership() {
         if (!ctx) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Simple radar chart logic can be expanded later
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 140;
+        const numAxes = 4;
+        const angleStep = (Math.PI * 2) / numAxes;
+
+        // Calculate average per domain
+        const domainNames = ['Leadership Effectiveness', 'Staff Morale & Retention', 'Professional Development', 'Spiritual Culture'];
+        const averages = domainNames.map(name => {
+            let total = 0;
+            let count = 0;
+            history.forEach(record => {
+                if (record.data?.domains) {
+                    const domain = record.data.domains.find((d: any) => d.name === name);
+                    if (domain) {
+                        const avg = domain.metrics.reduce((s: number, m: any) => s + (m.score || 0), 0) / domain.metrics.length;
+                        total += avg;
+                        count++;
+                    }
+                }
+            });
+            return count > 0 ? total / count : 3;
+        });
+
+        // Draw radar
+        ctx.strokeStyle = '#e2e8f0';
         ctx.fillStyle = '#10b981';
-        ctx.fillText('Average Scores Across All Surveys (Radar)', 20, 30);
-        // For now we show a placeholder - we can make it full radar next if you like
+        ctx.lineWidth = 2;
+
+        // Grid + axes
+        for (let i = 0; i < 5; i++) {
+            const r = radius * (i + 1) / 5;
+            ctx.beginPath();
+            for (let j = 0; j < numAxes; j++) {
+                const angle = j * angleStep - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * r;
+                const y = centerY + Math.sin(angle) * r;
+                if (j === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        // Actual data polygon
+        ctx.beginPath();
+        averages.forEach((value, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const r = (value / 5) * radius;
+            const x = centerX + Math.cos(angle) * r;
+            const y = centerY + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+        ctx.fill();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#1e2937';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        domainNames.forEach((name, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = centerX + Math.cos(angle) * (radius + 30);
+            const y = centerY + Math.sin(angle) * (radius + 30);
+            ctx.fillText(name.substring(0, 12), x, y);
+        });
+
+        // Numbers on axes
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px Arial';
+        for (let i = 1; i <= 5; i++) {
+            const r = radius * i / 5;
+            ctx.fillText(i.toString(), centerX - 10, centerY - r + 5);
+        }
     };
 
     useEffect(() => {
-        loadHistory();
+        if (user) loadHistory();
     }, [user]);
 
     useEffect(() => {
@@ -77,7 +152,7 @@ export default function StaffLeadership() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav */}
+            {/* Top Nav - unchanged */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -85,6 +160,7 @@ export default function StaffLeadership() {
                             <div className="w-8 h-8 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold">S</div>
                             <span className="font-semibold text-xl">School Health Score</span>
                         </div>
+
                         <div className="relative group">
                             <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
                                 My Tools <span className="text-xs">▼</span>
@@ -116,14 +192,14 @@ export default function StaffLeadership() {
                     </button>
                 </div>
 
-                {/* Scoring area - keep your existing domains here */}
+                {/* Scoring area - keep your existing domains rendering code here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* History + Graph */}
+                {/* History + Radar + Strategies */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
                     <h2 className="text-2xl font-semibold mb-6">All Feedback Received</h2>
 
@@ -154,7 +230,7 @@ export default function StaffLeadership() {
                         )}
                     </div>
 
-                    {/* Radar / Web Graph */}
+                    {/* Radar Graph */}
                     <div className="mt-12">
                         <h3 className="font-medium mb-4">Average Scores Across All Surveys</h3>
                         <canvas ref={canvasRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
