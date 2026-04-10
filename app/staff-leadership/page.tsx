@@ -8,35 +8,27 @@ import { supabase } from '../lib/supabase';
 
 export default function StaffLeadership() {
     const { user } = useUser();
-    const [domains, setDomains] = useState([ /* ← Paste your full 4 domains array here exactly as before */]);
+
+    const [domains, setDomains] = useState([ /* ← keep your exact 4 domains here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
 
-    // Modal state for survey link
-    const [showModal, setShowModal] = useState(false);
-    const [surveyLink, setSurveyLink] = useState('');
-    const [copied, setCopied] = useState(false);
+    // ← your existing calculateResults, saveAssessment, launchAnonymousSurvey, copyToClipboard, modal state, etc.
 
-    const calculateResults = () => { /* ← your existing calculateResults function */ };
-    const saveAssessment = async () => { /* ← your existing saveAssessment */ };
-    const loadHistory = async () => { /* ← your existing loadHistory */ };
+    const loadHistory = async () => {
+        if (!user) return;
 
-    const launchAnonymousSurvey = () => {
-        const surveyId = 'survey-' + Math.random().toString(36).substring(2, 12);
-        const link = `${window.location.origin}/staff-survey/${surveyId}`;
-        setSurveyLink(link);
-        setShowModal(true);
-        setCopied(false);
-    };
+        const { data, error } = await supabase
+            .from('assessments')
+            .select('*')
+            .eq('tool', 'staff-leadership')
+            .order('review_date', { ascending: false });
 
-    const copyToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(surveyLink);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            alert('Failed to copy');
+        if (error) {
+            console.error(error);
+        } else {
+            setHistory(data || []);
         }
     };
 
@@ -46,7 +38,7 @@ export default function StaffLeadership() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav */}
+            {/* Top Nav - unchanged */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -74,76 +66,40 @@ export default function StaffLeadership() {
                 <h1 className="text-4xl font-bold mb-2">Staff & Leadership Health Assessment</h1>
                 <p className="text-slate-600 mb-8">Self-assessment + Anonymous Staff Survey System</p>
 
-                {/* Launch Anonymous Survey Button */}
-                <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-6 mb-8 flex items-center justify-between">
-                    <div>
-                        <span className="inline-block bg-emerald-600 text-white text-sm font-semibold px-4 py-1 rounded-2xl mb-2">NEW</span>
-                        <h2 className="text-2xl font-semibold">Launch Anonymous Staff Survey</h2>
-                        <p className="text-emerald-700">Staff fill out anonymously → results auto-aggregate here</p>
-                    </div>
-                    <button
-                        onClick={launchAnonymousSurvey}
-                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-8 py-4 rounded-3xl font-semibold text-lg"
-                    >
-                        Create & Share Survey Link →
-                    </button>
-                </div>
+                {/* Launch Survey Button - unchanged */}
+                {/* ... your existing launch button and modal ... */}
 
-                {/* Your existing scoring area stays here exactly as before */}
-                {/* ... paste your domains grid ... */}
+                {/* Your existing scoring area - keep everything you already have here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* History Panel (unchanged) */}
+                {/* History Panel - now shows survey responses too */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
                     <h2 className="text-2xl font-semibold mb-6">Year-over-Year History</h2>
                     <div className="space-y-4 max-h-96 overflow-auto">
-                        {history.map(item => (
-                            <div key={item.id} className="flex justify-between items-center p-4 border rounded-2xl hover:bg-slate-50">
-                                <div><strong>{item.review_date}</strong></div>
-                                <div className="text-emerald-700 font-semibold">Overall: {item.overall_score}</div>
-                            </div>
-                        ))}
+                        {history.length === 0 ? (
+                            <p className="text-slate-500 text-center py-8">No assessments or surveys yet.</p>
+                        ) : (
+                            history.map(item => (
+                                <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
+                                    <div>
+                                        <strong>{item.review_date}</strong>
+                                        {item.data?.survey_id && (
+                                            <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>
+                                        )}
+                                    </div>
+                                    <div className="text-emerald-700 font-semibold">
+                                        Overall: {item.overall_score || '—'}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
-
-            {/* COPY-TO-CLIPBOARD MODAL */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 p-8">
-                        <h3 className="text-2xl font-semibold mb-2">Your Anonymous Survey Link</h3>
-                        <p className="text-slate-600 mb-6">Share this link with your staff. Responses are 100% anonymous.</p>
-
-                        <div className="flex gap-3 mb-6">
-                            <input
-                                type="text"
-                                value={surveyLink}
-                                readOnly
-                                className="flex-1 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-mono bg-slate-50"
-                            />
-                            <button
-                                onClick={copyToClipboard}
-                                className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 rounded-2xl font-medium"
-                            >
-                                {copied ? '✅ Copied!' : 'Copy'}
-                            </button>
-                        </div>
-
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="px-6 py-3 text-slate-700 hover:bg-slate-100 rounded-2xl"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
