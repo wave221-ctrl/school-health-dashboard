@@ -892,7 +892,7 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const const deleteAssessment = async (id) => {
+    const deleteAssessment = async (id) => {
         console.log('🔴 Delete clicked for ID:', id);
         console.log('Current user ID:', user?.id);
 
