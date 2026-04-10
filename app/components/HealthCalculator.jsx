@@ -919,7 +919,6 @@ export default function HealthCalculator() {
             loadHistory();   // refresh the list
         }
     };
-};
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
