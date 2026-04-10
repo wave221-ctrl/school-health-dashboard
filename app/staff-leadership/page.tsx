@@ -9,41 +9,7 @@ import { supabase } from '../lib/supabase';
 export default function StaffLeadership() {
     const { user } = useUser();
 
-    const [domains, setDomains] = useState([
-        {
-            name: 'Leadership Effectiveness',
-            metrics: [
-                { name: 'Clarity of vision and communication', help: 'Leaders clearly articulate direction and expectations', score: 4 },
-                { name: 'Trust and approachability', help: 'Staff feel safe bringing concerns to leadership', score: 3 },
-                { name: 'Decision-making transparency', help: 'Decisions are explained and staff feel heard', score: 4 }
-            ]
-        },
-        {
-            name: 'Staff Morale & Retention',
-            metrics: [
-                { name: 'Overall staff satisfaction', help: 'Staff enjoy coming to work and feel valued', score: 3 },
-                { name: 'Intention to stay next year', help: 'Staff plan to return next school year', score: 4 },
-                { name: 'Work-life balance', help: 'Staff feel supported and not burned out', score: 3 }
-            ]
-        },
-        {
-            name: 'Professional Development',
-            metrics: [
-                { name: 'Growth opportunities', help: 'Staff have access to meaningful training', score: 4 },
-                { name: 'Mentorship and coaching', help: 'New and veteran teachers receive support', score: 3 },
-                { name: 'Feedback culture', help: 'Constructive feedback is given regularly', score: 4 }
-            ]
-        },
-        {
-            name: 'Spiritual Culture',
-            metrics: [
-                { name: 'Faith integration in daily life', help: 'Staff experience spiritual formation at work', score: 4 },
-                { name: 'Prayer and worship culture', help: 'Prayer is regular and meaningful', score: 5 },
-                { name: 'Biblical worldview among staff', help: 'Staff model Christ-like character', score: 4 }
-            ]
-        }
-    ]);
-
+    const [domains, setDomains] = useState([ /* ← keep your exact 4 domains array here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
@@ -56,16 +22,12 @@ export default function StaffLeadership() {
     const calculateResults = () => {
         return domains.map(domain => {
             const avg = domain.metrics.reduce((sum, m) => sum + (m.score || 3), 0) / domain.metrics.length;
-            return {
-                name: domain.name,
-                avg: Math.round(avg * 100) / 100
-            };
+            return { name: domain.name, avg: Math.round(avg * 100) / 100 };
         });
     };
 
     const saveAssessment = async () => {
         if (!user) return alert('Please sign in to save');
-
         const results = calculateResults();
         const overall = results.reduce((sum, r) => sum + r.avg, 0) / results.length;
 
@@ -80,13 +42,12 @@ export default function StaffLeadership() {
         const { error } = await supabase.from('assessments').insert(payload);
         if (error) alert('Save failed: ' + error.message);
         else {
-            alert('✅ Assessment saved!');
+            alert('✅ Saved!');
             loadHistory();
         }
     };
 
     const loadHistory = async () => {
-        if (!user) return;
         const { data } = await supabase
             .from('assessments')
             .select('*')
@@ -110,8 +71,8 @@ export default function StaffLeadership() {
     };
 
     useEffect(() => {
-        if (user) loadHistory();
-    }, [user]);
+        loadHistory();
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -143,40 +104,41 @@ export default function StaffLeadership() {
                 <h1 className="text-4xl font-bold mb-2">Staff & Leadership Health Assessment</h1>
                 <p className="text-slate-600 mb-8">Self-assessment + Anonymous Staff Survey System</p>
 
-                {/* Launch Anonymous Survey */}
+                {/* Launch Survey Button */}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-6 mb-8 flex items-center justify-between">
                     <div>
                         <span className="inline-block bg-emerald-600 text-white text-sm font-semibold px-4 py-1 rounded-2xl mb-2">NEW</span>
                         <h2 className="text-2xl font-semibold">Launch Anonymous Staff Survey</h2>
-                        <p className="text-emerald-700">Staff fill out anonymously → results appear here</p>
+                        <p className="text-emerald-700">Staff fill out anonymously → results appear here instantly</p>
                     </div>
                     <button onClick={launchAnonymousSurvey} className="bg-emerald-700 hover:bg-emerald-800 text-white px-8 py-4 rounded-3xl font-semibold text-lg">
                         Create & Share Survey Link →
                     </button>
                 </div>
 
-                {/* Your scoring area - keep your existing domains rendering here */}
-                {/* ... paste your full domains grid code here if you changed it ... */}
+                {/* Your existing scoring area goes here (keep your domains) */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* History Panel */}
+                {/* History + Graph */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
-                    <h2 className="text-2xl font-semibold mb-6">Year-over-Year History</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold">Feedback Received</h2>
+                        <button onClick={loadHistory} className="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-2xl">Refresh</button>
+                    </div>
+
                     <div className="space-y-4 max-h-96 overflow-auto">
                         {history.length === 0 ? (
-                            <p className="text-slate-500 text-center py-12">No assessments or surveys yet.</p>
+                            <p className="text-slate-500 text-center py-12">No feedback yet. Submit a survey to see results here.</p>
                         ) : (
                             history.map(item => (
                                 <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
                                     <div>
                                         <strong>{item.review_date}</strong>
-                                        {item.data?.survey_id && (
-                                            <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>
-                                        )}
+                                        {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>}
                                     </div>
                                     <div className="text-emerald-700 font-semibold">
                                         Overall: {item.overall_score || '—'}
@@ -184,6 +146,12 @@ export default function StaffLeadership() {
                                 </div>
                             ))
                         )}
+                    </div>
+
+                    {/* Simple graph placeholder - we can make it more advanced later */}
+                    <div className="mt-8">
+                        <h3 className="font-medium mb-3">Average Scores Across All Surveys</h3>
+                        <canvas id="staffChart" width="800" height="300" className="w-full"></canvas>
                     </div>
                 </div>
             </div>
