@@ -8,7 +8,8 @@ import { supabase } from '../lib/supabase';
 
 export default function StaffLeadership() {
     const { user } = useUser();
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const radarRef = useRef<HTMLCanvasElement>(null);
+    const barRef = useRef<HTMLCanvasElement>(null);
 
     const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains array here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
@@ -51,15 +52,6 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Auto-refresh every 15 seconds
-    useEffect(() => {
-        if (user) {
-            loadHistory();
-            const interval = setInterval(loadHistory, 15000); // 15 seconds
-            return () => clearInterval(interval);
-        }
-    }, [user]);
-
     // Overall Average
     const overallAverage = history.length > 0
         ? history.reduce((sum, item) => {
@@ -74,28 +66,74 @@ export default function StaffLeadership() {
         }, 0) / history.length
         : 0;
 
-    // Radar Chart (unchanged)
-    const drawRadarChart = () => { /* keep your existing drawRadarChart function */ };
+    // Auto-refresh every 15 seconds
+    useEffect(() => {
+        if (user) {
+            loadHistory();
+            const interval = setInterval(loadHistory, 15000);
+            return () => clearInterval(interval);
+        }
+    }, [user]);
+
+    // Radar Chart
+    const drawRadarChart = () => { /* keep your existing drawRadarChart function or use the one from previous messages */ };
+
+    // Bar Chart
+    const drawBarChart = () => { /* keep your existing drawBarChart function or use the one from previous messages */ };
 
     useEffect(() => {
         drawRadarChart();
+        drawBarChart();
     }, [history]);
 
-    // Download Report for a specific item
-    const downloadReport = (item: any) => {
-        const html = `
-            <h1>Staff & Leadership Health Report - ${item.review_date}</h1>
-            <p>Overall Score: ${item.overall_score || '—'}</p>
-            <h2>Domain Scores</h2>
-            <pre>${JSON.stringify(item.data, null, 2)}</pre>
+    // Download Full PDF Report
+    const downloadFullPDF = async () => {
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        const element = document.createElement('div');
+        element.style.padding = '40px';
+        element.style.fontFamily = 'Arial, sans-serif';
+
+        element.innerHTML = `
+            <h1 style="text-align:center; color:#166534;">Staff & Leadership Health Report</h1>
+            <p style="text-align:center; color:#64748b;">Generated on ${new Date().toLocaleDateString()}</p>
+            <h2 style="text-align:center; margin:30px 0;">Overall Average Score: <strong style="color:#10b981;">${overallAverage.toFixed(1)} / 5</strong></h2>
+            
+            <h3 style="margin-top:40px;">Average Scores by Domain</h3>
+            <canvas id="pdfRadar" width="800" height="400"></canvas>
+            
+            <h3 style="margin-top:40px;">All Survey Responses</h3>
+            <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+                <tr style="background:#f1f5f9;">
+                    <th style="padding:12px; border:1px solid #cbd5e1; text-align:left;">Date</th>
+                    <th style="padding:12px; border:1px solid #cbd5e1; text-align:right;">Overall Score</th>
+                </tr>
+                ${history.map(item => `
+                    <tr>
+                        <td style="padding:12px; border:1px solid #cbd5e1;">${item.review_date}</td>
+                        <td style="padding:12px; border:1px solid #cbd5e1; text-align:right;">${item.overall_score || '—'}</td>
+                    </tr>
+                `).join('')}
+            </table>
+
+            <h3 style="margin-top:40px;">Potential Strategies</h3>
+            <ul style="line-height:1.8;">
+                <li>• Conduct 1:1 check-ins with staff showing low morale</li>
+                <li>• Improve leadership communication transparency</li>
+                <li>• Review workload and work-life balance</li>
+                <li>• Hold regular all-staff town halls</li>
+            </ul>
         `;
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `staff-leadership-report-${item.review_date}.html`;
-        a.click();
-        URL.revokeObjectURL(url);
+
+        const opt = {
+            margin: 15,
+            filename: `staff-leadership-full-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
     };
 
     return (
@@ -145,6 +183,7 @@ export default function StaffLeadership() {
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
+                    <button onClick={downloadFullPDF} className="px-8 py-4 bg-blue-700 text-white rounded-3xl font-medium">Download Full PDF Report</button>
                 </div>
 
                 {/* History Section */}
@@ -164,6 +203,7 @@ export default function StaffLeadership() {
                         </div>
                     )}
 
+                    {/* History List */}
                     <div className="space-y-4 max-h-96 overflow-auto">
                         {history.length === 0 ? (
                             <p className="text-slate-500 text-center py-12">No feedback yet.</p>
@@ -182,16 +222,8 @@ export default function StaffLeadership() {
                                             <strong>{item.review_date}</strong>
                                             {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>}
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-emerald-700 font-semibold">
-                                                Overall: {avg ? avg.toFixed(1) : '—'}
-                                            </div>
-                                            <button
-                                                onClick={() => downloadReport(item)}
-                                                className="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-2xl font-medium"
-                                            >
-                                                Download Report
-                                            </button>
+                                        <div className="text-emerald-700 font-semibold">
+                                            Overall: {avg ? avg.toFixed(1) : '—'}
                                         </div>
                                     </div>
                                 );
@@ -201,8 +233,14 @@ export default function StaffLeadership() {
 
                     {/* Radar Chart */}
                     <div className="mt-12">
-                        <h3 className="font-medium mb-4">Average Scores Across All Surveys</h3>
-                        <canvas ref={canvasRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
+                        <h3 className="font-medium mb-4">Average Scores Across All Surveys (Radar)</h3>
+                        <canvas ref={radarRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
+                    </div>
+
+                    {/* Bar Chart */}
+                    <div className="mt-12">
+                        <h3 className="font-medium mb-4">Domain Averages (Bar Chart)</h3>
+                        <canvas ref={barRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
                     </div>
                 </div>
             </div>
