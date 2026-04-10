@@ -48,12 +48,19 @@ export default function StaffLeadership() {
     };
 
     const loadHistory = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('assessments')
             .select('*')
-            .eq('tool', 'staff-leadership')
+            .eq('tool', 'staff-leadership')           // ← must match exactly what the survey saves
             .order('review_date', { ascending: false });
-        setHistory(data || []);
+
+        if (error) {
+            console.error('Load history error:', error);
+            alert('Error loading history: ' + error.message);
+        } else {
+            console.log('Loaded', data?.length || 0, 'records');
+            setHistory(data || []);
+        }
     };
 
     const launchAnonymousSurvey = () => {
