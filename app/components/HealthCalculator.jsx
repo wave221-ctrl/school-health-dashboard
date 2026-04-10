@@ -892,9 +892,9 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
+    // =============== DELETE ASSESSMENT ===============
     const deleteAssessment = async (id) => {
         console.log('🔴 Delete clicked for ID:', id);
-        console.log('Current user ID:', user?.id);
 
         if (!user) {
             alert('You must be logged in to delete assessments.');
@@ -902,6 +902,9 @@ export default function HealthCalculator() {
         }
 
         if (!confirm('Delete this assessment permanently? This cannot be undone.')) return;
+
+        // Optimistic update - remove from UI immediately
+        setHistory(prev => prev.filter(item => item.id !== id));
 
         console.log('Attempting Supabase delete for ID:', id);
 
@@ -912,11 +915,14 @@ export default function HealthCalculator() {
 
         if (error) {
             console.error('❌ Delete error:', error);
-            alert('Delete failed: ' + error.message);   // ← now shows the real error
+            alert('Delete failed: ' + error.message);
+            // Revert on error
+            loadHistory();
         } else {
             console.log('✅ Delete successful!');
             alert('✅ Assessment deleted successfully');
-            loadHistory();   // refresh the list
+            // Double-check from server
+            setTimeout(() => loadHistory(), 300);
         }
     };
     // =============== SHOW TOAST ===============
