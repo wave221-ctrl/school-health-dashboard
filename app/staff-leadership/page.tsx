@@ -10,12 +10,12 @@ export default function StaffLeadership() {
     const { user } = useUser();
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains here */]);
+    const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains array here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
 
-    // Modal state
+    // Modal
     const [showModal, setShowModal] = useState(false);
     const [surveyLink, setSurveyLink] = useState('');
     const [copied, setCopied] = useState(false);
@@ -27,26 +27,7 @@ export default function StaffLeadership() {
         });
     };
 
-    const saveAssessment = async () => {
-        if (!user) return alert('Please sign in to save');
-        const results = calculateResults(domains);
-        const overall = results.reduce((sum: number, r: any) => sum + r.avg, 0) / results.length;
-
-        const payload = {
-            school_name: schoolName,
-            review_date: reviewDate,
-            tool: 'staff-leadership',
-            overall_score: Math.round(overall * 10) / 10,
-            data: { domains, results, type: 'self-assessment' }
-        };
-
-        const { error } = await supabase.from('assessments').insert(payload);
-        if (error) alert('Save failed: ' + error.message);
-        else {
-            alert('✅ Assessment saved!');
-            loadHistory();
-        }
-    };
+    const saveAssessment = async () => { /* keep your existing save function */ };
 
     const loadHistory = async () => {
         const { data } = await supabase
@@ -71,6 +52,7 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // High-resolution Radar Chart
     const drawRadarChart = () => {
         const canvas = canvasRef.current;
         if (!canvas || history.length === 0) return;
@@ -208,16 +190,34 @@ export default function StaffLeadership() {
                     </button>
                 </div>
 
-                {/* Your scoring area - keep your existing domains rendering here */}
+                {/* Your scoring area goes here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
                     <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 text-white rounded-3xl font-medium">Save Assessment</button>
                 </div>
 
-                {/* History + Radar + Strategies */}
+                {/* History Section */}
                 <div className="mt-16 bg-white rounded-3xl shadow-sm border p-8">
-                    <h2 className="text-2xl font-semibold mb-6">All Feedback Received</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold">All Feedback Received</h2>
+                        <button onClick={loadHistory} className="text-sm bg-slate-100 hover:bg-slate-200 px-5 py-2 rounded-2xl font-medium">Refresh</button>
+                    </div>
+
+                    {/* Overall Average */}
+                    {history.length > 0 && (
+                        <div className="mb-8 p-6 bg-emerald-50 rounded-3xl text-center">
+                            <p className="text-sm text-emerald-700 font-medium">Overall Average from {history.length} Surveys</p>
+                            <div className="text-6xl font-bold text-emerald-700 mt-2">
+                                {history.reduce((sum, item) => {
+                                    const avg = item.data?.domains
+                                        ? item.data.domains.reduce((s: number, d: any) => s + d.metrics.reduce((ss: number, m: any) => ss + (m.score || 0), 0) / d.metrics.length, 0) / item.data.domains.length
+                                        : 0;
+                                    return sum + avg;
+                                }, 0) / history.length).toFixed(1)}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-4 max-h-96 overflow-auto">
                         {history.length === 0 ? (
