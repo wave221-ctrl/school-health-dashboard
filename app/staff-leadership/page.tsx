@@ -8,7 +8,8 @@ import { supabase } from '../lib/supabase';
 
 export default function StaffLeadership() {
     const { user } = useUser();
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const radarRef = useRef<HTMLCanvasElement>(null);
+    const trendRef = useRef<HTMLCanvasElement>(null);
 
     const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains array here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
@@ -51,7 +52,7 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Overall Average (moved outside JSX to avoid parsing error)
+    // Overall Average
     const overallAverage = history.length > 0
         ? history.reduce((sum, item) => {
             if (item.data?.domains) {
@@ -65,9 +66,9 @@ export default function StaffLeadership() {
         }, 0) / history.length
         : 0;
 
-    // Radar Chart
+    // Draw Radar Chart (crisp)
     const drawRadarChart = () => {
-        const canvas = canvasRef.current;
+        const canvas = radarRef.current;
         if (!canvas || history.length === 0) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -78,22 +79,14 @@ export default function StaffLeadership() {
         ctx.scale(dpr, dpr);
         ctx.clearRect(0, 0, 800, 400);
 
-        const centerX = 400;
-        const centerY = 200;
-        const radius = 140;
+        const centerX = 400, centerY = 200, radius = 140;
         const numAxes = 4;
         const angleStep = (Math.PI * 2) / numAxes;
 
-        const domainNames = [
-            'Leadership Effectiveness',
-            'Staff Morale & Retention',
-            'Professional Development',
-            'Spiritual Culture'
-        ];
+        const domainNames = ['Leadership Effectiveness', 'Staff Morale & Retention', 'Professional Development', 'Spiritual Culture'];
 
         const averages = domainNames.map(name => {
-            let total = 0;
-            let count = 0;
+            let total = 0, count = 0;
             history.forEach(record => {
                 if (record.data?.domains) {
                     const domain = record.data.domains.find((d: any) => d.name === name);
@@ -107,7 +100,7 @@ export default function StaffLeadership() {
             return count > 0 ? total / count : 3;
         });
 
-        // Grid + axes
+        // Grid and axes
         ctx.strokeStyle = '#e2e8f0';
         for (let i = 1; i <= 5; i++) {
             const r = (radius * i) / 5;
@@ -242,64 +235,4 @@ export default function StaffLeadership() {
                                     <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl hover:bg-slate-50">
                                         <div>
                                             <strong>{item.review_date}</strong>
-                                            {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3xl">Anonymous Survey</span>}
-                                        </div>
-                                        <div className="text-emerald-700 font-semibold">
-                                            Overall: {avg ? avg.toFixed(1) : '—'}
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-
-                    {/* Radar Chart */}
-                    <div className="mt-12">
-                        <h3 className="font-medium mb-4">Average Scores Across All Surveys</h3>
-                        <canvas ref={canvasRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
-                    </div>
-
-                    {/* Strategies */}
-                    <div className="mt-12">
-                        <h3 className="font-medium mb-4">Potential Strategies to Address Low Areas</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-5 border rounded-2xl bg-amber-50">
-                                <strong>Low Morale / Retention?</strong>
-                                <ul className="text-sm mt-3 space-y-2 text-slate-700">
-                                    <li>• Conduct 1:1 check-ins with staff</li>
-                                    <li>• Review workload and work-life balance</li>
-                                    <li>• Celebrate wins more frequently</li>
-                                </ul>
-                            </div>
-                            <div className="p-5 border rounded-2xl bg-amber-50">
-                                <strong>Low Leadership Effectiveness?</strong>
-                                <ul className="text-sm mt-3 space-y-2 text-slate-700">
-                                    <li>• Improve communication transparency</li>
-                                    <li>• Hold regular all-staff town halls</li>
-                                    <li>• Seek feedback on decision-making</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Copy Link Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 p-8">
-                        <h3 className="text-2xl font-semibold mb-2">Your Anonymous Survey Link</h3>
-                        <p className="text-slate-600 mb-6">Share this link with your staff.</p>
-                        <div className="flex gap-3 mb-6">
-                            <input type="text" value={surveyLink} readOnly className="flex-1 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-mono bg-slate-50" />
-                            <button onClick={copyToClipboard} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 rounded-2xl font-medium">
-                                {copied ? '✅ Copied!' : 'Copy'}
-                            </button>
-                        </div>
-                        <button onClick={() => setShowModal(false)} className="w-full py-3 text-slate-700 hover:bg-slate-100 rounded-2xl">Close</button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
+                                            {item.data?.survey_id && <span className="ml-3 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-3
