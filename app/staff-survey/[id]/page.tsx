@@ -66,11 +66,13 @@ export default function PublicStaffSurvey() {
 
         setLoading(true);
 
-        // Safe payload - only uses columns that actually exist in your table
+        // Minimal payload - only uses the 'data' column that definitely exists
         const payload = {
-            school_name: `Staff Survey ${surveyId.substring(0, 8)}`,
-            review_date: new Date().toISOString().split('T')[0],
-            data: { domains, survey_id: surveyId }
+            data: {
+                domains,
+                survey_id: surveyId,
+                submitted_at: new Date().toISOString()
+            }
         };
 
         const { error } = await supabase.from('assessments').insert(payload);
