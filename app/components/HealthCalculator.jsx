@@ -745,17 +745,11 @@ export default function HealthCalculator() {
     // =============== LOAD HISTORY ===============
     const loadHistory = async () => {
         if (!user) return;
-
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('assessments')
-            .select('id, review_date, overall_score, data')
-            .eq('user_id', user.id)           // ← ONLY SHOW THIS USER'S DATA
+            .select('*')
+            .eq('tool', 'school-health')   // or whatever your main tool's 'tool' value is
             .order('review_date', { ascending: false });
-
-        if (error) {
-            console.error(error);
-            return;
-        }
         setHistory(data || []);
     };
 
@@ -892,25 +886,17 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
-            if (!user) return;
-            if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
-                return;
-            }
+    cconst deleteAssessment = async (id) => {
+        if (!confirm('Are you sure you want to delete this assessment? This cannot be undone.')) return;
 
-            const { error } = await supabase
-                .from('assessments')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', user.id);   // ← only delete own records
+        const { error } = await supabase
+            .from('assessments')
+            .delete()
+            .eq('id', id);
 
-        if (error) {
-                showToast('✅ Assessment deleted' + error.message);
-            } else {
-                showToast('✅ Assessment deleted');
-                loadHistory();
-            }
-        };
+        if (error) alert('Delete failed: ' + error.message);
+        else loadHistory();
+    };
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -1262,15 +1248,7 @@ export default function HealthCalculator() {
                                                 e.stopPropagation();
                                                 deleteAssessment(item.id);
                                             }}
-                                            style={{
-                                                background: '#991b1b',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '6px 14px',
-                                                borderRadius: '8px',
-                                                fontSize: '0.9rem',
-                                                cursor: 'pointer'
-                                            }}
+                                            className="text-red-600 hover:text-red-700 px-4 py-1 rounded-xl font-medium"
                                         >
                                             Delete
                                         </button>
