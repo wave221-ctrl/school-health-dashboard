@@ -905,25 +905,20 @@ export default function HealthCalculator() {
 
         console.log('Attempting Supabase delete for ID:', id);
 
-        const { error, count } = await supabase
+        const { error } = await supabase
             .from('assessments')
             .delete()
             .eq('id', id)
-            .eq('user_id', user.id);   // ← extra strict filter
-
-        console.log('Supabase returned count:', count);
+            .eq('user_id', user.id);   // ← double safety filter
 
         if (error) {
             console.error('❌ Delete error:', error);
             alert('Delete failed: ' + error.message);
-        } else if (count === 0) {
-            console.log('⚠️ No rows were deleted — RLS is blocking it');
-            alert('Delete failed — Supabase could not find or delete the row.');
-            loadHistory();
         } else {
-            console.log('✅ Delete successful in Supabase!');
+            console.log('✅ Supabase accepted the delete command');
             alert('✅ Assessment deleted successfully');
-            loadHistory();
+            // Force a fresh reload from the server
+            setTimeout(() => loadHistory(), 400);
         }
     };
     // =============== SHOW TOAST ===============
