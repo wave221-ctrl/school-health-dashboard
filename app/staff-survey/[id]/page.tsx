@@ -66,8 +66,8 @@ export default function PublicStaffSurvey() {
 
         setLoading(true);
 
-        // This is the safest payload that matches your actual table
         const payload = {
+            review_date: new Date().toISOString().split('T')[0],   // ← required column
             data: {
                 domains,
                 survey_id: surveyId
