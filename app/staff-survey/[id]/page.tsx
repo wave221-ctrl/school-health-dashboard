@@ -67,7 +67,8 @@ export default function PublicStaffSurvey() {
         setLoading(true);
 
         const payload = {
-            review_date: new Date().toISOString().split('T')[0],   // ← required column
+            tool: 'staff-leadership',                    // ← This is the key
+            review_date: new Date().toISOString().split('T')[0],
             data: {
                 domains,
                 survey_id: surveyId
