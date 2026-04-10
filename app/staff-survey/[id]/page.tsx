@@ -66,10 +66,8 @@ export default function PublicStaffSurvey() {
 
         setLoading(true);
 
-        // Safe payload that works with your current table
+        // This is the safest payload that matches your actual table
         const payload = {
-            school_name: `Staff Survey ${surveyId.substring(0, 8)}`,
-            review_date: new Date().toISOString().split('T')[0],   // ← today's date (required)
             data: {
                 domains,
                 survey_id: surveyId
