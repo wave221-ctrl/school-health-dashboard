@@ -892,7 +892,7 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id: number) => {
+    const deleteAssessment = async (id) => {
         if (!user || !confirm('Delete this assessment permanently?')) return;
 
         const { error } = await supabase
@@ -904,8 +904,8 @@ export default function HealthCalculator() {
             console.error('Delete error:', error);
             alert('Delete failed: ' + error.message);
         } else {
-            showToast('✅ Assessment Deleted Successfully!');
-            loadHistory();   // refresh the list
+            alert('✅ Assessment deleted');
+            loadHistory();        // refreshes the list
         }
     };
     // =============== SHOW TOAST ===============
