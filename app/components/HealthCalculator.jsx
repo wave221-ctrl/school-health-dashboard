@@ -892,25 +892,22 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
-            if (!user) return;
-            if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
-                return;
-            }
+    const deleteAssessment = async (id: number) => {
+        if (!user || !confirm('Delete this assessment permanently?')) return;
 
-            const { error } = await supabase
-                .from('assessments')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', user.id);   // ← only delete own records
+        const { error } = await supabase
+            .from('assessments')
+            .delete()
+            .eq('id', id);
 
         if (error) {
-                showToast('✅ Assessment deleted' + error.message);
-            } else {
-                showToast('✅ Assessment deleted');
-                loadHistory();
-            }
-        };
+            console.error('Delete error:', error);
+            alert('Delete failed: ' + error.message);
+        } else {
+            showToast('✅ Assessment Deleted Successfully!');
+            loadHistory();   // refresh the list
+        }
+    };
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -1259,18 +1256,10 @@ export default function HealthCalculator() {
                                         </button>
                                         <button
                                             onClick={(e) => {
-                                                e.stopPropagation();
+                                                e.stopPropagation();           // important!
                                                 deleteAssessment(item.id);
                                             }}
-                                            style={{
-                                                background: '#991b1b',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '6px 14px',
-                                                borderRadius: '8px',
-                                                fontSize: '0.9rem',
-                                                cursor: 'pointer'
-                                            }}
+                                            className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-xl hover:bg-red-50"
                                         >
                                             Delete
                                         </button>
