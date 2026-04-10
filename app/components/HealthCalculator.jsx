@@ -893,21 +893,21 @@ export default function HealthCalculator() {
 
     // =============== DELETE ASSESSMENT ===============
     const deleteAssessment = async (id) => {
-        if (!user || !confirm('Delete this assessment permanently?')) return;
+    if (!user || !confirm('Delete this assessment permanently?')) return;
 
-        const { error } = await supabase
-            .from('assessments')
-            .delete()
-            .eq('id', id);
+    const { error } = await supabase
+        .from('assessments')
+        .delete()
+        .eq('id', id);
 
-        if (error) {
-            console.error('Delete error:', error);
-            alert('Delete failed: ' + error.message);
-        } else {
-            alert('✅ Assessment deleted');
-            loadHistory();        // refreshes the list
-        }
-    };
+    if (error) {
+        console.error('Delete error:', error);
+        alert('Delete failed: ' + error.message);
+    } else {
+        alert('✅ Assessment deleted');
+        loadHistory();        // refreshes the list
+    }
+};
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
         setToast({ message, type });

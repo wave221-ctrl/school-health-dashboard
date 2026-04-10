@@ -530,7 +530,6 @@ export default function StaffLeadership() {
                 {/* Action buttons */}
                 <div className="flex justify-end gap-4 mb-12">
                     <button onClick={() => setDomains(DEFAULT_DOMAINS)} className="px-8 py-4 bg-gray-200 hover:bg-gray-300 rounded-3xl font-medium">Reset</button>
-                    <button onClick={saveAssessment} className="px-8 py-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-3xl font-medium">Save Assessment</button>
                     <button onClick={downloadFullPDF} className="px-8 py-4 bg-blue-700 hover:bg-blue-800 text-white rounded-3xl font-medium">Download Full PDF Report</button>
                 </div>
 
