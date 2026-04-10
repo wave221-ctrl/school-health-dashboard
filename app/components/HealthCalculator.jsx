@@ -912,7 +912,7 @@ export default function HealthCalculator() {
 
         if (error) {
             console.error('❌ Delete error:', error);
-            alert('Delete failed: ' + error.message);
+            alert('Delete failed: ' + error.message);   // ← now shows the real error
         } else {
             console.log('✅ Delete successful!');
             alert('✅ Assessment deleted successfully');
