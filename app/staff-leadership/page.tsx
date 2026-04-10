@@ -10,12 +10,12 @@ export default function StaffLeadership() {
     const { user } = useUser();
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const [domains, setDomains] = useState([ /* ← keep your exact 4 domains here */]);
+    const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
 
-    // Modal
+    // Modal state
     const [showModal, setShowModal] = useState(false);
     const [surveyLink, setSurveyLink] = useState('');
     const [copied, setCopied] = useState(false);
@@ -27,7 +27,26 @@ export default function StaffLeadership() {
         });
     };
 
-    const saveAssessment = async () => { /* keep your existing save function */ };
+    const saveAssessment = async () => {
+        if (!user) return alert('Please sign in to save');
+        const results = calculateResults(domains);
+        const overall = results.reduce((sum: number, r: any) => sum + r.avg, 0) / results.length;
+
+        const payload = {
+            school_name: schoolName,
+            review_date: reviewDate,
+            tool: 'staff-leadership',
+            overall_score: Math.round(overall * 10) / 10,
+            data: { domains, results, type: 'self-assessment' }
+        };
+
+        const { error } = await supabase.from('assessments').insert(payload);
+        if (error) alert('Save failed: ' + error.message);
+        else {
+            alert('✅ Assessment saved!');
+            loadHistory();
+        }
+    };
 
     const loadHistory = async () => {
         const { data } = await supabase
@@ -52,20 +71,18 @@ export default function StaffLeadership() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Real Radar Chart
     const drawRadarChart = () => {
         const canvas = canvasRef.current;
         if (!canvas || history.length === 0) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // High-resolution fix
         const dpr = window.devicePixelRatio || 1;
         canvas.width = 800 * dpr;
         canvas.height = 400 * dpr;
         ctx.scale(dpr, dpr);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, 800, 400);
 
         const centerX = 400;
         const centerY = 200;
@@ -80,7 +97,6 @@ export default function StaffLeadership() {
             'Spiritual Culture'
         ];
 
-        // Calculate average per domain
         const averages = domainNames.map(name => {
             let total = 0;
             let count = 0;
@@ -97,9 +113,8 @@ export default function StaffLeadership() {
             return count > 0 ? total / count : 3;
         });
 
-        // Draw grid
+        // Grid
         ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
         for (let i = 1; i <= 5; i++) {
             const r = (radius * i) / 5;
             ctx.beginPath();
@@ -114,17 +129,7 @@ export default function StaffLeadership() {
             ctx.stroke();
         }
 
-        // Draw axes
-        ctx.strokeStyle = '#cbd5e1';
-        for (let i = 0; i < numAxes; i++) {
-            const angle = i * angleStep - Math.PI / 2;
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
-            ctx.stroke();
-        }
-
-        // Draw data polygon
+        // Data polygon
         ctx.beginPath();
         averages.forEach((value, i) => {
             const angle = i * angleStep - Math.PI / 2;
@@ -151,71 +156,6 @@ export default function StaffLeadership() {
             const y = centerY + Math.sin(angle) * (radius + 45) + 5;
             ctx.fillText(name, x, y);
         });
-
-        // Score numbers on axes
-        ctx.fillStyle = '#64748b';
-        ctx.font = '12px Arial';
-        for (let i = 1; i <= 5; i++) {
-            const r = (radius * i) / 5;
-            ctx.fillText(i.toString(), centerX - 12, centerY - r + 4);
-        }
-    };
-
-        // Draw radar
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.fillStyle = '#10b981';
-        ctx.lineWidth = 2;
-
-        // Grid + axes
-        for (let i = 0; i < 5; i++) {
-            const r = radius * (i + 1) / 5;
-            ctx.beginPath();
-            for (let j = 0; j < numAxes; j++) {
-                const angle = j * angleStep - Math.PI / 2;
-                const x = centerX + Math.cos(angle) * r;
-                const y = centerY + Math.sin(angle) * r;
-                if (j === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.stroke();
-        }
-
-        // Actual data polygon
-        ctx.beginPath();
-        averages.forEach((value, i) => {
-            const angle = i * angleStep - Math.PI / 2;
-            const r = (value / 5) * radius;
-            const x = centerX + Math.cos(angle) * r;
-            const y = centerY + Math.sin(angle) * r;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
-        ctx.fill();
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Labels
-        ctx.fillStyle = '#1e2937';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        domainNames.forEach((name, i) => {
-            const angle = i * angleStep - Math.PI / 2;
-            const x = centerX + Math.cos(angle) * (radius + 30);
-            const y = centerY + Math.sin(angle) * (radius + 30);
-            ctx.fillText(name.substring(0, 12), x, y);
-        });
-
-        // Numbers on axes
-        ctx.fillStyle = '#64748b';
-        ctx.font = '12px Arial';
-        for (let i = 1; i <= 5; i++) {
-            const r = radius * i / 5;
-            ctx.fillText(i.toString(), centerX - 10, centerY - r + 5);
-        }
     };
 
     useEffect(() => {
@@ -228,7 +168,7 @@ export default function StaffLeadership() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav - unchanged */}
+            {/* Top Nav */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -268,7 +208,7 @@ export default function StaffLeadership() {
                     </button>
                 </div>
 
-                {/* Scoring area - keep your existing domains rendering code here */}
+                {/* Your scoring area - keep your existing domains rendering here */}
 
                 <div className="mt-12 flex justify-end gap-4">
                     <button className="px-8 py-4 bg-gray-200 rounded-3xl font-medium">Reset</button>
@@ -306,7 +246,7 @@ export default function StaffLeadership() {
                         )}
                     </div>
 
-                    {/* Radar Graph */}
+                    {/* Radar Chart */}
                     <div className="mt-12">
                         <h3 className="font-medium mb-4">Average Scores Across All Surveys</h3>
                         <canvas ref={canvasRef} width="800" height="400" className="w-full border border-slate-200 rounded-3xl"></canvas>
