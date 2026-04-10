@@ -835,24 +835,32 @@ export default function HealthCalculator() {
 
     // =============== DELETE ASSESSMENT ===============
     const deleteAssessment = async (id) => {
-            if (!user) return;
-            if (!window.confirm('Are you sure you want to permanently delete this saved assessment?')) {
-                return;
-            }
+        console.log('🔴 Delete clicked for ID:', id);
+        console.log('Current user ID:', user?.id);
 
-            const { error } = await supabase
-                .from('assessments')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', user.id);   // ← only delete own records
+        if (!user) {
+            alert('You must be logged in to delete assessments.');
+            return;
+        }
 
-            if (error) {
-                alert('Delete failed: ' + error.message);
-            } else {
-                alert('✅ Assessment deleted');
-                loadHistory();
-            }
-        };
+        if (!confirm('Delete this assessment permanently? This cannot be undone.')) return;
+
+        console.log('Attempting Supabase delete for ID:', id);
+
+        const { error } = await supabase
+            .from('assessments')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ Delete error:', error);
+            alert('Delete failed: ' + error.message);
+        } else {
+            console.log('✅ Delete successful!');
+            alert('✅ Assessment deleted successfully');
+            loadHistory();   // refresh the list
+        }
+    };
 
         return (
             <div className="wrap">
@@ -1164,20 +1172,12 @@ export default function HealthCalculator() {
                                         </button>
                                         <button
                                             onClick={(e) => {
-                                                e.stopPropagation();
+                                                e.stopPropagation();           // ← THIS IS IMPORTANT
                                                 deleteAssessment(item.id);
                                             }}
-                                            style={{
-                                                background: '#991b1b',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '6px 14px',
-                                                borderRadius: '8px',
-                                                fontSize: '0.9rem',
-                                                cursor: 'pointer'
-                                            }}
+                                            className="text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 rounded-2xl hover:bg-red-50"
                                         >
-                                            Delete
+                                            🗑 Delete
                                         </button>
                                     </div>
                                 </div>

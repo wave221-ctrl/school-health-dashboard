@@ -892,21 +892,33 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
-    if (!user || !confirm('Delete this assessment permanently?')) return;
+    const const deleteAssessment = async (id) => {
+        console.log('🔴 Delete clicked for ID:', id);
+        console.log('Current user ID:', user?.id);
 
-    const { error } = await supabase
-        .from('assessments')
-        .delete()
-        .eq('id', id);
+        if (!user) {
+            alert('You must be logged in to delete assessments.');
+            return;
+        }
 
-    if (error) {
-        console.error('Delete error:', error);
-        alert('Delete failed: ' + error.message);
-    } else {
-        alert('✅ Assessment deleted');
-        loadHistory();        // refreshes the list
-    }
+        if (!confirm('Delete this assessment permanently? This cannot be undone.')) return;
+
+        console.log('Attempting Supabase delete for ID:', id);
+
+        const { error } = await supabase
+            .from('assessments')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ Delete error:', error);
+            alert('Delete failed: ' + error.message);
+        } else {
+            console.log('✅ Delete successful!');
+            alert('✅ Assessment deleted successfully');
+            loadHistory();   // refresh the list
+        }
+    };
 };
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
