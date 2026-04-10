@@ -11,41 +11,7 @@ export default function StaffLeadership() {
     const radarRef = useRef<HTMLCanvasElement>(null);
     const barRef = useRef<HTMLCanvasElement>(null);
 
-    const [domains, setDomains] = useState([
-        {
-            name: 'Leadership Effectiveness',
-            metrics: [
-                { name: 'Clarity of vision and communication', help: 'Leaders clearly articulate direction and expectations', score: 4 },
-                { name: 'Trust and approachability', help: 'Staff feel safe bringing concerns to leadership', score: 3 },
-                { name: 'Decision-making transparency', help: 'Decisions are explained and staff feel heard', score: 4 }
-            ]
-        },
-        {
-            name: 'Staff Morale & Retention',
-            metrics: [
-                { name: 'Overall staff satisfaction', help: 'Staff enjoy coming to work and feel valued', score: 3 },
-                { name: 'Intention to stay next year', help: 'Staff plan to return next school year', score: 4 },
-                { name: 'Work-life balance', help: 'Staff feel supported and not burned out', score: 3 }
-            ]
-        },
-        {
-            name: 'Professional Development',
-            metrics: [
-                { name: 'Growth opportunities', help: 'Staff have access to meaningful training', score: 4 },
-                { name: 'Mentorship and coaching', help: 'New and veteran teachers receive support', score: 3 },
-                { name: 'Feedback culture', help: 'Constructive feedback is given regularly', score: 4 }
-            ]
-        },
-        {
-            name: 'Spiritual Culture',
-            metrics: [
-                { name: 'Faith integration in daily life', help: 'Staff experience spiritual formation at work', score: 4 },
-                { name: 'Prayer and worship culture', help: 'Prayer is regular and meaningful', score: 5 },
-                { name: 'Biblical worldview among staff', help: 'Staff model Christ-like character', score: 4 }
-            ]
-        }
-    ]);
-
+    const [domains, setDomains] = useState([ /* ← Paste your exact 4 domains array here */]);
     const [schoolName, setSchoolName] = useState('Trinity Lutheran School');
     const [reviewDate, setReviewDate] = useState('2026-04-09');
     const [history, setHistory] = useState<any[]>([]);
@@ -61,26 +27,7 @@ export default function StaffLeadership() {
         });
     };
 
-    const saveAssessment = async () => {
-        if (!user) return alert('Please sign in to save');
-        const results = calculateResults(domains);
-        const overall = results.reduce((sum: number, r: any) => sum + r.avg, 0) / results.length;
-
-        const payload = {
-            school_name: schoolName,
-            review_date: reviewDate,
-            tool: 'staff-leadership',
-            overall_score: Math.round(overall * 10) / 10,
-            data: { domains, results, type: 'self-assessment' }
-        };
-
-        const { error } = await supabase.from('assessments').insert(payload);
-        if (error) alert('Save failed: ' + error.message);
-        else {
-            alert('✅ Assessment saved!');
-            loadHistory();
-        }
-    };
+    const saveAssessment = async () => { /* keep your existing save function */ };
 
     const loadHistory = async () => {
         const { data } = await supabase
@@ -262,7 +209,7 @@ export default function StaffLeadership() {
         drawBarChart();
     }, [history]);
 
-    // Download Full PDF Report
+    // Download Full PDF Report (fixed TypeScript)
     const downloadFullPDF = async () => {
         const html2pdf = (await import('html2pdf.js')).default;
 
@@ -273,8 +220,10 @@ export default function StaffLeadership() {
             <h1 style="text-align:center; color:#166534;">Staff & Leadership Health Report</h1>
             <p style="text-align:center; color:#64748b;">Generated on ${new Date().toLocaleDateString()}</p>
             <h2 style="text-align:center; margin:30px 0;">Overall Average Score: <strong style="color:#10b981;">${overallAverage.toFixed(1)} / 5</strong></h2>
+            
             <h3 style="margin-top:40px;">Average Scores by Domain</h3>
             <div style="height:400px; background:#f8fafc; border-radius:12px; margin:20px 0;"></div>
+            
             <h3 style="margin-top:40px;">All Survey Responses</h3>
             <table style="width:100%; border-collapse:collapse; margin-top:20px;">
                 <tr style="background:#f1f5f9;">
@@ -288,6 +237,7 @@ export default function StaffLeadership() {
                     </tr>
                 `).join('')}
             </table>
+
             <h3 style="margin-top:40px;">Potential Strategies</h3>
             <ul style="line-height:1.8;">
                 <li>• Conduct 1:1 check-ins with staff showing low morale</li>
@@ -300,7 +250,7 @@ export default function StaffLeadership() {
         const opt = {
             margin: 15,
             filename: `staff-leadership-full-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
