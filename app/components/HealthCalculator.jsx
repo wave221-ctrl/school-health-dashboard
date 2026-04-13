@@ -243,7 +243,6 @@ export default function HealthCalculator() {
         const chartH = h - padding.top - padding.bottom;
         const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
 
-        // Grid
         ctx.strokeStyle = '#e2e8f0';
         for (let i = 0; i <= 5; i++) {
             const y = padding.top + (chartH / 5) * i;
@@ -276,7 +275,6 @@ export default function HealthCalculator() {
             });
         });
 
-        // Labels
         ctx.fillStyle = '#1e2937';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
@@ -309,7 +307,6 @@ export default function HealthCalculator() {
 
         const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
 
-        // Grid
         ctx.strokeStyle = '#e2e8f0';
         for (let level = 1; level <= 5; level++) {
             const r = radius * (level / 5);
@@ -324,7 +321,6 @@ export default function HealthCalculator() {
             ctx.stroke();
         }
 
-        // Each year's radar
         datasets.forEach((yearData, i) => {
             const res = yearData.data?.results || yearData.results || [];
             ctx.beginPath();
@@ -343,7 +339,6 @@ export default function HealthCalculator() {
             ctx.fill();
         });
 
-        // Labels
         ctx.fillStyle = '#1e2937';
         ctx.font = '13px Arial';
         ctx.textAlign = 'center';
@@ -383,7 +378,6 @@ export default function HealthCalculator() {
 
             <div className="grid">
                 <aside className="section-stack">
-                    {/* School Information */}
                     <section className="card">
                         <h2>School Information</h2>
                         <div className="field">
@@ -412,7 +406,7 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Full Scoring Guide */}
+                    {/* Scoring Guide */}
                     <section className="card">
                         <h2>Scoring Guide – What Each Score Really Means</h2>
                         <table>
@@ -511,7 +505,6 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Notes */}
                     <section className="card">
                         <h2>Notes</h2>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={8} placeholder="Add key findings, assumptions, concerns, and next steps." />
@@ -519,7 +512,6 @@ export default function HealthCalculator() {
                 </aside>
 
                 <main className="section-stack">
-                    {/* Overall Summary */}
                     <section className="card">
                         <h2>Overall Summary</h2>
                         <div className="summary-grid">
@@ -530,7 +522,6 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Domain Scoring */}
                     <section className="card">
                         <h2>Domain Scoring</h2>
                         {domains.map((domain, dIndex) => (
@@ -601,17 +592,14 @@ export default function HealthCalculator() {
                         </div>
                     )}
 
-                    {/* Charts */}
                     <section className="card">
                         <h2>Health Visualization</h2>
                         <canvas ref={barChartRef} width="960" height="340" />
-                        <div className="footer-note">Quick visual comparisons make board conversations slightly less painful.</div>
                     </section>
 
                     <section className="card">
                         <h2>Radar View</h2>
                         <canvas ref={radarChartRef} width="960" height="420" />
-                        <div className="footer-note">A quick way to see whether the school is balanced or lopsided across domains.</div>
                     </section>
 
                     {/* Priority Actions */}
@@ -631,7 +619,7 @@ export default function HealthCalculator() {
                         <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains.</div>
                     </section>
 
-                    {/* History - No Delete Button */}
+                    {/* History - No Delete */}
                     <div className="card" style={{ marginTop: '30px' }}>
                         <h2>📅 Year-over-Year History</h2>
                         <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
