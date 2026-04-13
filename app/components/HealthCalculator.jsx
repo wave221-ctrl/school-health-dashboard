@@ -12,42 +12,54 @@ export default function HealthCalculator() {
     // ==================== STATE ====================
     const [domains, setDomains] = useState([
         {
-            name: 'Enrollment & Retention', weight: 1.2, metrics: [
+            name: 'Enrollment & Retention',
+            weight: 1.2,
+            metrics: [
                 { name: 'Enrollment trend', help: 'Are admissions stable or growing?', score: 3 },
                 { name: 'Student retention', help: 'Do families stay year to year?', score: 3 },
                 { name: 'Inquiry-to-enrollment pipeline', help: 'Is recruitment converting?', score: 3 }
             ]
         },
         {
-            name: 'Academic Program', weight: 1.2, metrics: [
+            name: 'Academic Program',
+            weight: 1.2,
+            metrics: [
                 { name: 'Curriculum alignment', help: 'Clear, consistent academic expectations', score: 3 },
                 { name: 'Instructional quality', help: 'Classroom teaching strength', score: 3 },
                 { name: 'Student support systems', help: 'Interventions and support are functioning', score: 3 }
             ]
         },
         {
-            name: 'Culture & Mission', weight: 1.1, metrics: [
+            name: 'Culture & Mission',
+            weight: 1.1,
+            metrics: [
                 { name: 'Mission clarity', help: 'Mission is visible and understood', score: 3 },
                 { name: 'Student / family culture', help: 'The community is healthy and engaged', score: 3 },
                 { name: 'Spiritual identity / values', help: 'Faith and identity are integrated well', score: 3 }
             ]
         },
         {
-            name: 'Finance & Operations', weight: 1.25, metrics: [
+            name: 'Finance & Operations',
+            weight: 1.25,
+            metrics: [
                 { name: 'Budget stability', help: 'Budget is sustainable and monitored', score: 3 },
                 { name: 'Facilities / deferred maintenance', help: 'Buildings are cared for', score: 3 },
                 { name: 'Operational systems', help: 'Processes are documented and dependable', score: 3 }
             ]
         },
         {
-            name: 'Leadership & Staffing', weight: 1.15, metrics: [
+            name: 'Leadership & Staffing',
+            weight: 1.15,
+            metrics: [
                 { name: 'Leadership effectiveness', help: 'Leadership is clear and trusted', score: 3 },
                 { name: 'Staff morale / retention', help: 'People want to stay and contribute', score: 3 },
                 { name: 'Professional development', help: 'Staff growth is intentional', score: 3 }
             ]
         },
         {
-            name: 'Marketing & Community Presence', weight: 1.0, metrics: [
+            name: 'Marketing & Community Presence',
+            weight: 1.0,
+            metrics: [
                 { name: 'Brand clarity', help: 'The school story is clear', score: 3 },
                 { name: 'Website / digital presence', help: 'The website and digital communication are useful', score: 3 },
                 { name: 'Community engagement', help: 'The school is visible and connected', score: 3 }
@@ -161,8 +173,9 @@ export default function HealthCalculator() {
             data: assessmentData
         });
 
-        if (error) showToast('Save failed: ' + error.message, 'error');
-        else {
+        if (error) {
+            showToast('Save failed: ' + error.message, 'error');
+        } else {
             showToast('✅ Assessment saved successfully!');
             loadHistory();
         }
@@ -199,16 +212,16 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== IMPROVEMENT PLAN - FIXED WITH SPECIFIC ACTIONS ====================
+    // ==================== IMPROVEMENT PLAN (with specific actions) ====================
     const renderImprovementPlan = () => {
         const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
         const windows = ['30 Days', '60 Days', '90 Days'];
 
         return weakestThree.map((item, index) => {
             const actions = [
-                `Clarify the immediate issue in ${item.name.toLowerCase()} and assign one owner.`,
-                `Implement a focused improvement step: ${recommendationForDomain(item.name)}`,
-                `Measure results after the period and decide whether to scale, refine, or intervene further.`
+                `Identify the root cause in ${item.name.toLowerCase()} and assign a clear owner.`,
+                `Take immediate action: ${recommendationForDomain(item.name)}`,
+                `Review progress at the end of the period and adjust the plan as needed.`
             ];
 
             return (
@@ -216,17 +229,15 @@ export default function HealthCalculator() {
                     <h3>{windows[index]}</h3>
                     <p><strong>Focus Area:</strong> {item.name}</p>
                     <p><span className={`band ${bandClass(item.avg)}`}>{item.risk} ({item.avg.toFixed(2)})</span></p>
-                    <ol className="plan-list">
-                        {actions.map((action, i) => (
-                            <li key={i}>{action}</li>
-                        ))}
+                    <ol>
+                        {actions.map((action, i) => <li key={i}>{action}</li>)}
                     </ol>
                 </div>
             );
         });
     };
 
-    // ==================== CHARTS (your original) ====================
+    // ==================== CHARTS ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -352,6 +363,51 @@ export default function HealthCalculator() {
         });
     };
 
+    // ==================== PDF DOWNLOAD (Fixed) ====================
+    const downloadReport = async () => {
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        const reportHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>School Health Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1, h2 { color: #166534; }
+        .band { padding: 4px 12px; border-radius: 999px; font-weight: 700; background: #dcfce7; color: #166534; }
+        ul, ol { margin: 10px 0 20px 20px; }
+    </style>
+</head>
+<body>
+    <h1>School Health Report</h1>
+    <p><strong>School:</strong> ${schoolName}</p>
+    <p><strong>Review Date:</strong> ${reviewDate || 'Not specified'}</p>
+    <p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
+
+    <h2>Priority Actions</h2>
+    <ul>${renderPriorityActions().map(li => `<li>${li.props.children}</li>`).join('')}</ul>
+
+    <h2>30 / 60 / 90 Day Improvement Plan</h2>
+    ${renderImprovementPlan().map(card => `
+        <div style="margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+            ${card.props.children}
+        </div>
+    `).join('')}
+
+    <p style="margin-top: 40px; font-size: 12px; color: #666;">Generated by School Health Calculator</p>
+</body>
+</html>`;
+
+        const opt = {
+            margin: 15,
+            filename: `school-health-report-${reviewDate || 'current'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 }
+        };
+
+        html2pdf().set(opt).from(reportHtml).save();
+    };
+
     // ==================== EFFECTS ====================
     useEffect(() => {
         if (user) loadHistory();
@@ -372,6 +428,7 @@ export default function HealthCalculator() {
                     <p>A strategic platform for Christian school leaders to assess overall school health, track year-over-year progress, and generate board-ready reports.</p>
                 </div>
                 <div className="controls no-print">
+                    <button onClick={downloadReport}>Download Report</button>
                     <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', fontWeight: '700', padding: '12px 24px' }}>
                         💾 Save Assessment
                     </button>
@@ -429,7 +486,7 @@ export default function HealthCalculator() {
                             Detailed rubric with biblical anchors for each domain:
                         </p>
 
-                        {/* All 6 rubrics restored */}
+                        {/* All 6 rubrics */}
                         <div className="domain" style={{ marginBottom: '12px' }}>
                             <details open>
                                 <summary><strong>Enrollment & Retention</strong></summary>
@@ -614,7 +671,7 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Improvement Plan - Now with specific actions */}
+                    {/* Improvement Plan */}
                     <section className="card">
                         <h2>30 / 60 / 90 Day Improvement Plan</h2>
                         <div className="improvement-grid">
@@ -639,7 +696,7 @@ export default function HealthCalculator() {
                                         <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
                                             {item.overall_score}
                                         </div>
-                                        <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                                        <button onClick={downloadReport} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
                                             📄 Download PDF
                                         </button>
                                     </div>
