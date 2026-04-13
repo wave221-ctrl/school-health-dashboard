@@ -184,19 +184,28 @@ export default function HealthCalculator() {
         }
     };
 
+    // FIXED DELETE - with count verification
     const deleteAssessment = async (id) => {
         if (!user?.id || !confirm('Delete this assessment permanently?')) return;
 
-        const { error } = await supabase
-            .from('assessments')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', user.id);
+        console.log('🗑️ Deleting assessment ID:', id);
 
-        if (error) showToast('Delete failed', 'error');
-        else {
+        const { data, error, count } = await supabase
+            .from('assessments')
+            .delete({ count: 'exact' })
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .select();
+
+        if (error) {
+            console.error('Delete error:', error);
+            showToast('Delete failed: ' + error.message, 'error');
+        } else if ((count ?? 0) > 0) {
+            console.log(`✅ Deleted ${count} row(s)`);
             setHistory(prev => prev.filter(item => item.id !== id));
-            showToast('Assessment deleted');
+            showToast('Assessment deleted successfully');
+        } else {
+            showToast('No matching assessment found or permission denied', 'error');
         }
     };
 
@@ -223,7 +232,7 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== CHARTS (YOUR ORIGINAL CODE) ====================
+    // ==================== CHARTS (your exact code) ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -354,7 +363,7 @@ export default function HealthCalculator() {
         });
     };
 
-    // ==================== ACTIONS & PLAN ====================
+    // ==================== PRIORITY ACTIONS & IMPROVEMENT PLAN ====================
     const renderPriorityActions = () => {
         const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
         return weakestThree.map(item => (
@@ -380,18 +389,26 @@ export default function HealthCalculator() {
     const downloadReport = async () => {
         const html2pdf = (await import('html2pdf.js')).default;
         const reportHtml = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>School Health Report</title>
-<style>body{font-family:Arial;margin:40px;line-height:1.5;} .band{padding:4px 12px;border-radius:999px;font-weight:700;}</style>
-</head><body>
-<h1>School Health Report</h1>
-<p><strong>School:</strong> ${schoolName}</p>
-<p><strong>Date:</strong> ${reviewDate}</p>
-<p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
-<h2>Priority Actions</h2>
-<ul>${renderPriorityActions().map(li => li.props.children).join('')}</ul>
-<h2>Improvement Plan</h2>
-${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;border:1px solid #ddd;">${card.props.children}</div>`).join('')}
-</body></html>`;
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>School Health Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .band { padding: 4px 12px; border-radius: 999px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <h1>School Health Report</h1>
+    <p><strong>School:</strong> ${schoolName}</p>
+    <p><strong>Date:</strong> ${reviewDate}</p>
+    <p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
+    <h2>Priority Actions</h2>
+    <ul>${renderPriorityActions().map(li => `<li>${li.props.children}</li>`).join('')}</ul>
+    <h2>Improvement Plan</h2>
+    ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;border:1px solid #ddd;">${card.props.children}</div>`).join('')}
+</body>
+</html>`;
 
         const opt = { margin: 15, filename: `school-health-report-${reviewDate || 'current'}.pdf` };
         html2pdf().set(opt).from(reportHtml).save();
@@ -409,15 +426,17 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
         drawRadarChart();
     }, [domains, comparisonData]);
 
-    // ==================== JSX ====================
+    // ==================== RENDER ====================
     return (
         <div className="wrap">
             <section className="hero">
-                <h1>School Health Calculator</h1>
-                <p>A strategic platform for Christian school leaders to assess overall school health and generate reports.</p>
+                <div className="no-print">
+                    <h1>School Health Calculator</h1>
+                    <p>A strategic platform for Christian school leaders to assess overall school health, track year-over-year progress, and generate board-ready reports.</p>
+                </div>
                 <div className="controls no-print">
                     <button onClick={downloadReport}>Download Report</button>
-                    <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', fontWeight: '700' }}>
+                    <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', fontWeight: '700', padding: '12px 24px' }}>
                         💾 Save Assessment
                     </button>
                 </div>
@@ -425,11 +444,12 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
 
             <div className="grid">
                 <aside className="section-stack">
+                    {/* School Information */}
                     <section className="card">
                         <h2>School Information</h2>
                         <div className="field">
                             <label>School Name</label>
-                            <input value={schoolName} onChange={e => setSchoolName(e.target.value)} />
+                            <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder="Example Lutheran School" />
                         </div>
                         <div className="inline-2">
                             <div className="field">
@@ -438,7 +458,7 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                             </div>
                             <div className="field">
                                 <label>Reviewer</label>
-                                <input value={reviewer} onChange={e => setReviewer(e.target.value)} />
+                                <input value={reviewer} onChange={e => setReviewer(e.target.value)} placeholder="Principal or leadership team" />
                             </div>
                         </div>
                         <div className="field">
@@ -446,15 +466,119 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                             <select value={schoolType} onChange={e => setSchoolType(e.target.value)}>
                                 <option>PK-8</option>
                                 <option>High School</option>
+                                <option>Early Childhood</option>
                                 <option>K-12</option>
                                 <option>Other</option>
                             </select>
                         </div>
                     </section>
 
+                    {/* SCORING GUIDE - FULLY RESTORED */}
+                    <section className="card">
+                        <h2>Scoring Guide – What Each Score Really Means</h2>
+
+                        <table>
+                            <thead>
+                                <tr><th>Score</th><th>Label</th><th>Meaning</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>5</strong></td><td>Excellent / Healthy</td><td>Fully thriving, mission-aligned, sustainable excellence</td></tr>
+                                <tr><td><strong>4</strong></td><td>Strong</td><td>Solid and reliable with only minor gaps</td></tr>
+                                <tr><td><strong>3</strong></td><td>Adequate / Functional</td><td>Meets basic expectations but not thriving</td></tr>
+                                <tr><td><strong>2</strong></td><td>Weak / Inconsistent</td><td>Noticeable problems causing concern</td></tr>
+                                <tr><td><strong>1</strong></td><td>Critical Concern</td><td>Major breakdown requiring immediate intervention</td></tr>
+                            </tbody>
+                        </table>
+
+                        <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>
+                            Detailed rubric with biblical anchors for each domain:
+                        </p>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details open>
+                                <summary><strong>Enrollment & Retention</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others </li>
+                                    <li><strong>4</strong> – Stable growth, 90–94% retention </li>
+                                    <li><strong>3</strong> – Flat enrollment, 85–89% retention </li>
+                                    <li><strong>2</strong> – Declining enrollment, visible anxiety </li>
+                                    <li><strong>1</strong> – Sharp decline, high attrition </li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Academic Program</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Christ-centered, rigorous, students thriving </li>
+                                    <li><strong>4</strong> – Strong academics with consistent integration </li>
+                                    <li><strong>3</strong> – Adequate academics, uneven integration </li>
+                                    <li><strong>2</strong> – Noticeable gaps, worldview feels added-on </li>
+                                    <li><strong>1</strong> – Significant struggles </li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Culture & Mission</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Mission alive, deep belonging </li>
+                                    <li><strong>4</strong> – Mission understood and mostly lived out </li>
+                                    <li><strong>3</strong> – Mission known but not deeply felt </li>
+                                    <li><strong>2</strong> – Mission drift or tension </li>
+                                    <li><strong>1</strong> – Toxic or divided culture </li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Finance & Operations</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Healthy budget, strong reserves </li>
+                                    <li><strong>4</strong> – Balanced budget, reliable operations </li>
+                                    <li><strong>3</strong> – Tight but manageable </li>
+                                    <li><strong>2</strong> – Frequent stress, deferred maintenance </li>
+                                    <li><strong>1</strong> – Financial instability </li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain" style={{ marginBottom: '12px' }}>
+                            <details>
+                                <summary><strong>Leadership & Staffing</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Trusted, unified, staff feel valued </li>
+                                    <li><strong>4</strong> – Strong leadership and good morale </li>
+                                    <li><strong>3</strong> – Adequate but some fatigue </li>
+                                    <li><strong>2</strong> – Trust issues or high turnover </li>
+                                    <li><strong>1</strong> – Leadership vacuum or conflict </li>
+                                </ul>
+                            </details>
+                        </div>
+
+                        <div className="domain">
+                            <details>
+                                <summary><strong>Marketing & Community Presence</strong></summary>
+                                <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
+                                    <li><strong>5</strong> – Compelling story, strong visibility </li>
+                                    <li><strong>4</strong> – Clear brand and good awareness </li>
+                                    <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
+                                    <li><strong>2</strong> – Outdated or unclear messaging </li>
+                                    <li><strong>1</strong> – Almost no presence or negative perception </li>
+                                </ul>
+                            </details>
+                        </div>
+                    </section>
+
+                    {/* Notes */}
                     <section className="card">
                         <h2>Notes</h2>
-                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={8} placeholder="Add key findings..." />
+                        <div className="field">
+                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={8} placeholder="Add key findings, assumptions, concerns, and next steps." />
+                        </div>
                     </section>
                 </aside>
 
@@ -476,20 +600,23 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                         {domains.map((domain, dIndex) => (
                             <div key={dIndex} className="domain">
                                 <div className="domain-header">
-                                    <h3>{domain.name}</h3>
+                                    <div>
+                                        <h3>{domain.name}</h3>
+                                        <div className="small">Score the current health of this area.</div>
+                                    </div>
                                     <span className={`band ${bandClass(average(domain.metrics.map(m => m.score)))}`}>
-                                        Avg: {average(domain.metrics.map(m => m.score)).toFixed(2)}
+                                        Average: {average(domain.metrics.map(m => m.score)).toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="domain-weight-row">
-                                    <label>Domain Weight</label>
+                                    <label className="small">Domain Weight</label>
                                     <input
                                         type="number"
                                         min="0.5"
                                         max="2"
                                         step="0.05"
                                         value={domain.weight}
-                                        onChange={(e) => updateWeight(dIndex, e.target.value)}
+                                        onChange={e => updateWeight(dIndex, e.target.value)}
                                     />
                                 </div>
                                 {domain.metrics.map((metric, mIndex) => (
@@ -500,7 +627,7 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                                         </div>
                                         <select
                                             value={metric.score}
-                                            onChange={(e) => updateMetric(dIndex, mIndex, Number(e.target.value))}
+                                            onChange={e => updateMetric(dIndex, mIndex, Number(e.target.value))}
                                             className="metric-score"
                                         >
                                             {[1, 2, 3, 4, 5].map(s => <option key={s} value={s}>{s}</option>)}
@@ -515,11 +642,13 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                     <section className="card">
                         <h2>Health Visualization</h2>
                         <canvas ref={barChartRef} width="960" height="340" />
+                        <div className="footer-note">Quick visual comparisons make board conversations slightly less painful.</div>
                     </section>
 
                     <section className="card">
                         <h2>Radar View</h2>
                         <canvas ref={radarChartRef} width="960" height="420" />
+                        <div className="footer-note">A quick way to see whether the school is balanced or lopsided across domains.</div>
                     </section>
 
                     {/* Priority Actions */}
@@ -532,10 +661,11 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
 
                     {/* Improvement Plan */}
                     <section className="card">
-                        <h2>30 / 60 / 90 Day Improvement Plan</h2>
+                        <h2>Optional Improvement Plan</h2>
                         <div className="improvement-grid">
                             {renderImprovementPlan()}
                         </div>
+                        <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains.</div>
                     </section>
 
                     {/* History */}
@@ -544,15 +674,26 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
                         <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             {history.length === 0 ? (
-                                <p>No assessments saved yet.</p>
+                                <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
                             ) : (
                                 history.map((item) => (
                                     <div key={item.id} style={{ padding: '14px', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div><strong>{item.review_date}</strong></div>
-                                        <div style={{ fontWeight: 700, color: '#166534' }}>{item.overall_score}</div>
-                                        <div>
-                                            <button onClick={() => {/* Add downloadSavedReport if needed */ }}>📄 PDF</button>
-                                            <button onClick={() => deleteAssessment(item.id)} className="text-red-600">Delete</button>
+                                        <div style={{ flex: 1 }}>
+                                            <strong>{item.review_date}</strong>
+                                        </div>
+                                        <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
+                                            {item.overall_score}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button onClick={() => downloadReport()} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                                                📄 Download PDF
+                                            </button>
+                                            <button
+                                                onClick={() => deleteAssessment(item.id)}
+                                                className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-xl hover:bg-red-50"
+                                            >
+                                                Delete
+                                            </button>
                                         </div>
                                     </div>
                                 ))
@@ -565,9 +706,15 @@ ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;bo
             {/* Toast */}
             {toast && (
                 <div style={{
-                    position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
                     background: toast.type === 'success' ? '#166534' : '#991b1b',
-                    color: 'white', padding: '20px 28px', borderRadius: '16px', zIndex: 10000
+                    color: 'white',
+                    padding: '20px 28px',
+                    borderRadius: '16px',
+                    zIndex: 10000
                 }}>
                     {toast.message}
                 </div>
