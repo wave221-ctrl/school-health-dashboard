@@ -57,7 +57,7 @@ export default function Home() {
                         )}
 
                         <Link
-                            href="/billing"
+                            href="/pricing"
                             className="border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xl font-semibold px-10 py-5 rounded-3xl transition-all text-center"
                         >
                             See Pricing
