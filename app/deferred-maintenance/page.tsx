@@ -10,7 +10,7 @@ interface MaintenanceItem {
     category: string;
     description: string;
     estimatedCost: number;
-    condition: number;        // 1 = Critical, 5 = Excellent
+    condition: number;
     yearsSinceLast: number;
     priority: 'High' | 'Medium' | 'Low';
 }
@@ -21,14 +21,13 @@ const CATEGORIES = [
     'Kitchen Equipment', 'Other'
 ];
 
-// Condition explanations
-const conditionExplanations = {
-    1: "Critical: Immediate attention required. Safety risk or major failure imminent.",
-    2: "Poor: Significant deterioration. Needs repair within 1-2 years.",
-    3: "Fair: Average condition. Functional but showing wear. Plan for future work.",
-    4: "Good: Minor wear only. Generally reliable for several more years.",
-    5: "Excellent: Like new or recently renovated. No action needed in near term."
-};
+const conditionLegend = [
+    { score: 1, label: "Critical", desc: "Immediate attention required. Safety risk or major failure imminent." },
+    { score: 2, label: "Poor", desc: "Significant deterioration. Needs repair within 1-2 years." },
+    { score: 3, label: "Fair", desc: "Average condition. Functional but showing wear." },
+    { score: 4, label: "Good", desc: "Minor wear only. Generally reliable for several more years." },
+    { score: 5, label: "Excellent", desc: "Like new or recently renovated. No action needed soon." }
+];
 
 export default function DeferredMaintenance() {
     const { user } = useUser();
@@ -77,9 +76,7 @@ export default function DeferredMaintenance() {
     };
 
     const updateItem = (id: string, field: keyof MaintenanceItem, value: any) => {
-        setItems(items.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
-        ));
+        setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
     };
 
     const removeItem = (id: string) => {
@@ -87,9 +84,7 @@ export default function DeferredMaintenance() {
     };
 
     const saveAssessment = async () => {
-        if (!user?.id) {
-            return showToast('Please sign in to save', 'error');
-        }
+        if (!user?.id) return showToast('Please sign in to save', 'error');
 
         const reviewDateStr = `${currentYear}-01-01`;
 
@@ -98,25 +93,16 @@ export default function DeferredMaintenance() {
             tool: 'deferred-maintenance',
             review_date: reviewDateStr,
             overall_score: Math.round(totalDeferred / 1000),
-            data: {
-                schoolName,
-                currentYear,
-                items,
-                totalDeferred,
-                highPriorityItems
-            }
+            data: { schoolName, currentYear, items, totalDeferred, highPriorityItems }
         };
 
-        const { data, error } = await supabase
-            .from('assessments')
-            .insert(payload)
-            .select();
+        const { error } = await supabase.from('assessments').insert(payload);
 
         if (error) {
             console.error('Supabase insert error:', error);
-            showToast('Save failed: ' + (error.message || 'Unknown error'), 'error');
+            showToast('Save failed: ' + error.message, 'error');
         } else {
-            showToast('✅ Deferred Maintenance saved successfully!', 'success');
+            showToast('✅ Deferred Maintenance saved!', 'success');
             loadHistory();
         }
     };
@@ -135,6 +121,62 @@ export default function DeferredMaintenance() {
     const showToast = (message: string, type: 'success' | 'error') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
+    };
+
+    // Download PDF Report
+    const downloadReport = async () => {
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        const reportHtml = `
+            <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+                <h1 style="color: #166534; text-align: center;">Deferred Maintenance Report</h1>
+                <p style="text-align: center; color: #666;">${schoolName} — ${currentYear}</p>
+                
+                <h2 style="color: #166534; margin-top: 40px;">Summary</h2>
+                <p><strong>Total Deferred Maintenance:</strong> $${totalDeferred.toLocaleString()}</p>
+                <p><strong>High Priority Items:</strong> ${highPriorityItems}</p>
+
+                <h2 style="color: #166534; margin-top: 30px;">Facility Items</h2>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <thead>
+                        <tr style="background: #f1f5f9;">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Category</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Description</th>
+                            <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">Cost</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Condition</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${item.category}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${item.description}</td>
+                                <td style="padding: 12px; text-align: right; border: 1px solid #ddd;">$${item.estimatedCost.toLocaleString()}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">${item.condition}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #ddd; color: ${item.priority === 'High' ? '#991b1b' : item.priority === 'Medium' ? '#ca8a04' : '#166534'}">
+                                    ${item.priority}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 50px; text-align: center; color: #666; font-size: 12px;">
+                    Generated by School Health Score • ${new Date().toLocaleDateString()}
+                </p>
+            </div>
+        `;
+
+        const opt = {
+            margin: 15,
+            filename: `deferred-maintenance-${schoolName.replace(/\s+/g, '-')}-${currentYear}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(reportHtml).save();
     };
 
     // Chart
@@ -193,8 +235,40 @@ export default function DeferredMaintenance() {
             </div>
 
             <div className="max-w-7xl mx-auto px-8 py-8">
-                <h1 className="text-4xl font-bold mb-2">Deferred Maintenance Calculator</h1>
-                <p className="text-slate-600 mb-8">Track your facility backlog with automatic prioritization.</p>
+                <div className="flex justify-between items-start mb-8">
+                    <div>
+                        <h1 className="text-4xl font-bold mb-2">Deferred Maintenance Calculator</h1>
+                        <p className="text-slate-600">Track your facility backlog with automatic prioritization.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={downloadReport}
+                            className="bg-white border border-slate-300 hover:bg-slate-50 px-6 py-3 rounded-2xl font-medium flex items-center gap-2"
+                        >
+                            📄 Download Report
+                        </button>
+                        <button
+                            onClick={saveAssessment}
+                            className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-2xl font-medium flex items-center gap-2"
+                        >
+                            💾 Save Assessment
+                        </button>
+                    </div>
+                </div>
+
+                {/* Condition Legend - Clean box at the top */}
+                <div className="bg-white border rounded-3xl p-6 mb-8">
+                    <h3 className="font-semibold mb-4 text-lg">Condition Scoring Guide (1-5)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        {conditionLegend.map(item => (
+                            <div key={item.score} className="border rounded-2xl p-4 hover:bg-slate-50 transition">
+                                <div className="text-3xl font-bold text-emerald-700 mb-1">{item.score}</div>
+                                <div className="font-medium mb-1">{item.label}</div>
+                                <div className="text-sm text-slate-600 leading-snug">{item.desc}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-12 gap-6">
                     {/* Sidebar */}
@@ -215,13 +289,6 @@ export default function DeferredMaintenance() {
                                 className="w-full border rounded-2xl px-4 py-3"
                             />
                         </div>
-
-                        <button
-                            onClick={saveAssessment}
-                            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-3xl font-semibold text-lg"
-                        >
-                            💾 Save This Year’s Assessment
-                        </button>
                     </div>
 
                     {/* Main Table */}
@@ -243,8 +310,8 @@ export default function DeferredMaintenance() {
                                     <th className="text-left py-3">Description</th>
                                     <th className="text-right py-3">Est. Cost</th>
                                     <th className="text-center py-3">Condition (1-5)</th>
-                                    <th className="text-center py-3">Years Since Last Work</th>
-                                    <th className="text-center py-3">Auto Priority</th>
+                                    <th className="text-center py-3">Years Since</th>
+                                    <th className="text-center py-3">Priority</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -252,51 +319,23 @@ export default function DeferredMaintenance() {
                                 {items.map(item => (
                                     <tr key={item.id} className="border-b">
                                         <td className="py-3">
-                                            <select
-                                                value={item.category}
-                                                onChange={e => updateItem(item.id, 'category', e.target.value)}
-                                                className="border rounded-lg px-3 py-1 w-40"
-                                            >
+                                            <select value={item.category} onChange={e => updateItem(item.id, 'category', e.target.value)} className="border rounded-lg px-3 py-1 w-40">
                                                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                             </select>
                                         </td>
                                         <td className="py-3">
-                                            <input
-                                                value={item.description}
-                                                onChange={e => updateItem(item.id, 'description', e.target.value)}
-                                                className="border rounded-lg px-3 py-1 w-full"
-                                            />
+                                            <input value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} className="border rounded-lg px-3 py-1 w-full" />
                                         </td>
                                         <td className="py-3 text-right">
-                                            <input
-                                                type="number"
-                                                value={item.estimatedCost}
-                                                onChange={e => updateItem(item.id, 'estimatedCost', Number(e.target.value))}
-                                                className="border rounded-lg px-3 py-1 w-28 text-right"
-                                            />
-                                        </td>
-                                        <td className="py-3 text-center relative group">
-                                            <select
-                                                value={item.condition}
-                                                onChange={e => updateItem(item.id, 'condition', Number(e.target.value))}
-                                                className="border rounded-lg px-3 py-1"
-                                            >
-                                                {[1, 2, 3, 4, 5].map(n => (
-                                                    <option key={n} value={n}>{n}</option>
-                                                ))}
-                                            </select>
-                                            {/* Hover explanation */}
-                                            <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs p-3 rounded-lg w-72 -top-2 left-1/2 -translate-x-1/2 z-10 shadow-xl">
-                                                {conditionExplanations[item.condition as keyof typeof conditionExplanations]}
-                                            </div>
+                                            <input type="number" value={item.estimatedCost} onChange={e => updateItem(item.id, 'estimatedCost', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-28 text-right" />
                                         </td>
                                         <td className="py-3 text-center">
-                                            <input
-                                                type="number"
-                                                value={item.yearsSinceLast}
-                                                onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))}
-                                                className="border rounded-lg px-3 py-1 w-16 text-center"
-                                            />
+                                            <select value={item.condition} onChange={e => updateItem(item.id, 'condition', Number(e.target.value))} className="border rounded-lg px-3 py-1">
+                                                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                                            </select>
+                                        </td>
+                                        <td className="py-3 text-center">
+                                            <input type="number" value={item.yearsSinceLast} onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-16 text-center" />
                                         </td>
                                         <td className="py-3 text-center">
                                             <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' :
@@ -307,12 +346,7 @@ export default function DeferredMaintenance() {
                                             </span>
                                         </td>
                                         <td className="py-3 text-center">
-                                            <button
-                                                onClick={() => removeItem(item.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                ✕
-                                            </button>
+                                            <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700">✕</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -350,9 +384,7 @@ export default function DeferredMaintenance() {
                                 <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl">
                                     <div><strong>{item.review_date?.substring(0, 4) || '—'}</strong></div>
                                     <div className="font-semibold">${item.data?.totalDeferred?.toLocaleString() || '0'}</div>
-                                    <div className="text-emerald-700 font-medium">
-                                        High Priority: {item.data?.highPriorityItems || 0}
-                                    </div>
+                                    <div className="text-emerald-700 font-medium">High Priority: {item.data?.highPriorityItems || 0}</div>
                                 </div>
                             ))
                         )}
