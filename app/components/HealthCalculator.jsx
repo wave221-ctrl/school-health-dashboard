@@ -893,30 +893,31 @@ export default function HealthCalculator() {
 
     // =============== DELETE ASSESSMENT ===============
     async function deleteAssessment(assessmentId) {
-        console.log("Attempting Supabase delete for ID:", assessmentId);
+        console.log("🔴 Delete clicked for ID:", assessmentId);
 
         const { data, error, count } = await supabase
             .from('assessments')
             .delete({ count: 'exact' })
-            .eq('id', assessmentId);
-
-        console.log("Supabase returned count:", count, "error:", error);
+            .eq('id', assessmentId)
+            .select(); // forces Supabase to return the deleted row for debugging
 
         if (error) {
             console.error("Delete error:", error);
-            // TODO: show error toast to user
             return { success: false, error: error.message };
         }
 
         const success = (count ?? 0) > 0;
-        console.log(`Delete ${success ? 'successful' : 'failed (no rows affected)'} in Supabase!`);
+        console.log("Supabase returned count:", count, "deleted row:", data);
 
         if (success) {
-            // Refresh history list or remove from local state here
-            // e.g. setHistory(prev => prev.filter(item => item.id !== assessmentId));
+            // Optimistic UI update – instantly remove from your history list
+            setHistory(prev => prev.filter(item => item.id !== assessmentId));
+            console.log("✅ Row successfully deleted from Supabase!");
+        } else {
+            console.log("❌ No rows deleted – RLS still not matching");
         }
 
-        return { success, count, data };
+        return { success, count };
     }
 
     // =============== SHOW TOAST ===============
