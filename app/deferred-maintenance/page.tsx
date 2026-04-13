@@ -73,22 +73,37 @@ export default function DeferredMaintenance() {
     const removeItem = (id: string) => {
         setItems(items.filter(item => item.id !== id));
     };
-
     const saveAssessment = async () => {
-        if (!user?.id) return showToast('Please sign in to save', 'error');
+        if (!user?.id) {
+            return showToast('Please sign in to save', 'error');
+        }
 
-        const { error } = await supabase.from('assessments').insert({
+        const payload = {
             user_id: user.id,
             tool: 'deferred-maintenance',
             review_date: currentYear.toString(),
             overall_score: Math.round(totalDeferred / 1000),
-            data: { schoolName, currentYear, items, totalDeferred, highPriorityItems }
-        });
+            data: {
+                schoolName,
+                currentYear,
+                items,
+                totalDeferred,
+                highPriorityItems
+            }
+        };
+
+        console.log('Saving payload:', payload); // ← Add this for debugging
+
+        const { data, error } = await supabase
+            .from('assessments')
+            .insert(payload)
+            .select();   // This helps see the response
 
         if (error) {
-            showToast('Save failed: ' + error.message, 'error');
+            console.error('Supabase insert error:', error);
+            showToast('Save failed: ' + (error.message || 'Unknown error'), 'error');
         } else {
-            showToast('✅ Deferred Maintenance saved!', 'success');
+            showToast('✅ Deferred Maintenance saved successfully!', 'success');
             loadHistory();
         }
     };
