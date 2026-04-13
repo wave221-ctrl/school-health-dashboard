@@ -12,54 +12,42 @@ export default function HealthCalculator() {
     // ==================== STATE ====================
     const [domains, setDomains] = useState([
         {
-            name: 'Enrollment & Retention',
-            weight: 1.2,
-            metrics: [
+            name: 'Enrollment & Retention', weight: 1.2, metrics: [
                 { name: 'Enrollment trend', help: 'Are admissions stable or growing?', score: 3 },
                 { name: 'Student retention', help: 'Do families stay year to year?', score: 3 },
                 { name: 'Inquiry-to-enrollment pipeline', help: 'Is recruitment converting?', score: 3 }
             ]
         },
         {
-            name: 'Academic Program',
-            weight: 1.2,
-            metrics: [
+            name: 'Academic Program', weight: 1.2, metrics: [
                 { name: 'Curriculum alignment', help: 'Clear, consistent academic expectations', score: 3 },
                 { name: 'Instructional quality', help: 'Classroom teaching strength', score: 3 },
                 { name: 'Student support systems', help: 'Interventions and support are functioning', score: 3 }
             ]
         },
         {
-            name: 'Culture & Mission',
-            weight: 1.1,
-            metrics: [
+            name: 'Culture & Mission', weight: 1.1, metrics: [
                 { name: 'Mission clarity', help: 'Mission is visible and understood', score: 3 },
                 { name: 'Student / family culture', help: 'The community is healthy and engaged', score: 3 },
                 { name: 'Spiritual identity / values', help: 'Faith and identity are integrated well', score: 3 }
             ]
         },
         {
-            name: 'Finance & Operations',
-            weight: 1.25,
-            metrics: [
+            name: 'Finance & Operations', weight: 1.25, metrics: [
                 { name: 'Budget stability', help: 'Budget is sustainable and monitored', score: 3 },
                 { name: 'Facilities / deferred maintenance', help: 'Buildings are cared for', score: 3 },
                 { name: 'Operational systems', help: 'Processes are documented and dependable', score: 3 }
             ]
         },
         {
-            name: 'Leadership & Staffing',
-            weight: 1.15,
-            metrics: [
+            name: 'Leadership & Staffing', weight: 1.15, metrics: [
                 { name: 'Leadership effectiveness', help: 'Leadership is clear and trusted', score: 3 },
                 { name: 'Staff morale / retention', help: 'People want to stay and contribute', score: 3 },
                 { name: 'Professional development', help: 'Staff growth is intentional', score: 3 }
             ]
         },
         {
-            name: 'Marketing & Community Presence',
-            weight: 1.0,
-            metrics: [
+            name: 'Marketing & Community Presence', weight: 1.0, metrics: [
                 { name: 'Brand clarity', help: 'The school story is clear', score: 3 },
                 { name: 'Website / digital presence', help: 'The website and digital communication are useful', score: 3 },
                 { name: 'Community engagement', help: 'The school is visible and connected', score: 3 }
@@ -184,11 +172,11 @@ export default function HealthCalculator() {
         }
     };
 
-    // FIXED DELETE - with count verification
+    // FIXED & IMPROVED DELETE
     const deleteAssessment = async (id) => {
         if (!user?.id || !confirm('Delete this assessment permanently?')) return;
 
-        console.log('🗑️ Deleting assessment ID:', id);
+        console.log('🗑️ Attempting to delete ID:', id);
 
         const { data, error, count } = await supabase
             .from('assessments')
@@ -201,11 +189,11 @@ export default function HealthCalculator() {
             console.error('Delete error:', error);
             showToast('Delete failed: ' + error.message, 'error');
         } else if ((count ?? 0) > 0) {
-            console.log(`✅ Deleted ${count} row(s)`);
+            console.log(`✅ Successfully deleted ${count} row(s)`);
             setHistory(prev => prev.filter(item => item.id !== id));
             showToast('Assessment deleted successfully');
         } else {
-            showToast('No matching assessment found or permission denied', 'error');
+            showToast('No matching assessment found or permission issue', 'error');
         }
     };
 
@@ -232,51 +220,7 @@ export default function HealthCalculator() {
         ));
     };
 
-    {/* Multi-Year Legend - Add this before the charts */ }
-    {
-        comparisonData.length > 0 && (
-            <div style={{
-                marginBottom: '20px',
-                padding: '12px 20px',
-                background: '#f8fafc',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '20px',
-                alignItems: 'center',
-                fontSize: '0.95rem'
-            }}>
-                <span style={{ fontWeight: 600, marginRight: '8px' }}>Legend:</span>
-                {comparisonData.map((item, index) => {
-                    const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
-                    return (
-                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                backgroundColor: colors[index % colors.length],
-                                borderRadius: '4px'
-                            }}></div>
-                            <span>{item.review_date || `Report ${index + 1}`}</span>
-                        </div>
-                    );
-                })}
-                {/* Always show Current assessment */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                        width: '16px',
-                        height: '16px',
-                        backgroundColor: '#166534',
-                        borderRadius: '4px'
-                    }}></div>
-                    <span>Current Assessment</span>
-                </div>
-            </div>
-        )
-    }
-
-    // ==================== CHARTS (your exact code) ====================
+    // ==================== CHARTS (your original code) ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -407,13 +351,11 @@ export default function HealthCalculator() {
         });
     };
 
-    // ==================== PRIORITY ACTIONS & IMPROVEMENT PLAN ====================
+    // ==================== PRIORITY & PLAN ====================
     const renderPriorityActions = () => {
         const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
         return weakestThree.map(item => (
-            <li key={item.name}>
-                <strong>{item.name}</strong>: {recommendationForDomain(item.name)}
-            </li>
+            <li key={item.name}><strong>{item.name}</strong>: {recommendationForDomain(item.name)}</li>
         ));
     };
 
@@ -429,31 +371,16 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== PDF DOWNLOAD ====================
+    // ==================== PDF ====================
     const downloadReport = async () => {
         const html2pdf = (await import('html2pdf.js')).default;
-        const reportHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>School Health Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .band { padding: 4px 12px; border-radius: 999px; font-weight: 700; }
-    </style>
-</head>
-<body>
-    <h1>School Health Report</h1>
-    <p><strong>School:</strong> ${schoolName}</p>
-    <p><strong>Date:</strong> ${reviewDate}</p>
-    <p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
-    <h2>Priority Actions</h2>
-    <ul>${renderPriorityActions().map(li => `<li>${li.props.children}</li>`).join('')}</ul>
-    <h2>Improvement Plan</h2>
-    ${renderImprovementPlan().map(card => `<div style="margin:15px 0;padding:15px;border:1px solid #ddd;">${card.props.children}</div>`).join('')}
-</body>
-</html>`;
-
+        const reportHtml = `<!DOCTYPE html><html><head><title>School Health Report</title><style>body{font-family:Arial;margin:40px;}</style></head><body>
+            <h1>School Health Report</h1>
+            <p><strong>School:</strong> ${schoolName}</p>
+            <p><strong>Date:</strong> ${reviewDate}</p>
+            <p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
+            <h2>Priority Actions</h2><ul>${renderPriorityActions().map(li => `<li>${li.props.children}</li>`).join('')}</ul>
+        </body></html>`;
         const opt = { margin: 15, filename: `school-health-report-${reviewDate || 'current'}.pdf` };
         html2pdf().set(opt).from(reportHtml).save();
     };
@@ -491,40 +418,24 @@ export default function HealthCalculator() {
                     {/* School Information */}
                     <section className="card">
                         <h2>School Information</h2>
-                        <div className="field">
-                            <label>School Name</label>
-                            <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder="Example Lutheran School" />
-                        </div>
+                        <div className="field"><label>School Name</label><input value={schoolName} onChange={e => setSchoolName(e.target.value)} /></div>
                         <div className="inline-2">
-                            <div className="field">
-                                <label>Review Date</label>
-                                <input type="date" value={reviewDate} onChange={e => setReviewDate(e.target.value)} />
-                            </div>
-                            <div className="field">
-                                <label>Reviewer</label>
-                                <input value={reviewer} onChange={e => setReviewer(e.target.value)} placeholder="Principal or leadership team" />
-                            </div>
+                            <div className="field"><label>Review Date</label><input type="date" value={reviewDate} onChange={e => setReviewDate(e.target.value)} /></div>
+                            <div className="field"><label>Reviewer</label><input value={reviewer} onChange={e => setReviewer(e.target.value)} /></div>
                         </div>
                         <div className="field">
                             <label>School Type</label>
                             <select value={schoolType} onChange={e => setSchoolType(e.target.value)}>
-                                <option>PK-8</option>
-                                <option>High School</option>
-                                <option>Early Childhood</option>
-                                <option>K-12</option>
-                                <option>Other</option>
+                                <option>PK-8</option><option>High School</option><option>K-12</option><option>Other</option>
                             </select>
                         </div>
                     </section>
 
-                    {/* SCORING GUIDE - FULLY RESTORED */}
+                    {/* Full Scoring Guide - Restored */}
                     <section className="card">
                         <h2>Scoring Guide – What Each Score Really Means</h2>
-
                         <table>
-                            <thead>
-                                <tr><th>Score</th><th>Label</th><th>Meaning</th></tr>
-                            </thead>
+                            <thead><tr><th>Score</th><th>Label</th><th>Meaning</th></tr></thead>
                             <tbody>
                                 <tr><td><strong>5</strong></td><td>Excellent / Healthy</td><td>Fully thriving, mission-aligned, sustainable excellence</td></tr>
                                 <tr><td><strong>4</strong></td><td>Strong</td><td>Solid and reliable with only minor gaps</td></tr>
@@ -534,84 +445,76 @@ export default function HealthCalculator() {
                             </tbody>
                         </table>
 
-                        <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>
-                            Detailed rubric with biblical anchors for each domain:
-                        </p>
+                        <p className="small" style={{ marginTop: '16px', marginBottom: '12px' }}>Detailed rubric with biblical anchors for each domain:</p>
 
                         <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details open>
-                                <summary><strong>Enrollment & Retention</strong></summary>
+                            <details open><summary><strong>Enrollment & Retention</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others </li>
-                                    <li><strong>4</strong> – Stable growth, 90–94% retention </li>
-                                    <li><strong>3</strong> – Flat enrollment, 85–89% retention </li>
-                                    <li><strong>2</strong> – Declining enrollment, visible anxiety </li>
-                                    <li><strong>1</strong> – Sharp decline, high attrition </li>
+                                    <li><strong>5</strong> – Strong growth, 95%+ retention, families invite others</li>
+                                    <li><strong>4</strong> – Stable growth, 90–94% retention</li>
+                                    <li><strong>3</strong> – Flat enrollment, 85–89% retention</li>
+                                    <li><strong>2</strong> – Declining enrollment, visible anxiety</li>
+                                    <li><strong>1</strong> – Sharp decline, high attrition</li>
                                 </ul>
                             </details>
                         </div>
 
                         <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Academic Program</strong></summary>
+                            <details><summary><strong>Academic Program</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Christ-centered, rigorous, students thriving </li>
-                                    <li><strong>4</strong> – Strong academics with consistent integration </li>
-                                    <li><strong>3</strong> – Adequate academics, uneven integration </li>
-                                    <li><strong>2</strong> – Noticeable gaps, worldview feels added-on </li>
-                                    <li><strong>1</strong> – Significant struggles </li>
+                                    <li><strong>5</strong> – Christ-centered, rigorous, students thriving</li>
+                                    <li><strong>4</strong> – Strong academics with consistent integration</li>
+                                    <li><strong>3</strong> – Adequate academics, uneven integration</li>
+                                    <li><strong>2</strong> – Noticeable gaps, worldview feels added-on</li>
+                                    <li><strong>1</strong> – Significant struggles</li>
                                 </ul>
                             </details>
                         </div>
 
                         <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Culture & Mission</strong></summary>
+                            <details><summary><strong>Culture & Mission</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Mission alive, deep belonging </li>
-                                    <li><strong>4</strong> – Mission understood and mostly lived out </li>
-                                    <li><strong>3</strong> – Mission known but not deeply felt </li>
-                                    <li><strong>2</strong> – Mission drift or tension </li>
-                                    <li><strong>1</strong> – Toxic or divided culture </li>
+                                    <li><strong>5</strong> – Mission alive, deep belonging</li>
+                                    <li><strong>4</strong> – Mission understood and mostly lived out</li>
+                                    <li><strong>3</strong> – Mission known but not deeply felt</li>
+                                    <li><strong>2</strong> – Mission drift or tension</li>
+                                    <li><strong>1</strong> – Toxic or divided culture</li>
                                 </ul>
                             </details>
                         </div>
 
                         <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Finance & Operations</strong></summary>
+                            <details><summary><strong>Finance & Operations</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Healthy budget, strong reserves </li>
-                                    <li><strong>4</strong> – Balanced budget, reliable operations </li>
-                                    <li><strong>3</strong> – Tight but manageable </li>
-                                    <li><strong>2</strong> – Frequent stress, deferred maintenance </li>
-                                    <li><strong>1</strong> – Financial instability </li>
+                                    <li><strong>5</strong> – Healthy budget, strong reserves</li>
+                                    <li><strong>4</strong> – Balanced budget, reliable operations</li>
+                                    <li><strong>3</strong> – Tight but manageable</li>
+                                    <li><strong>2</strong> – Frequent stress, deferred maintenance</li>
+                                    <li><strong>1</strong> – Financial instability</li>
                                 </ul>
                             </details>
                         </div>
 
                         <div className="domain" style={{ marginBottom: '12px' }}>
-                            <details>
-                                <summary><strong>Leadership & Staffing</strong></summary>
+                            <details><summary><strong>Leadership & Staffing</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Trusted, unified, staff feel valued </li>
-                                    <li><strong>4</strong> – Strong leadership and good morale </li>
-                                    <li><strong>3</strong> – Adequate but some fatigue </li>
-                                    <li><strong>2</strong> – Trust issues or high turnover </li>
-                                    <li><strong>1</strong> – Leadership vacuum or conflict </li>
+                                    <li><strong>5</strong> – Trusted, unified, staff feel valued</li>
+                                    <li><strong>4</strong> – Strong leadership and good morale</li>
+                                    <li><strong>3</strong> – Adequate but some fatigue</li>
+                                    <li><strong>2</strong> – Trust issues or high turnover</li>
+                                    <li><strong>1</strong> – Leadership vacuum or conflict</li>
                                 </ul>
                             </details>
                         </div>
 
                         <div className="domain">
-                            <details>
-                                <summary><strong>Marketing & Community Presence</strong></summary>
+                            <details><summary><strong>Marketing & Community Presence</strong></summary>
                                 <ul className="small" style={{ margin: '8px 0 0 20px', padding: '0' }}>
-                                    <li><strong>5</strong> – Compelling story, strong visibility </li>
-                                    <li><strong>4</strong> – Clear brand and good awareness </li>
+                                    <li><strong>5</strong> – Compelling story, strong visibility</li>
+                                    <li><strong>4</strong> – Clear brand and good awareness</li>
                                     <li><strong>3</strong> – Basic presence <em>(Matthew 5:15)</em></li>
-                                    <li><strong>2</strong> – Outdated or unclear messaging </li>
-                                    <li><strong>1</strong> – Almost no presence or negative perception </li>
+                                    <li><strong>2</strong> – Outdated or unclear messaging</li>
+                                    <li><strong>1</strong> – Almost no presence or negative perception</li>
                                 </ul>
                             </details>
                         </div>
@@ -620,9 +523,7 @@ export default function HealthCalculator() {
                     {/* Notes */}
                     <section className="card">
                         <h2>Notes</h2>
-                        <div className="field">
-                            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={8} placeholder="Add key findings, assumptions, concerns, and next steps." />
-                        </div>
+                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={8} placeholder="Add key findings..." />
                     </section>
                 </aside>
 
@@ -644,24 +545,14 @@ export default function HealthCalculator() {
                         {domains.map((domain, dIndex) => (
                             <div key={dIndex} className="domain">
                                 <div className="domain-header">
-                                    <div>
-                                        <h3>{domain.name}</h3>
-                                        <div className="small">Score the current health of this area.</div>
-                                    </div>
+                                    <div><h3>{domain.name}</h3><div className="small">Score the current health of this area.</div></div>
                                     <span className={`band ${bandClass(average(domain.metrics.map(m => m.score)))}`}>
                                         Average: {average(domain.metrics.map(m => m.score)).toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="domain-weight-row">
-                                    <label className="small">Domain Weight</label>
-                                    <input
-                                        type="number"
-                                        min="0.5"
-                                        max="2"
-                                        step="0.05"
-                                        value={domain.weight}
-                                        onChange={e => updateWeight(dIndex, e.target.value)}
-                                    />
+                                    <label>Domain Weight</label>
+                                    <input type="number" min="0.5" max="2" step="0.05" value={domain.weight} onChange={e => updateWeight(dIndex, e.target.value)} />
                                 </div>
                                 {domain.metrics.map((metric, mIndex) => (
                                     <div key={mIndex} className="score-row">
@@ -669,11 +560,7 @@ export default function HealthCalculator() {
                                             <div className="metric-name">{metric.name}</div>
                                             <div className="metric-help">{metric.help}</div>
                                         </div>
-                                        <select
-                                            value={metric.score}
-                                            onChange={e => updateMetric(dIndex, mIndex, Number(e.target.value))}
-                                            className="metric-score"
-                                        >
+                                        <select value={metric.score} onChange={e => updateMetric(dIndex, mIndex, Number(e.target.value))} className="metric-score">
                                             {[1, 2, 3, 4, 5].map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
@@ -682,34 +569,57 @@ export default function HealthCalculator() {
                         ))}
                     </section>
 
+                    {/* === CHART LEGEND === */}
+                    {comparisonData.length > 0 && (
+                        <div style={{
+                            marginBottom: '20px',
+                            padding: '12px 20px',
+                            background: '#f8fafc',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '20px',
+                            alignItems: 'center',
+                            fontSize: '0.95rem'
+                        }}>
+                            <span style={{ fontWeight: 600, marginRight: '8px' }}>Legend:</span>
+                            {comparisonData.map((item, index) => {
+                                const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
+                                return (
+                                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '16px', height: '16px', backgroundColor: colors[index % colors.length], borderRadius: '4px' }}></div>
+                                        <span>{item.review_date || `Report ${index + 1}`}</span>
+                                    </div>
+                                );
+                            })}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '16px', height: '16px', backgroundColor: '#166534', borderRadius: '4px' }}></div>
+                                <span>Current Assessment</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Charts */}
                     <section className="card">
                         <h2>Health Visualization</h2>
                         <canvas ref={barChartRef} width="960" height="340" />
-                        <div className="footer-note">Quick visual comparisons make board conversations slightly less painful.</div>
                     </section>
 
                     <section className="card">
                         <h2>Radar View</h2>
                         <canvas ref={radarChartRef} width="960" height="420" />
-                        <div className="footer-note">A quick way to see whether the school is balanced or lopsided across domains.</div>
                     </section>
 
-                    {/* Priority Actions */}
+                    {/* Priority Actions & Improvement Plan */}
                     <section className="card">
                         <h2>Priority Actions</h2>
-                        <div className="report-box">
-                            <ul>{renderPriorityActions()}</ul>
-                        </div>
+                        <div className="report-box"><ul>{renderPriorityActions()}</ul></div>
                     </section>
 
-                    {/* Improvement Plan */}
                     <section className="card">
-                        <h2>Optional Improvement Plan</h2>
-                        <div className="improvement-grid">
-                            {renderImprovementPlan()}
-                        </div>
-                        <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains.</div>
+                        <h2>30 / 60 / 90 Day Improvement Plan</h2>
+                        <div className="improvement-grid">{renderImprovementPlan()}</div>
                     </section>
 
                     {/* History */}
@@ -718,26 +628,15 @@ export default function HealthCalculator() {
                         <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             {history.length === 0 ? (
-                                <p className="small">No assessments saved yet. Click "Save Assessment" above to start tracking year-over-year.</p>
+                                <p className="small">No assessments saved yet.</p>
                             ) : (
                                 history.map((item) => (
                                     <div key={item.id} style={{ padding: '14px', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <strong>{item.review_date}</strong>
-                                        </div>
-                                        <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
-                                            {item.overall_score}
-                                        </div>
+                                        <div><strong>{item.review_date}</strong></div>
+                                        <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>{item.overall_score}</div>
                                         <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => downloadReport()} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
-                                                📄 Download PDF
-                                            </button>
-                                            <button
-                                                onClick={() => deleteAssessment(item.id)}
-                                                className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-xl hover:bg-red-50"
-                                            >
-                                                Delete
-                                            </button>
+                                            <button onClick={downloadReport} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>📄 PDF</button>
+                                            <button onClick={() => deleteAssessment(item.id)} className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-xl hover:bg-red-50">Delete</button>
                                         </div>
                                     </div>
                                 ))
@@ -750,15 +649,9 @@ export default function HealthCalculator() {
             {/* Toast */}
             {toast && (
                 <div style={{
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
+                    position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                     background: toast.type === 'success' ? '#166534' : '#991b1b',
-                    color: 'white',
-                    padding: '20px 28px',
-                    borderRadius: '16px',
-                    zIndex: 10000
+                    color: 'white', padding: '20px 28px', borderRadius: '16px', zIndex: 10000
                 }}>
                     {toast.message}
                 </div>
