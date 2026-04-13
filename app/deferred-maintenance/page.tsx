@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';   // ← This is the standard alias most projects use
+import { supabase } from '../../../lib/supabase';   // Relative path - should work
 import { UserButton } from '@clerk/nextjs';
 
 interface MaintenanceItem {
@@ -36,7 +36,6 @@ export default function DeferredMaintenance() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Automatic prioritization engine
     const calculatePriority = (condition: number, yearsSinceLast: number, cost: number): 'High' | 'Medium' | 'Low' => {
         const score = (6 - condition) * yearsSinceLast * (cost / 50000);
         if (score >= 25) return 'High';
@@ -110,7 +109,6 @@ export default function DeferredMaintenance() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    // Backlog visualization
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -224,10 +222,9 @@ export default function DeferredMaintenance() {
                                             <input type="number" value={item.yearsSinceLast} onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-16 text-center" />
                                         </td>
                                         <td className="py-3 text-center">
-                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' :
-                                                    item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
-                                                        'bg-emerald-100 text-emerald-700'
-                                                }`}>{item.priority}</span>
+                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' : item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                {item.priority}
+                                            </span>
                                         </td>
                                         <td className="py-3 text-center">
                                             <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700">✕</button>
