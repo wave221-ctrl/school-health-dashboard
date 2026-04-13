@@ -21,6 +21,15 @@ const CATEGORIES = [
     'Kitchen Equipment', 'Other'
 ];
 
+// Condition explanations
+const conditionExplanations = {
+    1: "Critical: Immediate attention required. Safety risk or major failure imminent.",
+    2: "Poor: Significant deterioration. Needs repair within 1-2 years.",
+    3: "Fair: Average condition. Functional but showing wear. Plan for future work.",
+    4: "Good: Minor wear only. Generally reliable for several more years.",
+    5: "Excellent: Like new or recently renovated. No action needed in near term."
+};
+
 export default function DeferredMaintenance() {
     const { user } = useUser();
 
@@ -77,13 +86,12 @@ export default function DeferredMaintenance() {
         setItems(items.filter(item => item.id !== id));
     };
 
-    // Fixed save with proper date format
     const saveAssessment = async () => {
         if (!user?.id) {
             return showToast('Please sign in to save', 'error');
         }
 
-        const reviewDateStr = `${currentYear}-01-01`;   // Proper YYYY-MM-DD format
+        const reviewDateStr = `${currentYear}-01-01`;
 
         const payload = {
             user_id: user.id,
@@ -98,8 +106,6 @@ export default function DeferredMaintenance() {
                 highPriorityItems
             }
         };
-
-        console.log('Saving payload:', payload);
 
         const { data, error } = await supabase
             .from('assessments')
@@ -131,7 +137,7 @@ export default function DeferredMaintenance() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    // Backlog chart
+    // Chart
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -163,7 +169,6 @@ export default function DeferredMaintenance() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Navigation */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -237,8 +242,8 @@ export default function DeferredMaintenance() {
                                     <th className="text-left py-3">Category</th>
                                     <th className="text-left py-3">Description</th>
                                     <th className="text-right py-3">Est. Cost</th>
-                                    <th className="text-center py-3">Condition</th>
-                                    <th className="text-center py-3">Years Since</th>
+                                    <th className="text-center py-3">Condition (1-5)</th>
+                                    <th className="text-center py-3">Years Since Last Work</th>
                                     <th className="text-center py-3">Auto Priority</th>
                                     <th></th>
                                 </tr>
@@ -270,14 +275,20 @@ export default function DeferredMaintenance() {
                                                 className="border rounded-lg px-3 py-1 w-28 text-right"
                                             />
                                         </td>
-                                        <td className="py-3 text-center">
+                                        <td className="py-3 text-center relative group">
                                             <select
                                                 value={item.condition}
                                                 onChange={e => updateItem(item.id, 'condition', Number(e.target.value))}
                                                 className="border rounded-lg px-3 py-1"
                                             >
-                                                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                                                {[1, 2, 3, 4, 5].map(n => (
+                                                    <option key={n} value={n}>{n}</option>
+                                                ))}
                                             </select>
+                                            {/* Hover explanation */}
+                                            <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs p-3 rounded-lg w-72 -top-2 left-1/2 -translate-x-1/2 z-10 shadow-xl">
+                                                {conditionExplanations[item.condition as keyof typeof conditionExplanations]}
+                                            </div>
                                         </td>
                                         <td className="py-3 text-center">
                                             <input
