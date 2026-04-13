@@ -232,6 +232,50 @@ export default function HealthCalculator() {
         ));
     };
 
+    {/* Multi-Year Legend - Add this before the charts */ }
+    {
+        comparisonData.length > 0 && (
+            <div style={{
+                marginBottom: '20px',
+                padding: '12px 20px',
+                background: '#f8fafc',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '20px',
+                alignItems: 'center',
+                fontSize: '0.95rem'
+            }}>
+                <span style={{ fontWeight: 600, marginRight: '8px' }}>Legend:</span>
+                {comparisonData.map((item, index) => {
+                    const colors = ['#166534', '#2563eb', '#9333ea', '#ca8a04'];
+                    return (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                                width: '16px',
+                                height: '16px',
+                                backgroundColor: colors[index % colors.length],
+                                borderRadius: '4px'
+                            }}></div>
+                            <span>{item.review_date || `Report ${index + 1}`}</span>
+                        </div>
+                    );
+                })}
+                {/* Always show Current assessment */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: '#166534',
+                        borderRadius: '4px'
+                    }}></div>
+                    <span>Current Assessment</span>
+                </div>
+            </div>
+        )
+    }
+
     // ==================== CHARTS (your exact code) ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
