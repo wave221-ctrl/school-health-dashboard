@@ -892,35 +892,33 @@ export default function HealthCalculator() {
     };
 
     // =============== DELETE ASSESSMENT ===============
-    const deleteAssessment = async (id) => {
-        console.log('🔴 Delete clicked for ID:', id);
-        console.log('Current user ID:', user?.id);
+    async function deleteAssessment(assessmentId) {
+        console.log("Attempting Supabase delete for ID:", assessmentId);
 
-        if (!user) {
-            alert('You must be logged in to delete assessments.');
-            return;
-        }
-
-        if (!confirm('Delete this assessment permanently? This cannot be undone.')) return;
-
-        console.log('Attempting Supabase delete for ID:', id);
-
-        const { error } = await supabase
+        const { data, error, count } = await supabase
             .from('assessments')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', user.id);   // ← double safety filter
+            .delete({ count: 'exact' })
+            .eq('id', assessmentId);
+
+        console.log("Supabase returned count:", count, "error:", error);
 
         if (error) {
-            console.error('❌ Delete error:', error);
-            alert('Delete failed: ' + error.message);
-        } else {
-            console.log('✅ Supabase accepted the delete command');
-            alert('✅ Assessment deleted successfully');
-            // Force a fresh reload from the server
-            setTimeout(() => loadHistory(), 400);
+            console.error("Delete error:", error);
+            // TODO: show error toast to user
+            return { success: false, error: error.message };
         }
-    };
+
+        const success = (count ?? 0) > 0;
+        console.log(`Delete ${success ? 'successful' : 'failed (no rows affected)'} in Supabase!`);
+
+        if (success) {
+            // Refresh history list or remove from local state here
+            // e.g. setHistory(prev => prev.filter(item => item.id !== assessmentId));
+        }
+
+        return { success, count, data };
+    }
+
     // =============== SHOW TOAST ===============
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
