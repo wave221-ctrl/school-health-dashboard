@@ -508,6 +508,8 @@ export default function StaffLeadership() {
                                 <Link href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50">
                                     Deferred Maintenance Calculator
                                 </Link>
+                                <Link href="/revenue-forecast" className="block px-6 py-3 hover:bg-emerald-50">Revenue Forecast</Link>
+                                <Link href="/disc-assessment" className="block px-6 py-3 hover:bg-emerald-50 font-medium text-emerald-700">DISC Assessment</Link>
                             </div>
                         </div>
                     </div>
