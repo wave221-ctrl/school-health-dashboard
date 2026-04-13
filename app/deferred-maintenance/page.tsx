@@ -10,7 +10,7 @@ interface MaintenanceItem {
     category: string;
     description: string;
     estimatedCost: number;
-    condition: number;
+    condition: number;        // 1 = Critical, 5 = Excellent
     yearsSinceLast: number;
     priority: 'High' | 'Medium' | 'Low';
 }
@@ -36,6 +36,7 @@ export default function DeferredMaintenance() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    // Automatic prioritization
     const calculatePriority = (condition: number, yearsSinceLast: number, cost: number): 'High' | 'Medium' | 'Low' => {
         const score = (6 - condition) * yearsSinceLast * (cost / 50000);
         if (score >= 25) return 'High';
@@ -67,21 +68,27 @@ export default function DeferredMaintenance() {
     };
 
     const updateItem = (id: string, field: keyof MaintenanceItem, value: any) => {
-        setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+        setItems(items.map(item =>
+            item.id === id ? { ...item, [field]: value } : item
+        ));
     };
 
     const removeItem = (id: string) => {
         setItems(items.filter(item => item.id !== id));
     };
+
+    // Fixed save with proper date format
     const saveAssessment = async () => {
         if (!user?.id) {
             return showToast('Please sign in to save', 'error');
         }
 
+        const reviewDateStr = `${currentYear}-01-01`;   // Proper YYYY-MM-DD format
+
         const payload = {
             user_id: user.id,
             tool: 'deferred-maintenance',
-            review_date: currentYear.toString(),
+            review_date: reviewDateStr,
             overall_score: Math.round(totalDeferred / 1000),
             data: {
                 schoolName,
@@ -92,12 +99,12 @@ export default function DeferredMaintenance() {
             }
         };
 
-        console.log('Saving payload:', payload); // ← Add this for debugging
+        console.log('Saving payload:', payload);
 
         const { data, error } = await supabase
             .from('assessments')
             .insert(payload)
-            .select();   // This helps see the response
+            .select();
 
         if (error) {
             console.error('Supabase insert error:', error);
@@ -124,6 +131,7 @@ export default function DeferredMaintenance() {
         setTimeout(() => setToast(null), 3000);
     };
 
+    // Backlog chart
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -155,6 +163,7 @@ export default function DeferredMaintenance() {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            {/* Navigation */}
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -180,26 +189,46 @@ export default function DeferredMaintenance() {
 
             <div className="max-w-7xl mx-auto px-8 py-8">
                 <h1 className="text-4xl font-bold mb-2">Deferred Maintenance Calculator</h1>
-                <p className="text-slate-600 mb-8">Automatic prioritization based on condition, age, and cost.</p>
+                <p className="text-slate-600 mb-8">Track your facility backlog with automatic prioritization.</p>
 
                 <div className="grid grid-cols-12 gap-6">
+                    {/* Sidebar */}
                     <div className="col-span-12 lg:col-span-4 space-y-6">
                         <div className="bg-white rounded-3xl shadow-sm border p-6">
                             <h2 className="font-semibold mb-4">School Information</h2>
-                            <input value={schoolName} onChange={e => setSchoolName(e.target.value)} className="w-full border rounded-2xl px-4 py-3 mb-4" placeholder="School Name" />
+                            <input
+                                value={schoolName}
+                                onChange={e => setSchoolName(e.target.value)}
+                                className="w-full border rounded-2xl px-4 py-3 mb-4"
+                                placeholder="School Name"
+                            />
                             <label className="block text-sm mb-1">Current School Year</label>
-                            <input type="number" value={currentYear} onChange={e => setCurrentYear(Number(e.target.value))} className="w-full border rounded-2xl px-4 py-3" />
+                            <input
+                                type="number"
+                                value={currentYear}
+                                onChange={e => setCurrentYear(Number(e.target.value))}
+                                className="w-full border rounded-2xl px-4 py-3"
+                            />
                         </div>
 
-                        <button onClick={saveAssessment} className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-3xl font-semibold text-lg">
+                        <button
+                            onClick={saveAssessment}
+                            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-3xl font-semibold text-lg"
+                        >
                             💾 Save This Year’s Assessment
                         </button>
                     </div>
 
+                    {/* Main Table */}
                     <div className="col-span-12 lg:col-span-8 bg-white rounded-3xl shadow-sm border p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-semibold">Facility Items</h2>
-                            <button onClick={addItem} className="bg-slate-100 hover:bg-slate-200 px-6 py-2 rounded-2xl font-medium">+ Add Item</button>
+                            <button
+                                onClick={addItem}
+                                className="bg-slate-100 hover:bg-slate-200 px-6 py-2 rounded-2xl font-medium"
+                            >
+                                + Add Item
+                            </button>
                         </div>
 
                         <table className="w-full">
@@ -218,31 +247,61 @@ export default function DeferredMaintenance() {
                                 {items.map(item => (
                                     <tr key={item.id} className="border-b">
                                         <td className="py-3">
-                                            <select value={item.category} onChange={e => updateItem(item.id, 'category', e.target.value)} className="border rounded-lg px-3 py-1 w-40">
+                                            <select
+                                                value={item.category}
+                                                onChange={e => updateItem(item.id, 'category', e.target.value)}
+                                                className="border rounded-lg px-3 py-1 w-40"
+                                            >
                                                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                             </select>
                                         </td>
                                         <td className="py-3">
-                                            <input value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} className="border rounded-lg px-3 py-1 w-full" />
+                                            <input
+                                                value={item.description}
+                                                onChange={e => updateItem(item.id, 'description', e.target.value)}
+                                                className="border rounded-lg px-3 py-1 w-full"
+                                            />
                                         </td>
                                         <td className="py-3 text-right">
-                                            <input type="number" value={item.estimatedCost} onChange={e => updateItem(item.id, 'estimatedCost', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-28 text-right" />
+                                            <input
+                                                type="number"
+                                                value={item.estimatedCost}
+                                                onChange={e => updateItem(item.id, 'estimatedCost', Number(e.target.value))}
+                                                className="border rounded-lg px-3 py-1 w-28 text-right"
+                                            />
                                         </td>
                                         <td className="py-3 text-center">
-                                            <select value={item.condition} onChange={e => updateItem(item.id, 'condition', Number(e.target.value))} className="border rounded-lg px-3 py-1">
+                                            <select
+                                                value={item.condition}
+                                                onChange={e => updateItem(item.id, 'condition', Number(e.target.value))}
+                                                className="border rounded-lg px-3 py-1"
+                                            >
                                                 {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                                             </select>
                                         </td>
                                         <td className="py-3 text-center">
-                                            <input type="number" value={item.yearsSinceLast} onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-16 text-center" />
+                                            <input
+                                                type="number"
+                                                value={item.yearsSinceLast}
+                                                onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))}
+                                                className="border rounded-lg px-3 py-1 w-16 text-center"
+                                            />
                                         </td>
                                         <td className="py-3 text-center">
-                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' : item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' :
+                                                    item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                                                        'bg-emerald-100 text-emerald-700'
+                                                }`}>
                                                 {item.priority}
                                             </span>
                                         </td>
                                         <td className="py-3 text-center">
-                                            <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700">✕</button>
+                                            <button
+                                                onClick={() => removeItem(item.id)}
+                                                className="text-red-500 hover:text-red-700"
+                                            >
+                                                ✕
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -262,26 +321,35 @@ export default function DeferredMaintenance() {
                     </div>
                 </div>
 
+                {/* Chart */}
                 <div className="mt-10 bg-white rounded-3xl shadow-sm border p-8">
                     <h2 className="font-semibold mb-4">Backlog Visualization</h2>
                     <canvas ref={canvasRef} width="900" height="300" className="w-full" />
                 </div>
 
+                {/* History */}
                 <div className="mt-12 bg-white rounded-3xl shadow-sm border p-8">
                     <h2 className="text-2xl font-semibold mb-6">Year-over-Year History</h2>
                     <button onClick={loadHistory} className="mb-4 text-sm bg-slate-100 hover:bg-slate-200 px-5 py-2 rounded-2xl">Refresh</button>
                     <div className="space-y-3">
-                        {history.map(item => (
-                            <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl">
-                                <div><strong>{item.review_date}</strong></div>
-                                <div className="font-semibold">${item.data?.totalDeferred?.toLocaleString() || '0'}</div>
-                                <div className="text-emerald-700 font-medium">High Priority: {item.data?.highPriorityItems || 0}</div>
-                            </div>
-                        ))}
+                        {history.length === 0 ? (
+                            <p className="text-slate-500">No assessments saved yet.</p>
+                        ) : (
+                            history.map(item => (
+                                <div key={item.id} className="flex justify-between items-center p-5 border rounded-2xl">
+                                    <div><strong>{item.review_date?.substring(0, 4) || '—'}</strong></div>
+                                    <div className="font-semibold">${item.data?.totalDeferred?.toLocaleString() || '0'}</div>
+                                    <div className="text-emerald-700 font-medium">
+                                        High Priority: {item.data?.highPriorityItems || 0}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
+            {/* Toast */}
             {toast && (
                 <div style={{
                     position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
