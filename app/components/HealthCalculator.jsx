@@ -147,6 +147,7 @@ export default function HealthCalculator() {
         if (!user?.id) return showToast('Please sign in to save', 'error');
 
         const assessmentData = {
+            user_id: user_id,
             schoolName, schoolType, reviewDate, reviewer, notes,
             domains: domains.map(d => ({
                 name: d.name,
