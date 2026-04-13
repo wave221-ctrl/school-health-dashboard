@@ -895,11 +895,24 @@ export default function HealthCalculator() {
     async function deleteAssessment(assessmentId) {
         console.log("🔴 Delete clicked for ID:", assessmentId);
 
+        // ←←← GET YOUR CURRENT CLERK USER ID HERE (adjust to your exact hook)
+        const currentUserId = user?.id || // from useUser() hook
+            clerkUser?.id ||
+            (typeof window !== 'undefined' && window.currentUserId); // your existing global if you have one
+
+        console.log("Current user ID from Clerk:", currentUserId);
+
+        if (!currentUserId) {
+            console.error("❌ No current user ID found");
+            return { success: false, error: "Not authenticated" };
+        }
+
         const { data, error, count } = await supabase
             .from('assessments')
             .delete({ count: 'exact' })
             .eq('id', assessmentId)
-            .select(); // forces Supabase to return the deleted row for debugging
+            .eq('user_id', currentUserId)   // ←←← THIS IS THE FIX
+            .select(); // helps with debugging
 
         if (error) {
             console.error("Delete error:", error);
@@ -910,11 +923,11 @@ export default function HealthCalculator() {
         console.log("Supabase returned count:", count, "deleted row:", data);
 
         if (success) {
-            // Optimistic UI update – instantly remove from your history list
+            // Optimistic UI update
             setHistory(prev => prev.filter(item => item.id !== assessmentId));
             console.log("✅ Row successfully deleted from Supabase!");
         } else {
-            console.log("❌ No rows deleted – RLS still not matching");
+            console.log("❌ Still no rows deleted – let me know");
         }
 
         return { success, count };
