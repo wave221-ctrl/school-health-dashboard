@@ -91,8 +91,6 @@ export default function HealthCalculator() {
         return 'Critical';
     };
 
-    const riskClass = (score) => score >= 3.75 ? 'good' : score >= 3 ? 'warn' : 'bad';
-
     const bandClass = (score) => {
         if (score >= 4.5) return 'band-excellent';
         if (score >= 3.75) return 'band-strong';
@@ -121,8 +119,7 @@ export default function HealthCalculator() {
                 avg: Math.round(avg * 100) / 100,
                 weighted: Math.round(weighted * 100) / 100,
                 risk: scoreLabel(avg),
-                weight: domain.weight,
-                metrics: domain.metrics
+                weight: domain.weight
             };
         });
     };
@@ -177,35 +174,10 @@ export default function HealthCalculator() {
         });
 
         if (error) {
-            console.error('Save error:', error);
             showToast('Save failed: ' + error.message, 'error');
         } else {
             showToast('✅ Assessment saved successfully!');
             loadHistory();
-        }
-    };
-
-    const deleteAssessment = async (id) => {
-        if (!user?.id || !confirm('Delete this assessment permanently?')) return;
-
-        console.log('🗑️ Deleting assessment ID:', id);
-
-        const { data, error, count } = await supabase
-            .from('assessments')
-            .delete({ count: 'exact' })
-            .eq('id', id)
-            .select();
-
-        if (error) {
-            console.error('Delete error:', error);
-            showToast('Delete failed: ' + error.message, 'error');
-        } else if ((count ?? 0) > 0) {
-            console.log(`✅ Successfully deleted ${count} row(s)`);
-            setHistory(prev => prev.filter(item => item.id !== id));
-            showToast('Assessment deleted successfully');
-        } else {
-            showToast('Could not delete assessment', 'error');
-            console.log('Response data:', data);
         }
     };
 
@@ -230,7 +202,29 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== CHARTS (your exact code) ====================
+    // ==================== PRIORITY ACTIONS & IMPROVEMENT PLAN ====================
+    const renderPriorityActions = () => {
+        const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
+        return weakestThree.map(item => (
+            <li key={item.name}>
+                <strong>{item.name}</strong>: {recommendationForDomain(item.name)}
+            </li>
+        ));
+    };
+
+    const renderImprovementPlan = () => {
+        const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
+        const windows = ['30 Days', '60 Days', '90 Days'];
+        return weakestThree.map((item, index) => (
+            <div key={index} className="plan-card">
+                <h3>{windows[index]}</h3>
+                <p><strong>Focus Area:</strong> {item.name}</p>
+                <p><span className={`band ${bandClass(item.avg)}`}>{item.risk} ({item.avg.toFixed(2)})</span></p>
+            </div>
+        ));
+    };
+
+    // ==================== CHARTS (your exact original code) ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -361,45 +355,6 @@ export default function HealthCalculator() {
         });
     };
 
-    // ==================== PRIORITY & PLAN ====================
-    const renderPriorityActions = () => {
-        const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
-        return weakestThree.map(item => (
-            <li key={item.name}><strong>{item.name}</strong>: {recommendationForDomain(item.name)}</li>
-        ));
-    };
-
-    const renderImprovementPlan = () => {
-        const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
-        const windows = ['30 Days', '60 Days', '90 Days'];
-        return weakestThree.map((item, index) => (
-            <div key={index} className="plan-card">
-                <h3>{windows[index]}</h3>
-                <p><strong>Focus Area:</strong> {item.name}</p>
-                <p><span className={`band ${bandClass(item.avg)}`}>{item.risk} ({item.avg.toFixed(2)})</span></p>
-            </div>
-        ));
-    };
-
-    // ==================== PDF DOWNLOAD ====================
-    const downloadReport = async () => {
-        const html2pdf = (await import('html2pdf.js')).default;
-        const reportHtml = `<!DOCTYPE html>
-<html><head><title>School Health Report</title>
-<style>body{font-family:Arial;margin:40px;}</style>
-</head><body>
-<h1>School Health Report</h1>
-<p><strong>School:</strong> ${schoolName}</p>
-<p><strong>Date:</strong> ${reviewDate}</p>
-<p><strong>Overall Score:</strong> ${overallScore.toFixed(2)} — ${scoreLabel(overallScore)}</p>
-<h2>Priority Actions</h2>
-<ul>${renderPriorityActions().map(li => `<li>${li.props.children}</li>`).join('')}</ul>
-</body></html>`;
-
-        const opt = { margin: 15, filename: `school-health-report-${reviewDate || 'current'}.pdf` };
-        html2pdf().set(opt).from(reportHtml).save();
-    };
-
     // ==================== EFFECTS ====================
     useEffect(() => {
         if (user) loadHistory();
@@ -420,7 +375,6 @@ export default function HealthCalculator() {
                     <p>A strategic platform for Christian school leaders to assess overall school health, track year-over-year progress, and generate board-ready reports.</p>
                 </div>
                 <div className="controls no-print">
-                    <button onClick={downloadReport}>Download Report</button>
                     <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', fontWeight: '700', padding: '12px 24px' }}>
                         💾 Save Assessment
                     </button>
@@ -458,7 +412,7 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Scoring Guide - Full Original */}
+                    {/* Full Scoring Guide */}
                     <section className="card">
                         <h2>Scoring Guide – What Each Score Really Means</h2>
                         <table>
@@ -677,7 +631,7 @@ export default function HealthCalculator() {
                         <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains.</div>
                     </section>
 
-                    {/* History */}
+                    {/* History - No Delete Button */}
                     <div className="card" style={{ marginTop: '30px' }}>
                         <h2>📅 Year-over-Year History</h2>
                         <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
@@ -693,17 +647,9 @@ export default function HealthCalculator() {
                                         <div style={{ marginRight: '20px', fontWeight: 700, color: '#166534' }}>
                                             {item.overall_score}
                                         </div>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={downloadReport} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
-                                                📄 Download PDF
-                                            </button>
-                                            <button
-                                                onClick={() => deleteAssessment(item.id)}
-                                                className="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-xl hover:bg-red-50"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
+                                        <button onClick={saveAssessment} style={{ background: '#166534', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                                            📄 Download PDF
+                                        </button>
                                     </div>
                                 ))
                             )}
@@ -712,7 +658,7 @@ export default function HealthCalculator() {
                 </main>
             </div>
 
-            {/* Toast */}
+            {/* Toast Notification */}
             {toast && (
                 <div style={{
                     position: 'fixed',
@@ -723,6 +669,7 @@ export default function HealthCalculator() {
                     color: 'white',
                     padding: '20px 28px',
                     borderRadius: '16px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
                     zIndex: 10000
                 }}>
                     {toast.message}
