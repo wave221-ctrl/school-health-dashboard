@@ -6,19 +6,7 @@ import Link from 'next/link';
 export default function PricingPage() {
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Top Nav - Reuse your style */}
-            <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
-                <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold">S</div>
-                        <span className="font-semibold text-xl">School Health Score</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <Link href="/calculator" className="text-slate-700 hover:text-slate-900">Tools</Link>
-                        <UserButton />
-                    </div>
-                </div>
-            </div>
+         
 
             <div className="max-w-4xl mx-auto px-6 py-16">
                 <div className="text-center mb-12">
