@@ -224,7 +224,7 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== CHARTS (your exact original code) ====================
+    // ==================== CHARTS ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -658,7 +658,7 @@ export default function HealthCalculator() {
                 </main>
             </div>
 
-            {/* Toast Notification */}
+            {/* Toast */}
             {toast && (
                 <div style={{
                     position: 'fixed',
@@ -669,7 +669,6 @@ export default function HealthCalculator() {
                     color: 'white',
                     padding: '20px 28px',
                     borderRadius: '16px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
                     zIndex: 10000
                 }}>
                     {toast.message}
