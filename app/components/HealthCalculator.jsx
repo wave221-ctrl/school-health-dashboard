@@ -173,11 +173,6 @@ export default function HealthCalculator() {
     };
 
     // FIXED & IMPROVED DELETE
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
-
     const deleteAssessment = async (id) => {
         if (!user?.id || !confirm('Delete this assessment permanently?')) return;
 
@@ -197,8 +192,8 @@ export default function HealthCalculator() {
             setHistory(prev => prev.filter(item => item.id !== id));
             showToast('Assessment deleted successfully');
         } else {
-            showToast('Could not delete the assessment', 'error');
-            console.log('Response:', data);
+            showToast('Could not delete — please check console', 'error');
+            console.log('Response data:', data);
         }
     };
 
