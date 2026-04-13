@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { UserButton } from '@clerk/nextjs';
 
 interface MaintenanceItem {
@@ -44,7 +44,6 @@ export default function DeferredMaintenance() {
         return 'Low';
     };
 
-    // Update priority when relevant fields change
     useEffect(() => {
         setItems(prev => prev.map(item => ({
             ...item,
@@ -119,7 +118,7 @@ export default function DeferredMaintenance() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    // Chart
+    // Simple backlog chart
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
