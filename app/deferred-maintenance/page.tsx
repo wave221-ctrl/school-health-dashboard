@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '@/lib/supabase';   // ← This is the most common working path
+import { supabase } from '@/lib/supabase';   // ← This is the standard alias most projects use
 import { UserButton } from '@clerk/nextjs';
 
 interface MaintenanceItem {
@@ -36,6 +36,7 @@ export default function DeferredMaintenance() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    // Automatic prioritization engine
     const calculatePriority = (condition: number, yearsSinceLast: number, cost: number): 'High' | 'Medium' | 'Low' => {
         const score = (6 - condition) * yearsSinceLast * (cost / 50000);
         if (score >= 25) return 'High';
@@ -109,11 +110,13 @@ export default function DeferredMaintenance() {
         setTimeout(() => setToast(null), 3000);
     };
 
+    // Backlog visualization
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const maxCost = Math.max(...items.map(i => i.estimatedCost), 100000);
@@ -150,7 +153,7 @@ export default function DeferredMaintenance() {
                             <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
                                 My Tools <span className="text-xs">▼</span>
                             </button>
-                            <div className="absolute left-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                            <div className="absolute left-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                 <a href="/calculator" className="block px-6 py-3 hover:bg-emerald-50">School Health Calculator</a>
                                 <a href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50">Staff & Leadership</a>
                                 <a href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50">Enrollment Projection</a>
@@ -164,9 +167,8 @@ export default function DeferredMaintenance() {
 
             <div className="max-w-7xl mx-auto px-8 py-8">
                 <h1 className="text-4xl font-bold mb-2">Deferred Maintenance Calculator</h1>
-                <p className="text-slate-600 mb-8">Track your facility backlog with automatic prioritization.</p>
+                <p className="text-slate-600 mb-8">Automatic prioritization based on condition, age, and cost.</p>
 
-                {/* Rest of the UI remains the same as before */}
                 <div className="grid grid-cols-12 gap-6">
                     <div className="col-span-12 lg:col-span-4 space-y-6">
                         <div className="bg-white rounded-3xl shadow-sm border p-6">
@@ -222,9 +224,10 @@ export default function DeferredMaintenance() {
                                             <input type="number" value={item.yearsSinceLast} onChange={e => updateItem(item.id, 'yearsSinceLast', Number(e.target.value))} className="border rounded-lg px-3 py-1 w-16 text-center" />
                                         </td>
                                         <td className="py-3 text-center">
-                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' : item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                {item.priority}
-                                            </span>
+                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${item.priority === 'High' ? 'bg-red-100 text-red-700' :
+                                                    item.priority === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                                                        'bg-emerald-100 text-emerald-700'
+                                                }`}>{item.priority}</span>
                                         </td>
                                         <td className="py-3 text-center">
                                             <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700">✕</button>
