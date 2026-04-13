@@ -311,7 +311,7 @@ export default function HealthCalculator() {
         html2pdf().set(opt).from(reportHtml).save();
     };
 
-    // ==================== CHARTS (your original) ====================
+    // ==================== CHARTS ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
