@@ -173,39 +173,21 @@ export default function HealthCalculator() {
     };
 
     // FIXED & IMPROVED DELETE
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const deleteAssessment = async (id) => {
         if (!user?.id || !confirm('Delete this assessment permanently?')) return;
 
-        console.log('🗑️ Delete attempt - Assessment ID:', id);
-        console.log('Current Clerk user.id:', user.id);
+        console.log('🗑️ Deleting assessment ID:', id);
 
-        // Try 1: Standard way (what we want long-term)
-        let { data, error, count } = await supabase
+        const { data, error, count } = await supabase
             .from('assessments')
             .delete({ count: 'exact' })
             .eq('id', id)
-            .eq('user_id', user.id)
             .select();
-
-        if ((count ?? 0) === 0 && !error) {
-            console.log('⚠️ Standard delete found 0 rows. Trying without user_id filter for debug...');
-
-            // Try 2: See if the row even exists
-            const { data: existing } = await supabase
-                .from('assessments')
-                .select('id, user_id, review_date, overall_score')
-                .eq('id', id)
-                .single();
-
-            console.log('Row exists with this user_id:', existing?.user_id);
-
-            // Try 3: Force delete without user_id filter (temporary bypass)
-            ({ data, error, count } = await supabase
-                .from('assessments')
-                .delete({ count: 'exact' })
-                .eq('id', id)
-                .select());
-        }
 
         if (error) {
             console.error('Delete error:', error);
@@ -215,7 +197,8 @@ export default function HealthCalculator() {
             setHistory(prev => prev.filter(item => item.id !== id));
             showToast('Assessment deleted successfully');
         } else {
-            showToast('Still could not delete – check console for details', 'error');
+            showToast('Could not delete the assessment', 'error');
+            console.log('Response:', data);
         }
     };
 
