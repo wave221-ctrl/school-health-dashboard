@@ -12,54 +12,42 @@ export default function HealthCalculator() {
     // ==================== STATE ====================
     const [domains, setDomains] = useState([
         {
-            name: 'Enrollment & Retention',
-            weight: 1.2,
-            metrics: [
+            name: 'Enrollment & Retention', weight: 1.2, metrics: [
                 { name: 'Enrollment trend', help: 'Are admissions stable or growing?', score: 3 },
                 { name: 'Student retention', help: 'Do families stay year to year?', score: 3 },
                 { name: 'Inquiry-to-enrollment pipeline', help: 'Is recruitment converting?', score: 3 }
             ]
         },
         {
-            name: 'Academic Program',
-            weight: 1.2,
-            metrics: [
+            name: 'Academic Program', weight: 1.2, metrics: [
                 { name: 'Curriculum alignment', help: 'Clear, consistent academic expectations', score: 3 },
                 { name: 'Instructional quality', help: 'Classroom teaching strength', score: 3 },
                 { name: 'Student support systems', help: 'Interventions and support are functioning', score: 3 }
             ]
         },
         {
-            name: 'Culture & Mission',
-            weight: 1.1,
-            metrics: [
+            name: 'Culture & Mission', weight: 1.1, metrics: [
                 { name: 'Mission clarity', help: 'Mission is visible and understood', score: 3 },
                 { name: 'Student / family culture', help: 'The community is healthy and engaged', score: 3 },
                 { name: 'Spiritual identity / values', help: 'Faith and identity are integrated well', score: 3 }
             ]
         },
         {
-            name: 'Finance & Operations',
-            weight: 1.25,
-            metrics: [
+            name: 'Finance & Operations', weight: 1.25, metrics: [
                 { name: 'Budget stability', help: 'Budget is sustainable and monitored', score: 3 },
                 { name: 'Facilities / deferred maintenance', help: 'Buildings are cared for', score: 3 },
                 { name: 'Operational systems', help: 'Processes are documented and dependable', score: 3 }
             ]
         },
         {
-            name: 'Leadership & Staffing',
-            weight: 1.15,
-            metrics: [
+            name: 'Leadership & Staffing', weight: 1.15, metrics: [
                 { name: 'Leadership effectiveness', help: 'Leadership is clear and trusted', score: 3 },
                 { name: 'Staff morale / retention', help: 'People want to stay and contribute', score: 3 },
                 { name: 'Professional development', help: 'Staff growth is intentional', score: 3 }
             ]
         },
         {
-            name: 'Marketing & Community Presence',
-            weight: 1.0,
-            metrics: [
+            name: 'Marketing & Community Presence', weight: 1.0, metrics: [
                 { name: 'Brand clarity', help: 'The school story is clear', score: 3 },
                 { name: 'Website / digital presence', help: 'The website and digital communication are useful', score: 3 },
                 { name: 'Community engagement', help: 'The school is visible and connected', score: 3 }
@@ -173,9 +161,8 @@ export default function HealthCalculator() {
             data: assessmentData
         });
 
-        if (error) {
-            showToast('Save failed: ' + error.message, 'error');
-        } else {
+        if (error) showToast('Save failed: ' + error.message, 'error');
+        else {
             showToast('✅ Assessment saved successfully!');
             loadHistory();
         }
@@ -202,7 +189,7 @@ export default function HealthCalculator() {
         ));
     };
 
-    // ==================== PRIORITY ACTIONS & IMPROVEMENT PLAN ====================
+    // ==================== PRIORITY ACTIONS ====================
     const renderPriorityActions = () => {
         const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
         return weakestThree.map(item => (
@@ -212,19 +199,34 @@ export default function HealthCalculator() {
         ));
     };
 
+    // ==================== IMPROVEMENT PLAN - FIXED WITH SPECIFIC ACTIONS ====================
     const renderImprovementPlan = () => {
         const weakestThree = [...results].sort((a, b) => a.avg - b.avg).slice(0, 3);
         const windows = ['30 Days', '60 Days', '90 Days'];
-        return weakestThree.map((item, index) => (
-            <div key={index} className="plan-card">
-                <h3>{windows[index]}</h3>
-                <p><strong>Focus Area:</strong> {item.name}</p>
-                <p><span className={`band ${bandClass(item.avg)}`}>{item.risk} ({item.avg.toFixed(2)})</span></p>
-            </div>
-        ));
+
+        return weakestThree.map((item, index) => {
+            const actions = [
+                `Clarify the immediate issue in ${item.name.toLowerCase()} and assign one owner.`,
+                `Implement a focused improvement step: ${recommendationForDomain(item.name)}`,
+                `Measure results after the period and decide whether to scale, refine, or intervene further.`
+            ];
+
+            return (
+                <div key={index} className="plan-card">
+                    <h3>{windows[index]}</h3>
+                    <p><strong>Focus Area:</strong> {item.name}</p>
+                    <p><span className={`band ${bandClass(item.avg)}`}>{item.risk} ({item.avg.toFixed(2)})</span></p>
+                    <ol className="plan-list">
+                        {actions.map((action, i) => (
+                            <li key={i}>{action}</li>
+                        ))}
+                    </ol>
+                </div>
+            );
+        });
     };
 
-    // ==================== CHARTS ====================
+    // ==================== CHARTS (your original) ====================
     const drawBarChart = () => {
         const canvas = barChartRef.current;
         if (!canvas) return;
@@ -378,6 +380,7 @@ export default function HealthCalculator() {
 
             <div className="grid">
                 <aside className="section-stack">
+                    {/* School Information */}
                     <section className="card">
                         <h2>School Information</h2>
                         <div className="field">
@@ -426,6 +429,7 @@ export default function HealthCalculator() {
                             Detailed rubric with biblical anchors for each domain:
                         </p>
 
+                        {/* All 6 rubrics restored */}
                         <div className="domain" style={{ marginBottom: '12px' }}>
                             <details open>
                                 <summary><strong>Enrollment & Retention</strong></summary>
@@ -610,7 +614,7 @@ export default function HealthCalculator() {
                         </div>
                     </section>
 
-                    {/* Improvement Plan */}
+                    {/* Improvement Plan - Now with specific actions */}
                     <section className="card">
                         <h2>30 / 60 / 90 Day Improvement Plan</h2>
                         <div className="improvement-grid">
@@ -619,7 +623,7 @@ export default function HealthCalculator() {
                         <div className="footer-note">These suggested 30/60/90-day actions are auto-generated from the weakest domains.</div>
                     </section>
 
-                    {/* History - No Delete */}
+                    {/* History */}
                     <div className="card" style={{ marginTop: '30px' }}>
                         <h2>📅 Year-over-Year History</h2>
                         <button onClick={loadHistory} className="secondary" style={{ marginBottom: '12px' }}>Refresh History</button>
