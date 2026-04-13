@@ -147,7 +147,6 @@ export default function HealthCalculator() {
         if (!user?.id) return showToast('Please sign in to save', 'error');
 
         const assessmentData = {
-            user_id: user_id,
             schoolName, schoolType, reviewDate, reviewer, notes,
             domains: domains.map(d => ({
                 name: d.name,
@@ -177,14 +176,18 @@ export default function HealthCalculator() {
     const deleteAssessment = async (id) => {
         if (!user?.id || !confirm('Delete this assessment permanently?')) return;
 
-        console.log('🗑️ Attempting to delete ID:', id);
+        console.log('🗑️ Delete attempt - Assessment ID:', id);
+        console.log('Current Clerk user.id:', user.id);
+        console.log('Clerk user object:', user);
 
         const { data, error, count } = await supabase
             .from('assessments')
             .delete({ count: 'exact' })
             .eq('id', id)
-            .eq('user_id', user.id)
+            .eq('user_id', user.id)   // Try using user.id first
             .select();
+
+        console.log('Supabase response → count:', count, 'data:', data, 'error:', error);
 
         if (error) {
             console.error('Delete error:', error);
@@ -194,13 +197,15 @@ export default function HealthCalculator() {
             setHistory(prev => prev.filter(item => item.id !== id));
             showToast('Assessment deleted successfully');
         } else {
-            showToast('No matching assessment found or permission issue', 'error');
-        }
-    };
+            showToast('No matching assessment found (user_id mismatch)', 'error');
 
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
+            // Extra debug: try without user_id filter to see if the row even exists
+            const { data: allRows } = await supabase
+                .from('assessments')
+                .select('id, user_id, review_date')
+                .eq('id', id);
+            console.log('Row with this ID exists with user_id:', allRows);
+        }
     };
 
     // ==================== DOMAIN UPDATES ====================
