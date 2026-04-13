@@ -505,6 +505,9 @@ export default function StaffLeadership() {
                                 <Link href="/calculator" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">School Health Calculator</Link>
                                 <Link href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">Enrollment Projection Calculator</Link>
                                 <Link href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">Staff & Leadership Health Assessment</Link>
+                                <Link href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50">
+                                    Deferred Maintenance Calculator
+                                </Link>
                             </div>
                         </div>
                     </div>
