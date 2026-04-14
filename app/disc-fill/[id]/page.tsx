@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -41,14 +41,13 @@ export default function DiscFill() {
         setLoading(false);
 
         if (error) {
-            alert("Error submitting assessment. Please try again.");
+            alert("Error submitting. Please try again.");
             console.error(error);
         } else {
             setSubmitted(true);
-            // Auto redirect after 2 seconds
             setTimeout(() => {
                 router.push('/thank-you');
-            }, 2000);
+            }, 1800);
         }
     };
 
@@ -83,12 +82,12 @@ export default function DiscFill() {
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 className="w-full border rounded-2xl px-5 py-4 text-lg"
-                                placeholder="Enter your name"
+                                placeholder="Enter your full name"
                             />
                         </div>
 
                         {[
-                            { label: "D — Dominance (Decisive, Results-oriented, Direct)", value: D, setter: setD, color: "text-red-600" },
+                            { label: "D — Dominance (Decisive, Results-oriented)", value: D, setter: setD, color: "text-red-600" },
                             { label: "I — Influence (Outgoing, Persuasive, Enthusiastic)", value: I, setter: setI, color: "text-amber-600" },
                             { label: "S — Steadiness (Patient, Team-player, Supportive)", value: S, setter: setS, color: "text-blue-600" },
                             { label: "C — Conscientiousness (Analytical, Detail-oriented, Accurate)", value: C, setter: setC, color: "text-emerald-600" }
