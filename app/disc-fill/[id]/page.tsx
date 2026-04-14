@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '../../../../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export default function DiscFill() {
     const { id } = useParams();
