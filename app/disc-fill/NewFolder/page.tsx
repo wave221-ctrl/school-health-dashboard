@@ -79,11 +79,11 @@ export default function DiscFill() {
                     <div className="space-y-10">
                         <div>
                             <label className="block font-medium mb-3 text-lg">Your Full Name</label>
-                            <input 
-                                value={name} 
-                                onChange={e => setName(e.target.value)} 
-                                className="w-full border rounded-2xl px-5 py-4 text-lg" 
-                                placeholder="Enter your name" 
+                            <input
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                className="w-full border rounded-2xl px-5 py-4 text-lg"
+                                placeholder="Enter your name"
                             />
                         </div>
 
@@ -95,13 +95,13 @@ export default function DiscFill() {
                         ].map((item, idx) => (
                             <div key={idx}>
                                 <label className="block font-medium mb-2">{item.label}</label>
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="100" 
-                                    value={item.value} 
-                                    onChange={e => item.setter(Number(e.target.value))} 
-                                    className="w-full accent-emerald-600" 
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={item.value}
+                                    onChange={e => item.setter(Number(e.target.value))}
+                                    className="w-full accent-emerald-600"
                                 />
                                 <div className={`text-center font-bold text-3xl mt-2 ${item.color}`}>
                                     {item.value}
@@ -110,7 +110,7 @@ export default function DiscFill() {
                         ))}
                     </div>
 
-                    <button 
+                    <button
                         onClick={submitAssessment}
                         disabled={loading || !name.trim()}
                         className="mt-12 w-full bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-400 text-white py-4 rounded-2xl font-semibold text-lg transition"
