@@ -231,6 +231,9 @@ export default function DeferredMaintenance() {
                                 <a href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50">Staff & Leadership</a>
                                 <a href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50">Enrollment Projection</a>
                                 <a href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50 font-medium text-emerald-700">Deferred Maintenance</a>
+                                <Link href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50">
+                                    Master Schedule Builder
+                                </Link>
                        
                             </div>
                         </div>
