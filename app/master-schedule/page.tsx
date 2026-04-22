@@ -34,7 +34,31 @@ interface ScheduleSlot {
     roomId: string;
 }
 
+interface FixedSlot {
+    id: string;
+    name: string;
+    days: string[];   // which days this applies — empty means all days
+    period: number;
+    type: 'chapel' | 'lunch' | 'recess' | 'assembly' | 'other';
+}
+
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+const FIXED_SLOT_COLORS: Record<FixedSlot['type'], string> = {
+    chapel: 'bg-purple-100 text-purple-800 border-purple-300',
+    lunch: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    recess: 'bg-sky-100 text-sky-800 border-sky-300',
+    assembly: 'bg-orange-100 text-orange-800 border-orange-300',
+    other: 'bg-gray-100 text-gray-700 border-gray-300',
+};
+
+const FIXED_SLOT_ICONS: Record<FixedSlot['type'], string> = {
+    chapel: '⛪',
+    lunch: '🍽️',
+    recess: '⚽',
+    assembly: '📢',
+    other: '📌',
+};
 
 export default function MasterScheduleBuilder() {
     const { user } = useUser();
@@ -44,6 +68,7 @@ export default function MasterScheduleBuilder() {
     const [sections, setSections] = useState<Section[]>([]);
     const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
     const [conflicts, setConflicts] = useState<string[]>([]);
+    const [fixedSlots, setFixedSlots] = useState<FixedSlot[]>([]);
 
     const [saveName, setSaveName] = useState('');
     const [savedScenarios, setSavedScenarios] = useState<any[]>([]);
@@ -53,7 +78,6 @@ export default function MasterScheduleBuilder() {
     const [showAiPanel, setShowAiPanel] = useState(false);
 
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
     const [numPeriods, setNumPeriods] = useState(7);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -80,7 +104,7 @@ export default function MasterScheduleBuilder() {
         const payload = {
             tool: 'master-schedule',
             name: saveName,
-            data: { teachers, rooms, sections, schedule, numPeriods },
+            data: { teachers, rooms, sections, schedule, numPeriods, fixedSlots },
             user_id: user?.id,
         };
         const { error } = await supabase.from('assessments').insert([payload]);
@@ -99,6 +123,7 @@ export default function MasterScheduleBuilder() {
         setSections(d.sections || []);
         setSchedule(d.schedule || []);
         setNumPeriods(d.numPeriods || 7);
+        setFixedSlots(d.fixedSlots || []);
         setConflicts([]);
         showNotification(`Loaded: ${scenario.name}`);
     };
@@ -106,6 +131,7 @@ export default function MasterScheduleBuilder() {
     const addTeacher = () => setTeachers([...teachers, { id: Date.now().toString(), name: '', maxPeriods: 5, notes: '' }]);
     const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
     const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
+    const addFixedSlot = () => setFixedSlots([...fixedSlots, { id: Date.now().toString(), name: '', days: [], period: 1, type: 'other' }]);
 
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
@@ -113,49 +139,84 @@ export default function MasterScheduleBuilder() {
         }
 
         const newSchedule: ScheduleSlot[] = [];
-        const teacherLoad: Record<string, number> = {};
-        const roomUsage: Record<string, Record<string, number>> = {};
 
-        teachers.forEach(t => teacherLoad[t.id] = 0);
-        rooms.forEach(r => {
-            roomUsage[r.id] = {};
-            days.forEach(d => roomUsage[r.id][d] = 0);
+        const teacherBusy = new Set<string>(); // `${teacherId}-${day}-${period}`
+        const roomBusy = new Set<string>(); // `${roomId}-${day}-${period}`
+
+        const teacherDayLoad: Record<string, Record<string, number>> = {};
+        teachers.forEach(t => {
+            teacherDayLoad[t.id] = {};
+            days.forEach(d => (teacherDayLoad[t.id][d] = 0));
         });
+
+        fixedSlots.forEach(fs => {
+            const applicableDays = fs.days.length > 0 ? fs.days : days;
+            applicableDays.forEach(day => {
+                teacherBusy.add(`FIXED-${day}-${fs.period}`);
+                roomBusy.add(`FIXED-${day}-${fs.period}`);
+            });
+        });
+
+        const isFixedPeriod = (day: string, period: number): boolean =>
+            fixedSlots.some(fs => {
+                const applicableDays = fs.days.length > 0 ? fs.days : days;
+                return applicableDays.includes(day) && fs.period === period;
+            });
 
         const sortedSections = [...sections].sort((a, b) => b.periodsPerWeek - a.periodsPerWeek);
 
         sortedSections.forEach(section => {
-            let assigned = false;
-            const possibleTeachers = section.teacherId ? teachers.filter(t => t.id === section.teacherId) : teachers;
-            const possibleRooms = section.roomId ? rooms.filter(r => r.id === section.roomId) : rooms;
+            let assignedCount = 0;
+            const target = Math.min(section.periodsPerWeek, days.length * numPeriods);
 
-            for (let pass = 0; pass < 15 && !assigned; pass++) {
-                for (const day of days) {
-                    for (let p = 1; p <= numPeriods; p++) {
-                        const availableTeacher = possibleTeachers
-                            .filter(t => (teacherLoad[t.id] || 0) < t.maxPeriods)
-                            .sort((a, b) => (teacherLoad[a.id] || 0) - (teacherLoad[b.id] || 0))[0];
+            const possibleTeachers = section.teacherId
+                ? teachers.filter(t => t.id === section.teacherId)
+                : teachers;
+            const possibleRooms = section.roomId
+                ? rooms.filter(r => r.id === section.roomId)
+                : rooms;
 
-                        if (!availableTeacher) continue;
+            outer:
+            for (const day of days) {
+                for (let p = 1; p <= numPeriods; p++) {
+                    if (assignedCount >= target) break outer;
 
-                        const availableRoom = possibleRooms.find(r => (roomUsage[r.id][day] || 0) < 1);
+                    if (isFixedPeriod(day, p)) continue;
 
-                        if (availableRoom) {
-                            newSchedule.push({
-                                day,
-                                period: p,
-                                sectionId: section.id,
-                                teacherId: availableTeacher.id,
-                                roomId: availableRoom.id,
-                            });
-                            teacherLoad[availableTeacher.id] = (teacherLoad[availableTeacher.id] || 0) + 1;
-                            roomUsage[availableRoom.id][day] = (roomUsage[availableRoom.id][day] || 0) + 1;
-                            assigned = true;
-                            break;
-                        }
-                    }
-                    if (assigned) break;
+                    const availableTeacher = possibleTeachers
+                        .filter(t =>
+                            !teacherBusy.has(`${t.id}-${day}-${p}`) &&
+                            (teacherDayLoad[t.id]?.[day] ?? 0) < t.maxPeriods
+                        )
+                        .sort((a, b) =>
+                            (teacherDayLoad[a.id]?.[day] ?? 0) - (teacherDayLoad[b.id]?.[day] ?? 0)
+                        )[0];
+
+                    if (!availableTeacher) continue;
+
+                    const availableRoom = possibleRooms.find(
+                        r => !roomBusy.has(`${r.id}-${day}-${p}`)
+                    );
+                    if (!availableRoom) continue;
+
+                    newSchedule.push({
+                        day,
+                        period: p,
+                        sectionId: section.id,
+                        teacherId: availableTeacher.id,
+                        roomId: availableRoom.id,
+                    });
+
+                    teacherBusy.add(`${availableTeacher.id}-${day}-${p}`);
+                    roomBusy.add(`${availableRoom.id}-${day}-${p}`);
+                    teacherDayLoad[availableTeacher.id][day] =
+                        (teacherDayLoad[availableTeacher.id][day] ?? 0) + 1;
+                    assignedCount++;
                 }
+            }
+
+            if (assignedCount < target) {
+                console.warn(`Could only place ${assignedCount}/${target} periods for "${section.courseName}"`);
             }
         });
 
@@ -165,22 +226,24 @@ export default function MasterScheduleBuilder() {
         if (newSchedule.length > 0) {
             showNotification(`Generated ${newSchedule.length} assignments!`);
         } else {
-            showNotification('Could not assign all sections. Try adding more rooms or increasing max periods.', 'error');
+            showNotification('Could not assign any sections. Try adding more rooms or increasing max periods.', 'error');
         }
     };
 
     const detectConflicts = (currentSchedule: ScheduleSlot[]) => {
         const newConflicts: string[] = [];
-        const teacherDayPeriod = new Map();
-        const roomDayPeriod = new Map();
+        const teacherDayPeriod = new Map<string, boolean>();
+        const roomDayPeriod = new Map<string, boolean>();
 
         currentSchedule.forEach(slot => {
             const tKey = `${slot.teacherId}-${slot.day}-${slot.period}`;
-            if (teacherDayPeriod.has(tKey)) newConflicts.push(`Teacher conflict: ${getTeacherName(slot.teacherId)} on ${slot.day} period ${slot.period}`);
+            if (teacherDayPeriod.has(tKey))
+                newConflicts.push(`Teacher conflict: ${getTeacherName(slot.teacherId)} on ${slot.day} period ${slot.period}`);
             teacherDayPeriod.set(tKey, true);
 
             const rKey = `${slot.roomId}-${slot.day}-${slot.period}`;
-            if (roomDayPeriod.has(rKey)) newConflicts.push(`Room conflict: ${getRoomName(slot.roomId)} on ${slot.day} period ${slot.period}`);
+            if (roomDayPeriod.has(rKey))
+                newConflicts.push(`Room conflict: ${getRoomName(slot.roomId)} on ${slot.day} period ${slot.period}`);
             roomDayPeriod.set(rKey, true);
         });
 
@@ -201,6 +264,7 @@ export default function MasterScheduleBuilder() {
 Teachers: ${teachers.map(t => t.name).join(', ')}
 Rooms: ${rooms.map(r => r.name).join(', ')}
 Sections: ${sections.map(s => s.courseName).join(', ')}
+Fixed Slots: ${fixedSlots.map(f => `${f.name} (Period ${f.period})`).join(', ')}
 Assignments: ${schedule.length}
 Conflicts: ${conflicts.length}
     `.trim();
@@ -209,11 +273,13 @@ Conflicts: ${conflicts.length}
             const res = await fetch('/api/master-schedule-ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: `You are an expert Christian school master scheduler. Provide 4-6 specific suggestions to improve this schedule:\n${dataSummary}` }),
+                body: JSON.stringify({
+                    prompt: `You are an expert Christian school master scheduler. Provide 4-6 specific suggestions to improve this schedule:\n${dataSummary}`,
+                }),
             });
             const data = await res.json();
             setAiResponse(data.response || 'No response received.');
-        } catch (err: any) {
+        } catch {
             showNotification('AI failed. Make sure OPENAI_API_KEY is set in Vercel dashboard.', 'error');
             setAiResponse('OpenAI key not configured on the server.');
         } finally {
@@ -221,9 +287,17 @@ Conflicts: ${conflicts.length}
         }
     };
 
+    const getFixedSlot = (day: string, period: number): FixedSlot | undefined =>
+        fixedSlots.find(fs => {
+            const applicableDays = fs.days.length > 0 ? fs.days : days;
+            return applicableDays.includes(day) && fs.period === period;
+        });
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
+
+                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-emerald-700">Master Schedule Builder</h1>
@@ -260,8 +334,116 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Input Grid */}
+                {/* Non-Negotiable Periods */}
+                <div className="bg-white rounded-2xl shadow p-6 mb-8">
+                    <div className="flex justify-between items-center mb-5">
+                        <div>
+                            <h2 className="text-xl font-semibold text-emerald-700">Non-Negotiable Periods</h2>
+                            <p className="text-sm text-gray-500 mt-0.5">Chapel, Lunch, Recess, etc. — these periods are locked and will never be overwritten.</p>
+                        </div>
+                        <button onClick={addFixedSlot} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
+                    </div>
+
+                    {fixedSlots.length === 0 && (
+                        <p className="text-gray-400 text-sm italic">No fixed periods added yet.</p>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {fixedSlots.map((fs, idx) => (
+                            <div key={fs.id} className={`border-2 rounded-xl p-4 ${FIXED_SLOT_COLORS[fs.type]}`}>
+                                <div className="flex gap-2 mb-3">
+                                    <span className="text-xl">{FIXED_SLOT_ICONS[fs.type]}</span>
+                                    <input
+                                        type="text"
+                                        value={fs.name}
+                                        onChange={(e) => {
+                                            const u = [...fixedSlots];
+                                            u[idx].name = e.target.value;
+                                            setFixedSlots(u);
+                                        }}
+                                        placeholder="Event name (e.g. Chapel)"
+                                        className="flex-1 bg-white/70 border border-current/20 rounded-lg px-3 py-1.5 text-sm font-medium"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1 opacity-70">Type</label>
+                                        <select
+                                            value={fs.type}
+                                            onChange={(e) => {
+                                                const u = [...fixedSlots];
+                                                u[idx].type = e.target.value as FixedSlot['type'];
+                                                setFixedSlots(u);
+                                            }}
+                                            className="w-full bg-white/70 border border-current/20 rounded-lg px-2 py-1.5 text-sm"
+                                        >
+                                            <option value="chapel">Chapel</option>
+                                            <option value="lunch">Lunch</option>
+                                            <option value="recess">Recess</option>
+                                            <option value="assembly">Assembly</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1 opacity-70">Period #</label>
+                                        <input
+                                            type="number"
+                                            value={fs.period}
+                                            min={1}
+                                            max={numPeriods}
+                                            onChange={(e) => {
+                                                const u = [...fixedSlots];
+                                                u[idx].period = Math.max(1, Math.min(numPeriods, parseInt(e.target.value) || 1));
+                                                setFixedSlots(u);
+                                            }}
+                                            className="w-full bg-white/70 border border-current/20 rounded-lg px-2 py-1.5 text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mb-3">
+                                    <label className="block text-xs font-medium mb-1.5 opacity-70">Apply to days (leave blank for every day)</label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {days.map(day => (
+                                            <button
+                                                key={day}
+                                                onClick={() => {
+                                                    const u = [...fixedSlots];
+                                                    const current = u[idx].days;
+                                                    u[idx].days = current.includes(day)
+                                                        ? current.filter(d => d !== day)
+                                                        : [...current, day];
+                                                    setFixedSlots(u);
+                                                }}
+                                                className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-all ${fs.days.includes(day)
+                                                        ? 'bg-white border-current shadow-sm'
+                                                        : 'bg-transparent border-current/30 opacity-50'
+                                                    }`}
+                                            >
+                                                {day.slice(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {fs.days.length === 0 && (
+                                        <p className="text-xs mt-1 opacity-60">Applies every day</p>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={() => setFixedSlots(fixedSlots.filter((_, i) => i !== idx))}
+                                    className="text-xs underline opacity-60 hover:opacity-100"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Input Grid — Teachers / Rooms / Sections */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
                         <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
@@ -276,7 +458,7 @@ Conflicts: ${conflicts.length}
                                 </div>
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Max Periods Per Day</label>
-                                    <input type="number" value={teacher.maxPeriods} min="1" max="8" onChange={(e) => { const u = [...teachers]; u[idx].maxPeriods = parseInt(e.target.value) || 5; setTeachers(u); }} className="w-full border rounded-lg p-3" />
+                                    <input type="number" value={teacher.maxPeriods} min="1" max="10" onChange={(e) => { const u = [...teachers]; u[idx].maxPeriods = parseInt(e.target.value) || 5; setTeachers(u); }} className="w-full border rounded-lg p-3" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
@@ -350,16 +532,41 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                <div className="flex gap-4 mb-10">
+                {/* Action Buttons */}
+                <div className="flex gap-4 mb-4">
                     <button onClick={generateDraft} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-semibold text-lg">Generate Draft Schedule</button>
                     <button onClick={saveScenario} className="border-2 border-emerald-700 text-emerald-700 hover:bg-emerald-50 py-4 px-10 rounded-2xl font-semibold">Save Scenario</button>
                 </div>
+                <input
+                    type="text"
+                    value={saveName}
+                    onChange={(e) => setSaveName(e.target.value)}
+                    placeholder="Scenario name (e.g. Fall 2026 - Draft 1)"
+                    className="w-full border border-gray-300 p-4 rounded-2xl mb-12 text-lg"
+                />
 
-                <input type="text" value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="Scenario name (e.g. Fall 2026 - Draft 1)" className="w-full border border-gray-300 p-4 rounded-2xl mb-12 text-lg" />
-
+                {/* Schedule Grid */}
                 {schedule.length > 0 && (
                     <div id="schedule-report" className="bg-white rounded-3xl shadow p-8 mb-12">
                         <h2 className="text-2xl font-bold text-emerald-700 mb-6">Draft Master Schedule</h2>
+
+                        {/* Legend */}
+                        {fixedSlots.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {(['chapel', 'lunch', 'recess', 'assembly', 'other'] as FixedSlot['type'][])
+                                    .filter(t => fixedSlots.some(fs => fs.type === t))
+                                    .map(t => (
+                                        <span key={t} className={`text-xs px-3 py-1 rounded-full border font-medium ${FIXED_SLOT_COLORS[t]}`}>
+                                            {FIXED_SLOT_ICONS[t]} {t.charAt(0).toUpperCase() + t.slice(1)}
+                                        </span>
+                                    ))
+                                }
+                                <span className="text-xs px-3 py-1 rounded-full border font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    🟢 Scheduled Class
+                                </span>
+                            </div>
+                        )}
+
                         {conflicts.length > 0 && (
                             <div className="bg-red-50 border border-red-200 p-6 rounded-2xl mb-8">
                                 <h3 className="font-semibold text-red-700 mb-3">Conflicts Detected ({conflicts.length})</h3>
@@ -368,13 +575,14 @@ Conflicts: ${conflicts.length}
                                 </ul>
                             </div>
                         )}
+
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse min-w-[900px]">
                                 <thead>
                                     <tr className="bg-emerald-700 text-white">
-                                        <th className="p-4 text-left border">Day</th>
+                                        <th className="p-4 text-left border border-emerald-600">Day</th>
                                         {Array.from({ length: numPeriods }).map((_, i) => (
-                                            <th key={i} className="p-4 border text-center">Period {i + 1}</th>
+                                            <th key={i} className="p-4 border border-emerald-600 text-center">Period {i + 1}</th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -384,16 +592,34 @@ Conflicts: ${conflicts.length}
                                             <td className="p-4 border font-medium bg-gray-100">{day}</td>
                                             {Array.from({ length: numPeriods }).map((_, pIdx) => {
                                                 const periodNum = pIdx + 1;
-                                                const slot = schedule.find(s => s.day === day && s.period === periodNum);
+                                                const fixedSlot = getFixedSlot(day, periodNum);
+                                                const slot = !fixedSlot
+                                                    ? schedule.find(s => s.day === day && s.period === periodNum)
+                                                    : undefined;
+
+                                                if (fixedSlot) {
+                                                    return (
+                                                        <td
+                                                            key={pIdx}
+                                                            className={`p-3 border text-center text-sm align-middle ${FIXED_SLOT_COLORS[fixedSlot.type]}`}
+                                                        >
+                                                            <div className="font-semibold text-sm">{FIXED_SLOT_ICONS[fixedSlot.type]} {fixedSlot.name || fixedSlot.type}</div>
+                                                            <div className="text-xs opacity-60 capitalize">{fixedSlot.type}</div>
+                                                        </td>
+                                                    );
+                                                }
+
                                                 return (
-                                                    <td key={pIdx} className="p-4 border text-center text-sm min-h-[110px] align-top">
+                                                    <td key={pIdx} className="p-3 border text-center text-sm min-h-[110px] align-top">
                                                         {slot ? (
                                                             <div className="space-y-1">
                                                                 <div className="font-medium text-emerald-700">{sections.find(s => s.id === slot.sectionId)?.courseName}</div>
                                                                 <div className="text-xs text-gray-600">{getTeacherName(slot.teacherId)}</div>
                                                                 <div className="text-xs text-emerald-600">{getRoomName(slot.roomId)}</div>
                                                             </div>
-                                                        ) : <span className="text-gray-300">—</span>}
+                                                        ) : (
+                                                            <span className="text-gray-300">—</span>
+                                                        )}
                                                     </td>
                                                 );
                                             })}
@@ -405,6 +631,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 )}
 
+                {/* Saved Scenarios */}
                 {savedScenarios.length > 0 && (
                     <div className="bg-white rounded-3xl shadow p-8 mb-12">
                         <h2 className="text-xl font-semibold text-emerald-700 mb-6">Saved Scenarios</h2>
