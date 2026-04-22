@@ -24,7 +24,7 @@ interface Section {
     teacherId: string;
     roomId: string;
     periodsPerWeek: number;
-    gradeLevel: string;   // New: supports multiple grade levels
+    gradeLevel: string;
 }
 
 interface ScheduleSlot {
@@ -143,14 +143,12 @@ export default function MasterScheduleBuilder() {
         const teacherBusy = new Set<string>();
         const roomBusy = new Set<string>();
 
-        // Track teacher load per day
         const teacherDayLoad: Record<string, Record<string, number>> = {};
         teachers.forEach(t => {
             teacherDayLoad[t.id] = {};
             days.forEach(d => (teacherDayLoad[t.id][d] = 0));
         });
 
-        // Mark fixed slots as busy
         fixedSlots.forEach(fs => {
             const applicableDays = fs.days.length > 0 ? fs.days : days;
             applicableDays.forEach(day => {
@@ -300,37 +298,37 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Fixed Slots (Multiple Lunch, Chapel, etc.) */}
+                {/* Non-Negotiable Periods */}
                 <div className="bg-white rounded-2xl shadow p-6 mb-8">
                     <div className="flex justify-between items-center mb-5">
                         <div>
                             <h2 className="text-xl font-semibold text-emerald-700">Non-Negotiable Periods</h2>
-                            <p className="text-sm text-gray-500">Chapel, Lunch, Recess, etc.</p>
+                            <p className="text-sm text-gray-500 mt-0.5">Chapel, Lunch, Recess, etc. — these periods are locked</p>
                         </div>
                         <button onClick={addFixedSlot} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {fixedSlots.map((fs, idx) => (
-                            <div key={fs.id} className={`border-2 rounded-xl p-4 ${FIXED_SLOT_COLORS[fs.type]}`}>
-                                <div className="flex gap-2 mb-3">
-                                    <span className="text-xl">{FIXED_SLOT_ICONS[fs.type]}</span>
+                            <div key={fs.id} className={`border-2 rounded-2xl p-5 ${FIXED_SLOT_COLORS[fs.type]}`}>
+                                <div className="flex gap-3 mb-4">
+                                    <span className="text-2xl flex-shrink-0">{FIXED_SLOT_ICONS[fs.type]}</span>
                                     <input
                                         type="text"
                                         value={fs.name}
                                         onChange={(e) => { const u = [...fixedSlots]; u[idx].name = e.target.value; setFixedSlots(u); }}
                                         placeholder="Event name"
-                                        className="flex-1 bg-white/70 border border-current/20 rounded-lg px-3 py-1.5 text-sm font-medium"
+                                        className="flex-1 bg-white border border-current/30 rounded-xl px-4 py-2.5 text-sm font-medium"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium mb-1 opacity-70">Type</label>
+                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Type</label>
                                         <select
                                             value={fs.type}
                                             onChange={(e) => { const u = [...fixedSlots]; u[idx].type = e.target.value as FixedSlot['type']; setFixedSlots(u); }}
-                                            className="w-full bg-white/70 border border-current/20 rounded-lg px-2 py-1.5 text-sm"
+                                            className="w-full bg-white border border-current/30 rounded-xl px-4 py-2.5 text-sm"
                                         >
                                             <option value="chapel">Chapel</option>
                                             <option value="lunch">Lunch</option>
@@ -340,19 +338,19 @@ Conflicts: ${conflicts.length}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium mb-1 opacity-70">Period #</label>
+                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Period #</label>
                                         <input
                                             type="number"
                                             value={fs.period}
                                             min={1}
                                             max={numPeriods}
                                             onChange={(e) => { const u = [...fixedSlots]; u[idx].period = Math.max(1, Math.min(numPeriods, parseInt(e.target.value) || 1)); setFixedSlots(u); }}
-                                            className="w-full bg-white/70 border border-current/20 rounded-lg px-2 py-1.5 text-sm"
+                                            className="w-full bg-white border border-current/30 rounded-xl px-4 py-3 text-center text-lg font-medium"
                                         />
                                     </div>
                                 </div>
 
-                                <button onClick={() => setFixedSlots(fixedSlots.filter((_, i) => i !== idx))} className="text-xs underline opacity-60 hover:opacity-100">Remove</button>
+                                <button onClick={() => setFixedSlots(fixedSlots.filter((_, i) => i !== idx))} className="mt-4 text-xs text-red-600 hover:underline">Remove</button>
                             </div>
                         ))}
                     </div>
@@ -360,8 +358,6 @@ Conflicts: ${conflicts.length}
 
                 {/* Input Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                    {/* Teachers, Rooms, Sections — full original features with labels */}
-                    {/* (The input sections are fully restored from your original design) */}
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
                         <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
