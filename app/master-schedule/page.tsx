@@ -108,9 +108,10 @@ export default function MasterScheduleBuilder() {
     const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
     const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
 
+    // Improved generation logic
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
-            showNotification('Please add teachers, rooms, and sections first', 'error');
+            showNotification('Please add at least one teacher, room, and section', 'error');
             return;
         }
 
@@ -128,42 +129,51 @@ export default function MasterScheduleBuilder() {
 
         sortedSections.forEach(section => {
             let assigned = false;
+
             const possibleTeachers = section.teacherId
                 ? teachers.filter(t => t.id === section.teacherId)
                 : teachers;
 
-            for (const day of days) {
-                for (let p = 1; p <= defaultPeriods; p++) {
-                    const availableTeacher = possibleTeachers.find(t => (teacherLoad[t.id] || 0) < t.maxPeriods);
-                    if (!availableTeacher) continue;
+            // Try multiple passes to improve assignment success rate
+            for (let attempt = 0; attempt < 3 && !assigned; attempt++) {
+                for (const day of days) {
+                    for (let p = 1; p <= defaultPeriods; p++) {
+                        const availableTeacher = possibleTeachers.find(t => (teacherLoad[t.id] || 0) < t.maxPeriods);
+                        if (!availableTeacher) continue;
 
-                    const possibleRooms = section.roomId
-                        ? rooms.filter(r => r.id === section.roomId)
-                        : rooms;
+                        const possibleRooms = section.roomId
+                            ? rooms.filter(r => r.id === section.roomId)
+                            : rooms;
 
-                    const availableRoom = possibleRooms.find(r => (roomUsage[r.id][day] || 0) < 1);
+                        const availableRoom = possibleRooms.find(r => (roomUsage[r.id][day] || 0) < 1);
 
-                    if (availableRoom) {
-                        newSchedule.push({
-                            day,
-                            period: p,
-                            sectionId: section.id,
-                            teacherId: availableTeacher.id,
-                            roomId: availableRoom.id,
-                        });
-                        teacherLoad[availableTeacher.id] = (teacherLoad[availableTeacher.id] || 0) + 1;
-                        roomUsage[availableRoom.id][day] = (roomUsage[availableRoom.id][day] || 0) + 1;
-                        assigned = true;
-                        break;
+                        if (availableRoom) {
+                            newSchedule.push({
+                                day,
+                                period: p,
+                                sectionId: section.id,
+                                teacherId: availableTeacher.id,
+                                roomId: availableRoom.id,
+                            });
+                            teacherLoad[availableTeacher.id] = (teacherLoad[availableTeacher.id] || 0) + 1;
+                            roomUsage[availableRoom.id][day] = (roomUsage[availableRoom.id][day] || 0) + 1;
+                            assigned = true;
+                            break;
+                        }
                     }
+                    if (assigned) break;
                 }
-                if (assigned) break;
             }
         });
 
         setSchedule(newSchedule);
         detectConflicts(newSchedule);
-        showNotification('Draft schedule generated!');
+
+        if (newSchedule.length < sections.length * 3) {
+            showNotification(`Generated ${newSchedule.length} assignments. Some sections may need manual adjustment.`, 'error');
+        } else {
+            showNotification('Draft schedule generated successfully!');
+        }
     };
 
     const detectConflicts = (currentSchedule: ScheduleSlot[]) => {
@@ -203,10 +213,10 @@ export default function MasterScheduleBuilder() {
 
         const dataSummary = `
 Teachers (${teachers.length}):
-${teachers.map(t => `- ${t.name} | Max ${t.maxPeriods} periods/day | Notes: ${t.notes || 'None'}`).join('\n')}
+${teachers.map(t => `- ${t.name} | Max ${t.maxPeriods} periods/day`).join('\n')}
 
 Rooms (${rooms.length}):
-${rooms.map(r => `- ${r.name} (${r.type}, capacity ${r.capacity})`).join('\n')}
+${rooms.map(r => `- ${r.name} (${r.type})`).join('\n')}
 
 Sections (${sections.length}):
 ${sections.map(s => `- ${s.courseName} | Teacher: ${getTeacherName(s.teacherId) || 'Any'} | Room: ${getRoomName(s.roomId) || 'Any'} | ${s.periodsPerWeek} periods/week`).join('\n')}
@@ -215,10 +225,7 @@ Current assignments: ${schedule.length}
 Detected conflicts: ${conflicts.length}
     `.trim();
 
-        const fullPrompt = `You are an expert Christian school administrator and master scheduler. 
-Provide 4–6 specific, practical suggestions to improve this draft schedule. 
-Focus on reducing conflicts, balancing teacher loads, protecting time for chapel and Bible classes, 
-and supporting spiritual formation. Be concrete with possible re-assignments when helpful.\n\n${dataSummary}`;
+        const fullPrompt = `You are an expert Christian school administrator and master scheduler. Provide 4–6 specific suggestions to improve this draft schedule, reduce conflicts, and protect chapel/Bible time.\n\n${dataSummary}`;
 
         try {
             const res = await fetch('/api/master-schedule-ai', {
@@ -232,8 +239,8 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
 
             setAiResponse(data.response);
         } catch (err: any) {
-            showNotification(err.message || 'AI assist failed', 'error');
-            setAiResponse('Sorry, the AI assistant encountered an error.');
+            showNotification('AI assist failed - ' + (err.message || 'Check server configuration'), 'error');
+            setAiResponse('AI failed to respond. Make sure your OpenAI key is set in the deployment environment variables.');
         } finally {
             setIsAiLoading(false);
         }
@@ -271,10 +278,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                         <p className="text-gray-600 mt-1">Lite AI-Assisted Scheduling for Christian Schools</p>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <button
-                            onClick={exportPDF}
-                            className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium"
-                        >
+                        <button onClick={exportPDF} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium">
                             📄 Download PDF Report
                         </button>
                         <button
@@ -295,9 +299,9 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                    {/* Teachers */}
-                    <div className="bg-white rounded-2xl shadow p-6">
-                        <div className="flex justify-between items-center mb-5">
+                    {/* Teachers - Scrollable container */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Teachers</h2>
                             <button onClick={addTeacher} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -305,66 +309,41 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                             <div key={teacher.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Teacher Name</label>
-                                    <input
-                                        type="text"
-                                        value={teacher.name}
-                                        onChange={(e) => {
-                                            const updated = [...teachers];
-                                            updated[idx].name = e.target.value;
-                                            setTeachers(updated);
-                                        }}
-                                        placeholder="e.g. Mrs. Johnson"
-                                        className="w-full border rounded-lg p-3"
-                                    />
+                                    <input type="text" value={teacher.name} onChange={(e) => {
+                                        const updated = [...teachers]; updated[idx].name = e.target.value; setTeachers(updated);
+                                    }} placeholder="e.g. Mrs. Johnson" className="w-full border rounded-lg p-3" />
                                 </div>
 
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Max Periods Per Day
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={teacher.maxPeriods}
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Periods Per Day</label>
+                                    <input type="number" value={teacher.maxPeriods} min="1" max="8"
                                         onChange={(e) => {
                                             const updated = [...teachers];
                                             updated[idx].maxPeriods = parseInt(e.target.value) || 5;
                                             setTeachers(updated);
                                         }}
-                                        min="1"
-                                        max="8"
                                         className="w-full border rounded-lg p-3"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Typical values: 5–6 periods per day</p>
+                                    <p className="text-xs text-gray-500 mt-1">Typical: 5–6 periods</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                                    <input
-                                        type="text"
-                                        value={teacher.notes}
-                                        onChange={(e) => {
-                                            const updated = [...teachers];
-                                            updated[idx].notes = e.target.value;
-                                            setTeachers(updated);
-                                        }}
-                                        placeholder="e.g. Chapel duty on Wednesday"
-                                        className="w-full border rounded-lg p-3"
-                                    />
+                                    <input type="text" value={teacher.notes} onChange={(e) => {
+                                        const updated = [...teachers]; updated[idx].notes = e.target.value; setTeachers(updated);
+                                    }} placeholder="Chapel duty, etc." className="w-full border rounded-lg p-3" />
                                 </div>
 
-                                <button
-                                    onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))}
-                                    className="text-red-600 text-sm mt-4 hover:underline"
-                                >
+                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
                                     Remove Teacher
                                 </button>
                             </div>
                         ))}
                     </div>
 
-                    {/* Rooms */}
-                    <div className="bg-white rounded-2xl shadow p-6">
-                        <div className="flex justify-between items-center mb-5">
+                    {/* Rooms - Scrollable */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Rooms</h2>
                             <button onClick={addRoom} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -372,60 +351,34 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                             <div key={room.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                                    <input
-                                        type="text"
-                                        value={room.name}
-                                        onChange={(e) => {
-                                            const updated = [...rooms];
-                                            updated[idx].name = e.target.value;
-                                            setRooms(updated);
-                                        }}
-                                        placeholder="e.g. Room 101"
-                                        className="w-full border rounded-lg p-3"
-                                    />
+                                    <input type="text" value={room.name} onChange={(e) => {
+                                        const updated = [...rooms]; updated[idx].name = e.target.value; setRooms(updated);
+                                    }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                                        <input
-                                            type="number"
-                                            value={room.capacity}
-                                            onChange={(e) => {
-                                                const updated = [...rooms];
-                                                updated[idx].capacity = parseInt(e.target.value) || 25;
-                                                setRooms(updated);
-                                            }}
-                                            className="w-full border rounded-lg p-3"
-                                        />
+                                        <input type="number" value={room.capacity} onChange={(e) => {
+                                            const updated = [...rooms]; updated[idx].capacity = parseInt(e.target.value) || 25; setRooms(updated);
+                                        }} className="w-full border rounded-lg p-3" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                        <input
-                                            type="text"
-                                            value={room.type}
-                                            onChange={(e) => {
-                                                const updated = [...rooms];
-                                                updated[idx].type = e.target.value;
-                                                setRooms(updated);
-                                            }}
-                                            placeholder="Classroom, Lab, Gym"
-                                            className="w-full border rounded-lg p-3"
-                                        />
+                                        <input type="text" value={room.type} onChange={(e) => {
+                                            const updated = [...rooms]; updated[idx].type = e.target.value; setRooms(updated);
+                                        }} placeholder="Classroom" className="w-full border rounded-lg p-3" />
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setRooms(rooms.filter((_, i) => i !== idx))}
-                                    className="text-red-600 text-sm mt-4 hover:underline"
-                                >
+                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
                                     Remove Room
                                 </button>
                             </div>
                         ))}
                     </div>
 
-                    {/* Sections */}
-                    <div className="bg-white rounded-2xl shadow p-6">
-                        <div className="flex justify-between items-center mb-5">
+                    {/* Sections - Scrollable */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Sections / Courses</h2>
                             <button onClick={addSection} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -433,30 +386,16 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                             <div key={section.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
-                                    <input
-                                        type="text"
-                                        value={section.courseName}
-                                        onChange={(e) => {
-                                            const updated = [...sections];
-                                            updated[idx].courseName = e.target.value;
-                                            setSections(updated);
-                                        }}
-                                        placeholder="e.g. Algebra I"
-                                        className="w-full border rounded-lg p-3"
-                                    />
+                                    <input type="text" value={section.courseName} onChange={(e) => {
+                                        const updated = [...sections]; updated[idx].courseName = e.target.value; setSections(updated);
+                                    }} placeholder="e.g. Algebra I" className="w-full border rounded-lg p-3" />
                                 </div>
 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Teacher</label>
-                                    <select
-                                        value={section.teacherId}
-                                        onChange={(e) => {
-                                            const updated = [...sections];
-                                            updated[idx].teacherId = e.target.value;
-                                            setSections(updated);
-                                        }}
-                                        className="w-full border rounded-lg p-3"
-                                    >
+                                    <select value={section.teacherId} onChange={(e) => {
+                                        const updated = [...sections]; updated[idx].teacherId = e.target.value; setSections(updated);
+                                    }} className="w-full border rounded-lg p-3">
                                         <option value="">Any Teacher</option>
                                         {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
@@ -464,15 +403,9 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Room</label>
-                                    <select
-                                        value={section.roomId}
-                                        onChange={(e) => {
-                                            const updated = [...sections];
-                                            updated[idx].roomId = e.target.value;
-                                            setSections(updated);
-                                        }}
-                                        className="w-full border rounded-lg p-3"
-                                    >
+                                    <select value={section.roomId} onChange={(e) => {
+                                        const updated = [...sections]; updated[idx].roomId = e.target.value; setSections(updated);
+                                    }} className="w-full border rounded-lg p-3">
                                         <option value="">Any Room</option>
                                         {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
@@ -480,22 +413,12 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Periods Per Week</label>
-                                    <input
-                                        type="number"
-                                        value={section.periodsPerWeek}
-                                        onChange={(e) => {
-                                            const updated = [...sections];
-                                            updated[idx].periodsPerWeek = parseInt(e.target.value) || 5;
-                                            setSections(updated);
-                                        }}
-                                        className="w-full border rounded-lg p-3"
-                                    />
+                                    <input type="number" value={section.periodsPerWeek} onChange={(e) => {
+                                        const updated = [...sections]; updated[idx].periodsPerWeek = parseInt(e.target.value) || 5; setSections(updated);
+                                    }} className="w-full border rounded-lg p-3" />
                                 </div>
 
-                                <button
-                                    onClick={() => setSections(sections.filter((_, i) => i !== idx))}
-                                    className="text-red-600 text-sm mt-4 hover:underline"
-                                >
+                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
                                     Remove Section
                                 </button>
                             </div>
@@ -505,16 +428,10 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                    <button
-                        onClick={generateDraft}
-                        className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-semibold text-lg"
-                    >
+                    <button onClick={generateDraft} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-semibold text-lg">
                         Generate Draft Schedule
                     </button>
-                    <button
-                        onClick={saveScenario}
-                        className="border-2 border-emerald-700 text-emerald-700 hover:bg-emerald-50 py-4 px-10 rounded-2xl font-semibold"
-                    >
+                    <button onClick={saveScenario} className="border-2 border-emerald-700 text-emerald-700 hover:bg-emerald-50 py-4 px-10 rounded-2xl font-semibold">
                         Save This Scenario
                     </button>
                 </div>
@@ -527,7 +444,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     className="w-full border border-gray-300 p-4 rounded-2xl mb-12 text-lg"
                 />
 
-                {/* Generated Schedule */}
+                {/* Schedule Display */}
                 {schedule.length > 0 && (
                     <div id="schedule-report" className="bg-white rounded-3xl shadow p-8 mb-12">
                         <h2 className="text-2xl font-bold text-emerald-700 mb-6">Draft Master Schedule</h2>
@@ -560,15 +477,11 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                                                     <td key={pIdx} className="p-4 border text-center text-sm min-h-[85px] align-top">
                                                         {slot ? (
                                                             <div className="space-y-1">
-                                                                <div className="font-medium text-emerald-700">
-                                                                    {sections.find(s => s.id === slot.sectionId)?.courseName}
-                                                                </div>
+                                                                <div className="font-medium text-emerald-700">{sections.find(s => s.id === slot.sectionId)?.courseName}</div>
                                                                 <div className="text-xs text-gray-600">{getTeacherName(slot.teacherId)}</div>
                                                                 <div className="text-xs text-emerald-600">{getRoomName(slot.roomId)}</div>
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-gray-300">—</span>
-                                                        )}
+                                                        ) : <span className="text-gray-300">—</span>}
                                                     </td>
                                                 );
                                             })}
@@ -589,13 +502,9 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                                 <div key={scen.id} className="border border-gray-200 p-6 rounded-2xl flex justify-between items-center hover:border-emerald-300 transition">
                                     <div>
                                         <div className="font-medium">{scen.name}</div>
-                                        <div className="text-sm text-gray-500 mt-1">
-                                            {new Date(scen.created_at).toLocaleDateString()}
-                                        </div>
+                                        <div className="text-sm text-gray-500 mt-1">{new Date(scen.created_at).toLocaleDateString()}</div>
                                     </div>
-                                    <button onClick={() => loadScenario(scen)} className="text-emerald-700 font-medium hover:underline">
-                                        Load
-                                    </button>
+                                    <button onClick={() => loadScenario(scen)} className="text-emerald-700 font-medium hover:underline">Load</button>
                                 </div>
                             ))}
                         </div>
@@ -634,36 +543,26 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                 </div>
             </div>
 
-            {/* AI Assistant Panel */}
+            {/* AI Panel */}
             {showAiPanel && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="p-6 border-b flex items-center justify-between">
                             <h2 className="text-2xl font-semibold text-emerald-700">AI Schedule Assistant</h2>
-                            <button
-                                onClick={() => setShowAiPanel(false)}
-                                className="text-4xl leading-none text-gray-400 hover:text-gray-600"
-                            >
-                                ×
-                            </button>
+                            <button onClick={() => setShowAiPanel(false)} className="text-4xl leading-none text-gray-400 hover:text-gray-600">×</button>
                         </div>
                         <div className="flex-1 p-8 overflow-auto text-gray-700 leading-relaxed">
                             {isAiLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20">
                                     <div className="animate-spin h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full mb-6"></div>
-                                    <p>Consulting AI scheduler using your OpenAI credits...</p>
+                                    <p>Consulting AI scheduler...</p>
                                 </div>
                             ) : (
                                 <div className="whitespace-pre-wrap">{aiResponse || 'No response yet.'}</div>
                             )}
                         </div>
                         <div className="border-t p-6 text-right">
-                            <button
-                                onClick={() => setShowAiPanel(false)}
-                                className="px-8 py-3 text-emerald-700 hover:bg-emerald-50 rounded-2xl font-medium"
-                            >
-                                Close Assistant
-                            </button>
+                            <button onClick={() => setShowAiPanel(false)} className="px-8 py-3 text-emerald-700 hover:bg-emerald-50 rounded-2xl font-medium">Close Assistant</button>
                         </div>
                     </div>
                 </div>
