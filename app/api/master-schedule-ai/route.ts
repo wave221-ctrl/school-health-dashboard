@@ -1,24 +1,35 @@
+// app/api/master-schedule-ai/route.ts
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     try {
-        const { prompt } = await request.json();
+        const apiKey = process.env.OPENAI_API_KEY;
 
-        if (!prompt) {
-            return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+        if (!apiKey) {
+            console.error('OPENAI_API_KEY environment variable is missing');
+            return NextResponse.json(
+                { error: 'OpenAI API key is not configured on the server.' },
+                { status: 500 }
+            );
         }
 
+        const { prompt } = await request.json();
+
+        if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+            return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
+        }
+
+        const openai = new OpenAI({ apiKey });
+
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',   // cheap and good for this use case
+            model: 'gpt-4o-mini',
             messages: [
                 {
                     role: 'system',
-                    content: 'You are an expert Christian school administrator and master scheduler. Give practical, specific suggestions that respect chapel, Bible classes, teacher wellbeing, and spiritual formation time.',
+                    content: 'You are an expert Christian school administrator and master scheduler. Provide practical, specific suggestions that respect chapel, Bible classes, teacher well-being, and spiritual formation time.',
                 },
                 { role: 'user', content: prompt },
             ],
@@ -32,7 +43,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error('OpenAI API Error:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to get AI suggestions' },
+            { error: 'Failed to get AI suggestions. Please try again later.' },
             { status: 500 }
         );
     }
