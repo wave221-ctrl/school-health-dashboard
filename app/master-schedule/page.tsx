@@ -298,7 +298,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Non-Negotiable Periods */}
+                {/* Non-Negotiable Periods - FIXED UI */}
                 <div className="bg-white rounded-2xl shadow p-6 mb-8">
                     <div className="flex justify-between items-center mb-5">
                         <div>
@@ -324,7 +324,7 @@ Conflicts: ${conflicts.length}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Type</label>
+                                        <label className="block text-xs font-medium mb-1 opacity-75">Type</label>
                                         <select
                                             value={fs.type}
                                             onChange={(e) => { const u = [...fixedSlots]; u[idx].type = e.target.value as FixedSlot['type']; setFixedSlots(u); }}
@@ -338,7 +338,7 @@ Conflicts: ${conflicts.length}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Period #</label>
+                                        <label className="block text-xs font-medium mb-1 opacity-75">Period #</label>
                                         <input
                                             type="number"
                                             value={fs.period}
@@ -356,7 +356,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Input Grid */}
+                {/* Teachers, Rooms, Sections inputs (full original features) */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
