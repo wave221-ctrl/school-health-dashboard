@@ -260,9 +260,7 @@ Conflicts: ${conflicts.length}
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
-
-            {/* Nav */}
+        <div className="min-h-screen bg-gray-50 p-6">
             <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-8">
@@ -274,22 +272,14 @@ Conflicts: ${conflicts.length}
                             <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
                                 My Tools <span className="text-xs">▼</span>
                             </button>
-                            <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                <Link href="/calculator" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
-                                    School Health Calculator
-                                </Link>
-                                <Link href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
-                                    Enrollment Projection Calculator
-                                </Link>
-                                <Link href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50 text-slate-700 font-medium">
-                                    Staff & Leadership Health Assessment
-                                </Link>
-                                <Link href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50">
-                                    Deferred Maintenance Calculator
-                                </Link>
-                                <Link href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50">
+                            <div className="absolute left-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <a href="/calculator" className="block px-6 py-3 hover:bg-emerald-50">School Health Calculator</a>
+                                <a href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50">Staff & Leadership</a>
+                                <a href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50">Enrollment Projection</a>
+                                <a href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50 font-medium text-emerald-700">Deferred Maintenance</a>
+                                <a href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50">
                                     Master Schedule Builder
-                                </Link>
+                                </a>
 
                             </div>
                         </div>
