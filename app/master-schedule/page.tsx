@@ -283,8 +283,8 @@ Conflicts: ${conflicts.length}
                                     <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-gray-100 py-2 z-50">
                                         <Link href="/calculator" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">School Health Calculator</Link>
                                         <Link href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Deferred Maintenance</Link>
-                                        <Link href="/revenue-forecast" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Revenue Forecast</Link>
-                                        <Link href="/disc-assessment" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">DISC Assessment</Link>
+                                        <Link href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Enrollment Projection Calculator</Link>
+                                        <Link href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Staff & Leadership health Assessment</Link>
                                         <Link href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50 text-emerald-700 font-medium">Master Schedule Builder</Link>
                                     </div>
                                 )}
