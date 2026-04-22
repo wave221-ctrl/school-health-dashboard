@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 interface Teacher {
     id: string;
@@ -80,6 +81,7 @@ export default function MasterScheduleBuilder() {
 
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [numPeriods, setNumPeriods] = useState(7);
+    const [showToolsDropdown, setShowToolsDropdown] = useState(false);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -260,34 +262,45 @@ Conflicts: ${conflicts.length}
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
-                <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold">S</div>
-                            <span className="font-semibold text-xl">School Health Score</span>
-                        </div>
-                        <div className="relative group">
-                            <button className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium px-5 py-3 rounded-2xl hover:bg-slate-100 transition">
-                                My Tools <span className="text-xs">▼</span>
-                            </button>
-                            <div className="absolute left-0 mt-2 w-72 bg-white rounded-3xl shadow-xl border border-slate-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                <a href="/calculator" className="block px-6 py-3 hover:bg-emerald-50">School Health Calculator</a>
-                                <a href="/staff-leadership" className="block px-6 py-3 hover:bg-emerald-50">Staff & Leadership</a>
-                                <a href="/enrollment-projection" className="block px-6 py-3 hover:bg-emerald-50">Enrollment Projection</a>
-                                <a href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50 font-medium text-emerald-700">Deferred Maintenance</a>
-                                <a href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50">
-                                    Master Schedule Builder
-                                </a>
+        <div className="min-h-screen bg-gray-50">
+            {/* NAVBAR - Matches your other tools */}
+            <nav className="bg-white border-b border-gray-200 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="h-16 flex items-center justify-between">
+                        <div className="flex items-center gap-8">
+                            <Link href="/" className="text-2xl font-bold text-emerald-700">School Health</Link>
 
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowToolsDropdown(!showToolsDropdown)}
+                                    className="flex items-center gap-2 text-emerald-700 hover:text-emerald-800 font-medium px-4 py-2 rounded-xl hover:bg-emerald-50"
+                                >
+                                    My Tools
+                                    <span className="text-xl">▼</span>
+                                </button>
+
+                                {showToolsDropdown && (
+                                    <div className="absolute left-0 mt-2 w-64 bg-white rounded-3xl shadow-xl border border-gray-100 py-2 z-50">
+                                        <Link href="/calculator" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">School Health Calculator</Link>
+                                        <Link href="/deferred-maintenance" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Deferred Maintenance</Link>
+                                        <Link href="/revenue-forecast" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">Revenue Forecast</Link>
+                                        <Link href="/disc-assessment" className="block px-6 py-3 hover:bg-emerald-50 text-gray-700">DISC Assessment</Link>
+                                        <Link href="/master-schedule" className="block px-6 py-3 hover:bg-emerald-50 text-emerald-700 font-medium">Master Schedule Builder</Link>
+                                    </div>
+                                )}
                             </div>
                         </div>
+
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm text-gray-500">Christian School Health Platform</span>
+                            {user && <span className="text-emerald-600 text-sm font-medium">{user.firstName || user.emailAddresses?.[0]?.emailAddress}</span>}
+                        </div>
                     </div>
-                    <UserButton />
                 </div>
-            </div>
-            <div className="max-w-7xl mx-auto">
+            </nav>
+
+            <div className="max-w-7xl mx-auto p-6">
+                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-emerald-700">Master Schedule Builder</h1>
@@ -324,7 +337,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Non-Negotiable Periods - FIXED UI */}
+                {/* Non-Negotiable Periods - FIXED UI (period input is now clearly inside the card) */}
                 <div className="bg-white rounded-2xl shadow p-6 mb-8">
                     <div className="flex justify-between items-center mb-5">
                         <div>
@@ -350,7 +363,7 @@ Conflicts: ${conflicts.length}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium mb-1 opacity-75">Type</label>
+                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Type</label>
                                         <select
                                             value={fs.type}
                                             onChange={(e) => { const u = [...fixedSlots]; u[idx].type = e.target.value as FixedSlot['type']; setFixedSlots(u); }}
@@ -364,7 +377,7 @@ Conflicts: ${conflicts.length}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium mb-1 opacity-75">Period #</label>
+                                        <label className="block text-xs font-medium mb-1.5 opacity-75">Period #</label>
                                         <input
                                             type="number"
                                             value={fs.period}
@@ -382,7 +395,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
-                {/* Teachers, Rooms, Sections inputs (full original features) */}
+                {/* Input Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
