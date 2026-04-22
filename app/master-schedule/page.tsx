@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '@/lib/supabase';
-import html2pdf from 'html2pdf.js';
 
 interface Teacher {
     id: string;
@@ -107,17 +106,9 @@ export default function MasterScheduleBuilder() {
         showNotification(`Loaded: ${scenario.name}`);
     };
 
-    const addTeacher = () => {
-        setTeachers([...teachers, { id: Date.now().toString(), name: '', maxPeriods: 5, notes: '' }]);
-    };
-
-    const addRoom = () => {
-        setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
-    };
-
-    const addSection = () => {
-        setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
-    };
+    const addTeacher = () => setTeachers([...teachers, { id: Date.now().toString(), name: '', maxPeriods: 5, notes: '' }]);
+    const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
+    const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
 
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
@@ -179,8 +170,8 @@ export default function MasterScheduleBuilder() {
 
     const detectConflicts = (currentSchedule: ScheduleSlot[]) => {
         const newConflicts: string[] = [];
-        const teacherDayPeriod = new Map<string, boolean>();
-        const roomDayPeriod = new Map<string, boolean>();
+        const teacherDayPeriod = new Map();
+        const roomDayPeriod = new Map();
 
         currentSchedule.forEach(slot => {
             const tKey = `${slot.teacherId}-${slot.day}-${slot.period}`;
@@ -239,38 +230,45 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to get AI response');
+            if (!res.ok) throw new Error(data.error || 'Failed');
 
             setAiResponse(data.response);
         } catch (err: any) {
-            showNotification(err.message || 'AI assist failed. Please try again.', 'error');
-            setAiResponse('Sorry, the AI assistant encountered an error. Please try again later.');
+            showNotification(err.message || 'AI assist failed', 'error');
+            setAiResponse('Sorry, the AI assistant encountered an error.');
         } finally {
             setIsAiLoading(false);
         }
     };
 
-    const exportPDF = () => {
+    const exportPDF = async () => {
         const element = document.getElementById('schedule-report');
         if (!element) {
-            showNotification('Could not find schedule report for PDF', 'error');
+            showNotification('Schedule report not found', 'error');
             return;
         }
 
-        const opt = {
-            margin: 10,
-            filename: `Master-Schedule-${new Date().toISOString().slice(0, 10)}.pdf`,
-            image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: {
-                unit: 'mm' as const,
-                format: 'a4' as const,
-                orientation: 'landscape' as const
-            },
-        };
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
 
-        html2pdf().set(opt).from(element).save();
-        showNotification('PDF report downloaded successfully');
+            const opt = {
+                margin: 10,
+                filename: `Master-Schedule-${new Date().toISOString().slice(0, 10)}.pdf`,
+                image: { type: 'jpeg' as const, quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: {
+                    unit: 'mm' as const,
+                    format: 'a4' as const,
+                    orientation: 'landscape' as const
+                },
+            };
+
+            html2pdf().set(opt).from(element).save();
+            showNotification('PDF report downloaded successfully');
+        } catch (err) {
+            showNotification('Failed to generate PDF', 'error');
+            console.error(err);
+        }
     };
 
     return (
@@ -309,7 +307,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     </div>
                 )}
 
-                {/* Inputs */}
+                {/* Inputs Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6">
