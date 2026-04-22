@@ -75,10 +75,7 @@ export default function MasterScheduleBuilder() {
     };
 
     const saveScenario = async () => {
-        if (!saveName.trim()) {
-            showNotification('Please enter a scenario name', 'error');
-            return;
-        }
+        if (!saveName.trim()) return showNotification('Please enter a scenario name', 'error');
         const payload = {
             tool: 'master-schedule',
             name: saveName,
@@ -108,42 +105,43 @@ export default function MasterScheduleBuilder() {
     const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
     const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
 
-    // Improved generation logic
+    // Improved schedule generation
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
-            showNotification('Please add at least one teacher, room, and section', 'error');
-            return;
+            return showNotification('Please add at least one teacher, room, and section', 'error');
         }
 
         const newSchedule: ScheduleSlot[] = [];
         const teacherLoad: Record<string, number> = {};
         const roomUsage: Record<string, Record<string, number>> = {};
 
-        teachers.forEach(t => (teacherLoad[t.id] = 0));
+        teachers.forEach(t => teacherLoad[t.id] = 0);
         rooms.forEach(r => {
             roomUsage[r.id] = {};
-            days.forEach(d => (roomUsage[r.id][d] = 0));
+            days.forEach(d => roomUsage[r.id][d] = 0);
         });
 
         const sortedSections = [...sections].sort((a, b) => b.periodsPerWeek - a.periodsPerWeek);
 
         sortedSections.forEach(section => {
             let assigned = false;
-
             const possibleTeachers = section.teacherId
                 ? teachers.filter(t => t.id === section.teacherId)
                 : teachers;
+            const possibleRooms = section.roomId
+                ? rooms.filter(r => r.id === section.roomId)
+                : rooms;
 
-            // Try multiple passes to improve assignment success rate
-            for (let attempt = 0; attempt < 3 && !assigned; attempt++) {
+            // Multiple passes with better balancing
+            for (let pass = 0; pass < 6 && !assigned; pass++) {
                 for (const day of days) {
                     for (let p = 1; p <= defaultPeriods; p++) {
-                        const availableTeacher = possibleTeachers.find(t => (teacherLoad[t.id] || 0) < t.maxPeriods);
-                        if (!availableTeacher) continue;
+                        // Sort by least loaded teacher first
+                        const availableTeacher = possibleTeachers
+                            .filter(t => (teacherLoad[t.id] || 0) < t.maxPeriods)
+                            .sort((a, b) => (teacherLoad[a.id] || 0) - (teacherLoad[b.id] || 0))[0];
 
-                        const possibleRooms = section.roomId
-                            ? rooms.filter(r => r.id === section.roomId)
-                            : rooms;
+                        if (!availableTeacher) continue;
 
                         const availableRoom = possibleRooms.find(r => (roomUsage[r.id][day] || 0) < 1);
 
@@ -169,10 +167,10 @@ export default function MasterScheduleBuilder() {
         setSchedule(newSchedule);
         detectConflicts(newSchedule);
 
-        if (newSchedule.length < sections.length * 3) {
-            showNotification(`Generated ${newSchedule.length} assignments. Some sections may need manual adjustment.`, 'error');
+        if (newSchedule.length > 0) {
+            showNotification(`Generated ${newSchedule.length} assignments across ${teachers.length} teachers`);
         } else {
-            showNotification('Draft schedule generated successfully!');
+            showNotification('Could not assign sections. Try adding more rooms or increasing max periods.', 'error');
         }
     };
 
@@ -183,15 +181,11 @@ export default function MasterScheduleBuilder() {
 
         currentSchedule.forEach(slot => {
             const tKey = `${slot.teacherId}-${slot.day}-${slot.period}`;
-            if (teacherDayPeriod.has(tKey)) {
-                newConflicts.push(`Teacher conflict: ${getTeacherName(slot.teacherId)} on ${slot.day} period ${slot.period}`);
-            }
+            if (teacherDayPeriod.has(tKey)) newConflicts.push(`Teacher conflict: ${getTeacherName(slot.teacherId)} on ${slot.day} period ${slot.period}`);
             teacherDayPeriod.set(tKey, true);
 
             const rKey = `${slot.roomId}-${slot.day}-${slot.period}`;
-            if (roomDayPeriod.has(rKey)) {
-                newConflicts.push(`Room conflict: ${getRoomName(slot.roomId)} on ${slot.day} period ${slot.period}`);
-            }
+            if (roomDayPeriod.has(rKey)) newConflicts.push(`Room conflict: ${getRoomName(slot.roomId)} on ${slot.day} period ${slot.period}`);
             roomDayPeriod.set(rKey, true);
         });
 
@@ -202,45 +196,32 @@ export default function MasterScheduleBuilder() {
     const getRoomName = (id: string) => rooms.find(r => r.id === id)?.name || 'Unknown';
 
     const getAISuggestions = async () => {
-        if (sections.length === 0) {
-            showNotification('Add at least one section before using AI Assist', 'error');
-            return;
-        }
+        if (sections.length === 0) return showNotification('Add at least one section first', 'error');
 
         setIsAiLoading(true);
         setAiResponse('');
         setShowAiPanel(true);
 
         const dataSummary = `
-Teachers (${teachers.length}):
-${teachers.map(t => `- ${t.name} | Max ${t.maxPeriods} periods/day`).join('\n')}
-
-Rooms (${rooms.length}):
-${rooms.map(r => `- ${r.name} (${r.type})`).join('\n')}
-
-Sections (${sections.length}):
-${sections.map(s => `- ${s.courseName} | Teacher: ${getTeacherName(s.teacherId) || 'Any'} | Room: ${getRoomName(s.roomId) || 'Any'} | ${s.periodsPerWeek} periods/week`).join('\n')}
-
+Teachers: ${teachers.map(t => t.name).join(', ')}
+Rooms: ${rooms.map(r => r.name).join(', ')}
+Sections: ${sections.map(s => s.courseName).join(', ')}
 Current assignments: ${schedule.length}
-Detected conflicts: ${conflicts.length}
+Conflicts: ${conflicts.length}
     `.trim();
-
-        const fullPrompt = `You are an expert Christian school administrator and master scheduler. Provide 4–6 specific suggestions to improve this draft schedule, reduce conflicts, and protect chapel/Bible time.\n\n${dataSummary}`;
 
         try {
             const res = await fetch('/api/master-schedule-ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: fullPrompt }),
+                body: JSON.stringify({ prompt: `Improve this Christian school master schedule. Provide specific suggestions:\n${dataSummary}` }),
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed');
-
-            setAiResponse(data.response);
+            setAiResponse(data.response || 'No response received.');
         } catch (err: any) {
-            showNotification('AI assist failed - ' + (err.message || 'Check server configuration'), 'error');
-            setAiResponse('AI failed to respond. Make sure your OpenAI key is set in the deployment environment variables.');
+            showNotification('AI failed. Make sure OPENAI_API_KEY is set in Vercel dashboard.', 'error');
+            setAiResponse('OpenAI key not configured on the server. Please add it in Vercel → Settings → Environment Variables.');
         } finally {
             setIsAiLoading(false);
         }
@@ -248,10 +229,7 @@ Detected conflicts: ${conflicts.length}
 
     const exportPDF = async () => {
         const element = document.getElementById('schedule-report');
-        if (!element) {
-            showNotification('Schedule report not found', 'error');
-            return;
-        }
+        if (!element) return showNotification('Schedule report not found', 'error');
 
         try {
             const html2pdf = (await import('html2pdf.js')).default;
@@ -264,7 +242,7 @@ Detected conflicts: ${conflicts.length}
             };
             html2pdf().set(opt).from(element).save();
             showNotification('PDF report downloaded successfully');
-        } catch (err) {
+        } catch {
             showNotification('Failed to generate PDF', 'error');
         }
     };
@@ -278,9 +256,7 @@ Detected conflicts: ${conflicts.length}
                         <p className="text-gray-600 mt-1">Lite AI-Assisted Scheduling for Christian Schools</p>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <button onClick={exportPDF} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium">
-                            📄 Download PDF Report
-                        </button>
+                        <button onClick={exportPDF} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium">📄 Download PDF Report</button>
                         <button
                             onClick={getAISuggestions}
                             disabled={isAiLoading || sections.length === 0}
@@ -299,9 +275,9 @@ Detected conflicts: ${conflicts.length}
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                    {/* Teachers - Scrollable container */}
-                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
+                    {/* Teachers */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Teachers</h2>
                             <button onClick={addTeacher} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -309,41 +285,44 @@ Detected conflicts: ${conflicts.length}
                             <div key={teacher.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Teacher Name</label>
-                                    <input type="text" value={teacher.name} onChange={(e) => {
-                                        const updated = [...teachers]; updated[idx].name = e.target.value; setTeachers(updated);
-                                    }} placeholder="e.g. Mrs. Johnson" className="w-full border rounded-lg p-3" />
+                                    <input
+                                        type="text"
+                                        value={teacher.name}
+                                        onChange={(e) => { const u = [...teachers]; u[idx].name = e.target.value; setTeachers(u); }}
+                                        placeholder="e.g. Mrs. Johnson"
+                                        className="w-full border rounded-lg p-3"
+                                    />
                                 </div>
-
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Max Periods Per Day</label>
-                                    <input type="number" value={teacher.maxPeriods} min="1" max="8"
-                                        onChange={(e) => {
-                                            const updated = [...teachers];
-                                            updated[idx].maxPeriods = parseInt(e.target.value) || 5;
-                                            setTeachers(updated);
-                                        }}
+                                    <input
+                                        type="number"
+                                        value={teacher.maxPeriods}
+                                        min="1"
+                                        max="8"
+                                        onChange={(e) => { const u = [...teachers]; u[idx].maxPeriods = parseInt(e.target.value) || 5; setTeachers(u); }}
                                         className="w-full border rounded-lg p-3"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Typical: 5–6 periods</p>
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                                    <input type="text" value={teacher.notes} onChange={(e) => {
-                                        const updated = [...teachers]; updated[idx].notes = e.target.value; setTeachers(updated);
-                                    }} placeholder="Chapel duty, etc." className="w-full border rounded-lg p-3" />
+                                    <input
+                                        type="text"
+                                        value={teacher.notes}
+                                        onChange={(e) => { const u = [...teachers]; u[idx].notes = e.target.value; setTeachers(u); }}
+                                        placeholder="Chapel duty, etc."
+                                        className="w-full border rounded-lg p-3"
+                                    />
                                 </div>
-
-                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
-                                    Remove Teacher
-                                </button>
+                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Teacher</button>
                             </div>
                         ))}
                     </div>
 
-                    {/* Rooms - Scrollable */}
-                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
+                    {/* Rooms */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Rooms</h2>
                             <button onClick={addRoom} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -351,34 +330,26 @@ Detected conflicts: ${conflicts.length}
                             <div key={room.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                                    <input type="text" value={room.name} onChange={(e) => {
-                                        const updated = [...rooms]; updated[idx].name = e.target.value; setRooms(updated);
-                                    }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
+                                    <input type="text" value={room.name} onChange={(e) => { const u = [...rooms]; u[idx].name = e.target.value; setRooms(u); }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                                        <input type="number" value={room.capacity} onChange={(e) => {
-                                            const updated = [...rooms]; updated[idx].capacity = parseInt(e.target.value) || 25; setRooms(updated);
-                                        }} className="w-full border rounded-lg p-3" />
+                                        <input type="number" value={room.capacity} onChange={(e) => { const u = [...rooms]; u[idx].capacity = parseInt(e.target.value) || 25; setRooms(u); }} className="w-full border rounded-lg p-3" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                        <input type="text" value={room.type} onChange={(e) => {
-                                            const updated = [...rooms]; updated[idx].type = e.target.value; setRooms(updated);
-                                        }} placeholder="Classroom" className="w-full border rounded-lg p-3" />
+                                        <input type="text" value={room.type} onChange={(e) => { const u = [...rooms]; u[idx].type = e.target.value; setRooms(u); }} placeholder="Classroom" className="w-full border rounded-lg p-3" />
                                     </div>
                                 </div>
-                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
-                                    Remove Room
-                                </button>
+                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Room</button>
                             </div>
                         ))}
                     </div>
 
-                    {/* Sections - Scrollable */}
-                    <div className="bg-white rounded-2xl shadow p-6 max-h-[650px] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-4 border-b">
+                    {/* Sections */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
                             <h2 className="text-xl font-semibold text-emerald-700">Sections / Courses</h2>
                             <button onClick={addSection} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
@@ -386,47 +357,32 @@ Detected conflicts: ${conflicts.length}
                             <div key={section.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
-                                    <input type="text" value={section.courseName} onChange={(e) => {
-                                        const updated = [...sections]; updated[idx].courseName = e.target.value; setSections(updated);
-                                    }} placeholder="e.g. Algebra I" className="w-full border rounded-lg p-3" />
+                                    <input type="text" value={section.courseName} onChange={(e) => { const u = [...sections]; u[idx].courseName = e.target.value; setSections(u); }} placeholder="e.g. Algebra I" className="w-full border rounded-lg p-3" />
                                 </div>
-
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Teacher</label>
-                                    <select value={section.teacherId} onChange={(e) => {
-                                        const updated = [...sections]; updated[idx].teacherId = e.target.value; setSections(updated);
-                                    }} className="w-full border rounded-lg p-3">
+                                    <select value={section.teacherId} onChange={(e) => { const u = [...sections]; u[idx].teacherId = e.target.value; setSections(u); }} className="w-full border rounded-lg p-3">
                                         <option value="">Any Teacher</option>
                                         {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
                                 </div>
-
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Room</label>
-                                    <select value={section.roomId} onChange={(e) => {
-                                        const updated = [...sections]; updated[idx].roomId = e.target.value; setSections(updated);
-                                    }} className="w-full border rounded-lg p-3">
+                                    <select value={section.roomId} onChange={(e) => { const u = [...sections]; u[idx].roomId = e.target.value; setSections(u); }} className="w-full border rounded-lg p-3">
                                         <option value="">Any Room</option>
                                         {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Periods Per Week</label>
-                                    <input type="number" value={section.periodsPerWeek} onChange={(e) => {
-                                        const updated = [...sections]; updated[idx].periodsPerWeek = parseInt(e.target.value) || 5; setSections(updated);
-                                    }} className="w-full border rounded-lg p-3" />
+                                    <input type="number" value={section.periodsPerWeek} onChange={(e) => { const u = [...sections]; u[idx].periodsPerWeek = parseInt(e.target.value) || 5; setSections(u); }} className="w-full border rounded-lg p-3" />
                                 </div>
-
-                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">
-                                    Remove Section
-                                </button>
+                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Section</button>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-10">
                     <button onClick={generateDraft} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-4 rounded-2xl font-semibold text-lg">
                         Generate Draft Schedule
@@ -444,7 +400,6 @@ Detected conflicts: ${conflicts.length}
                     className="w-full border border-gray-300 p-4 rounded-2xl mb-12 text-lg"
                 />
 
-                {/* Schedule Display */}
                 {schedule.length > 0 && (
                     <div id="schedule-report" className="bg-white rounded-3xl shadow p-8 mb-12">
                         <h2 className="text-2xl font-bold text-emerald-700 mb-6">Draft Master Schedule</h2>
@@ -493,7 +448,6 @@ Detected conflicts: ${conflicts.length}
                     </div>
                 )}
 
-                {/* Saved Scenarios */}
                 {savedScenarios.length > 0 && (
                     <div className="bg-white rounded-3xl shadow p-8 mb-12">
                         <h2 className="text-xl font-semibold text-emerald-700 mb-6">Saved Scenarios</h2>
@@ -511,7 +465,6 @@ Detected conflicts: ${conflicts.length}
                     </div>
                 )}
 
-                {/* 30/60/90 Plan */}
                 <div className="bg-white rounded-3xl shadow p-8">
                     <h2 className="text-2xl font-bold text-emerald-700 mb-6">Implementation Plan (30/60/90 Days)</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
