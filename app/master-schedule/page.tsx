@@ -37,7 +37,7 @@ interface ScheduleSlot {
 interface FixedSlot {
     id: string;
     name: string;
-    days: string[];   // which days this applies — empty means all days
+    days: string[];
     period: number;
     type: 'chapel' | 'lunch' | 'recess' | 'assembly' | 'other';
 }
@@ -139,9 +139,8 @@ export default function MasterScheduleBuilder() {
         }
 
         const newSchedule: ScheduleSlot[] = [];
-
-        const teacherBusy = new Set<string>(); // `${teacherId}-${day}-${period}`
-        const roomBusy = new Set<string>(); // `${roomId}-${day}-${period}`
+        const teacherBusy = new Set<string>();
+        const roomBusy = new Set<string>();
 
         const teacherDayLoad: Record<string, Record<string, number>> = {};
         teachers.forEach(t => {
@@ -180,7 +179,6 @@ export default function MasterScheduleBuilder() {
             for (const day of days) {
                 for (let p = 1; p <= numPeriods; p++) {
                     if (assignedCount >= target) break outer;
-
                     if (isFixedPeriod(day, p)) continue;
 
                     const availableTeacher = possibleTeachers
@@ -194,23 +192,13 @@ export default function MasterScheduleBuilder() {
 
                     if (!availableTeacher) continue;
 
-                    const availableRoom = possibleRooms.find(
-                        r => !roomBusy.has(`${r.id}-${day}-${p}`)
-                    );
+                    const availableRoom = possibleRooms.find(r => !roomBusy.has(`${r.id}-${day}-${p}`));
                     if (!availableRoom) continue;
 
-                    newSchedule.push({
-                        day,
-                        period: p,
-                        sectionId: section.id,
-                        teacherId: availableTeacher.id,
-                        roomId: availableRoom.id,
-                    });
-
+                    newSchedule.push({ day, period: p, sectionId: section.id, teacherId: availableTeacher.id, roomId: availableRoom.id });
                     teacherBusy.add(`${availableTeacher.id}-${day}-${p}`);
                     roomBusy.add(`${availableRoom.id}-${day}-${p}`);
-                    teacherDayLoad[availableTeacher.id][day] =
-                        (teacherDayLoad[availableTeacher.id][day] ?? 0) + 1;
+                    teacherDayLoad[availableTeacher.id][day] = (teacherDayLoad[availableTeacher.id][day] ?? 0) + 1;
                     assignedCount++;
                 }
             }
@@ -267,7 +255,7 @@ Sections: ${sections.map(s => s.courseName).join(', ')}
 Fixed Slots: ${fixedSlots.map(f => `${f.name} (Period ${f.period})`).join(', ')}
 Assignments: ${schedule.length}
 Conflicts: ${conflicts.length}
-    `.trim();
+        `.trim();
 
         try {
             const res = await fetch('/api/master-schedule-ai', {
@@ -601,7 +589,7 @@ Conflicts: ${conflicts.length}
                                                     return (
                                                         <td
                                                             key={pIdx}
-                                                            className={`p-3 border text-center text-sm align-middle ${FIXED_SLOT_COLORS[fixedSlot.type]}`}
+                                                            className={`p-3 border-2 text-center text-sm align-middle rounded-sm shadow-sm ${FIXED_SLOT_COLORS[fixedSlot.type]}`}
                                                         >
                                                             <div className="font-semibold text-sm">{FIXED_SLOT_ICONS[fixedSlot.type]} {fixedSlot.name || fixedSlot.type}</div>
                                                             <div className="text-xs opacity-60 capitalize">{fixedSlot.type}</div>
