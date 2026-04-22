@@ -34,8 +34,7 @@ interface ScheduleSlot {
     roomId: string;
 }
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-const defaultPeriods = 7;
+const defaultDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export default function MasterScheduleBuilder() {
     const { user } = useUser();
@@ -54,6 +53,10 @@ export default function MasterScheduleBuilder() {
     const [showAiPanel, setShowAiPanel] = useState(false);
 
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Schedule settings
+    const [numPeriods, setNumPeriods] = useState(7);
+    const [dayLength, setDayLength] = useState(420); // minutes (7 hours)
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -79,13 +82,13 @@ export default function MasterScheduleBuilder() {
         const payload = {
             tool: 'master-schedule',
             name: saveName,
-            data: { teachers, rooms, sections, schedule },
+            data: { teachers, rooms, sections, schedule, numPeriods, dayLength },
             user_id: user?.id,
         };
         const { error } = await supabase.from('assessments').insert([payload]);
-        if (error) showNotification('Failed to save', 'error');
+        if (error) showNotification('Failed to save scenario', 'error');
         else {
-            showNotification('Scenario saved!');
+            showNotification('Scenario saved successfully!');
             setSaveName('');
             loadSavedScenarios();
         }
@@ -97,6 +100,8 @@ export default function MasterScheduleBuilder() {
         setRooms(d.rooms || []);
         setSections(d.sections || []);
         setSchedule(d.schedule || []);
+        setNumPeriods(d.numPeriods || 7);
+        setDayLength(d.dayLength || 420);
         setConflicts([]);
         showNotification(`Loaded: ${scenario.name}`);
     };
@@ -117,7 +122,7 @@ export default function MasterScheduleBuilder() {
         teachers.forEach(t => teacherLoad[t.id] = 0);
         rooms.forEach(r => {
             roomUsage[r.id] = {};
-            days.forEach(d => roomUsage[r.id][d] = 0);
+            defaultDays.forEach(d => roomUsage[r.id][d] = 0);
         });
 
         const sortedSections = [...sections].sort((a, b) => b.periodsPerWeek - a.periodsPerWeek);
@@ -128,8 +133,8 @@ export default function MasterScheduleBuilder() {
             const possibleRooms = section.roomId ? rooms.filter(r => r.id === section.roomId) : rooms;
 
             for (let pass = 0; pass < 8 && !assigned; pass++) {
-                for (const day of days) {
-                    for (let p = 1; p <= defaultPeriods; p++) {
+                for (const day of defaultDays) {
+                    for (let p = 1; p <= numPeriods; p++) {
                         const availableTeacher = possibleTeachers
                             .filter(t => (teacherLoad[t.id] || 0) < t.maxPeriods)
                             .sort((a, b) => (teacherLoad[a.id] || 0) - (teacherLoad[b.id] || 0))[0];
@@ -163,7 +168,7 @@ export default function MasterScheduleBuilder() {
         if (newSchedule.length > 0) {
             showNotification(`Generated ${newSchedule.length} assignments!`);
         } else {
-            showNotification('Could not assign any sections. Try adding more rooms or increasing max periods.', 'error');
+            showNotification('Could not assign sections. Try adding more rooms or increasing max periods.', 'error');
         }
     };
 
@@ -188,37 +193,6 @@ export default function MasterScheduleBuilder() {
     const getTeacherName = (id: string) => teachers.find(t => t.id === id)?.name || 'Unknown';
     const getRoomName = (id: string) => rooms.find(r => r.id === id)?.name || 'Unknown';
 
-    const getAISuggestions = async () => {
-        if (sections.length === 0) return showNotification('Add sections first', 'error');
-
-        setIsAiLoading(true);
-        setAiResponse('');
-        setShowAiPanel(true);
-
-        const dataSummary = `
-Teachers: ${teachers.map(t => t.name).join(', ')}
-Rooms: ${rooms.map(r => r.name).join(', ')}
-Sections: ${sections.map(s => s.courseName).join(', ')}
-Assignments: ${schedule.length}
-Conflicts: ${conflicts.length}
-    `.trim();
-
-        try {
-            const res = await fetch('/api/master-schedule-ai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: `Improve this Christian school master schedule. Give specific suggestions:\n${dataSummary}` }),
-            });
-            const data = await res.json();
-            setAiResponse(data.response || 'No response received.');
-        } catch (err: any) {
-            showNotification('AI failed. Make sure OPENAI_API_KEY is set in Vercel dashboard.', 'error');
-            setAiResponse('OpenAI key not configured on the server.');
-        } finally {
-            setIsAiLoading(false);
-        }
-    };
-
     const exportPDF = async () => {
         const element = document.getElementById('schedule-report');
         if (!element) return showNotification('Generate a schedule first', 'error');
@@ -233,9 +207,9 @@ Conflicts: ${conflicts.length}
                 jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'landscape' as const },
             };
             html2pdf().set(opt).from(element).save();
-            showNotification('PDF downloaded successfully');
+            showNotification('PDF report downloaded successfully');
         } catch (err) {
-            showNotification('Failed to generate PDF', 'error');
+            showNotification('Failed to generate PDF. Please try again.', 'error');
             console.error(err);
         }
     };
@@ -251,11 +225,11 @@ Conflicts: ${conflicts.length}
                     <div className="flex flex-wrap gap-3">
                         <button onClick={exportPDF} className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium">📄 Download PDF Report</button>
                         <button
-                            onClick={getAISuggestions}
-                            disabled={isAiLoading || sections.length === 0}
-                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-3 rounded-xl font-medium"
+                            onClick={() => { }}
+                            disabled
+                            className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium"
                         >
-                            ✨ {isAiLoading ? 'AI is Thinking...' : 'Get AI Suggestions'}
+                            ✨ AI Suggestions (coming soon)
                         </button>
                     </div>
                 </div>
@@ -265,6 +239,34 @@ Conflicts: ${conflicts.length}
                         {notification.message}
                     </div>
                 )}
+
+                {/* Schedule Settings */}
+                <div className="bg-white rounded-2xl shadow p-6 mb-8">
+                    <h2 className="text-xl font-semibold text-emerald-700 mb-4">Schedule Settings</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Periods per Day</label>
+                            <input
+                                type="number"
+                                value={numPeriods}
+                                onChange={(e) => setNumPeriods(Math.max(1, parseInt(e.target.value) || 7))}
+                                min="1"
+                                max="10"
+                                className="w-full border rounded-lg p-3"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">School Day Length (minutes)</label>
+                            <input
+                                type="number"
+                                value={dayLength}
+                                onChange={(e) => setDayLength(Math.max(60, parseInt(e.target.value) || 420))}
+                                className="w-full border rounded-lg p-3"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Typical: 420 minutes (7 hours)</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     {/* Teachers */}
@@ -303,6 +305,16 @@ Conflicts: ${conflicts.length}
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
                                     <input type="text" value={room.name} onChange={(e) => { const u = [...rooms]; u[idx].name = e.target.value; setRooms(u); }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                                        <input type="number" value={room.capacity} onChange={(e) => { const u = [...rooms]; u[idx].capacity = parseInt(e.target.value) || 25; setRooms(u); }} className="w-full border rounded-lg p-3" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                        <input type="text" value={room.type} onChange={(e) => { const u = [...rooms]; u[idx].type = e.target.value; setRooms(u); }} placeholder="Classroom" className="w-full border rounded-lg p-3" />
+                                    </div>
                                 </div>
                                 <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Room</button>
                             </div>
@@ -350,16 +362,16 @@ Conflicts: ${conflicts.length}
                                 <thead>
                                     <tr className="bg-emerald-700 text-white">
                                         <th className="p-4 text-left border">Day</th>
-                                        {Array.from({ length: defaultPeriods }).map((_, i) => (
+                                        {Array.from({ length: numPeriods }).map((_, i) => (
                                             <th key={i} className="p-4 border text-center">Period {i + 1}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {days.map((day) => (
+                                    {defaultDays.map((day) => (
                                         <tr key={day} className="hover:bg-gray-50">
                                             <td className="p-4 border font-medium bg-gray-100">{day}</td>
-                                            {Array.from({ length: defaultPeriods }).map((_, pIdx) => {
+                                            {Array.from({ length: numPeriods }).map((_, pIdx) => {
                                                 const periodNum = pIdx + 1;
                                                 const slot = schedule.find(s => s.day === day && s.period === periodNum);
                                                 return (
@@ -429,30 +441,6 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
             </div>
-
-            {showAiPanel && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b flex items-center justify-between">
-                            <h2 className="text-2xl font-semibold text-emerald-700">AI Schedule Assistant</h2>
-                            <button onClick={() => setShowAiPanel(false)} className="text-4xl leading-none text-gray-400 hover:text-gray-600">×</button>
-                        </div>
-                        <div className="flex-1 p-8 overflow-auto text-gray-700 leading-relaxed">
-                            {isAiLoading ? (
-                                <div className="flex flex-col items-center justify-center py-20">
-                                    <div className="animate-spin h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full mb-6"></div>
-                                    <p>Consulting AI scheduler using your OpenAI credits...</p>
-                                </div>
-                            ) : (
-                                <div className="whitespace-pre-wrap">{aiResponse || 'No response yet.'}</div>
-                            )}
-                        </div>
-                        <div className="border-t p-6 text-right">
-                            <button onClick={() => setShowAiPanel(false)} className="px-8 py-3 text-emerald-700 hover:bg-emerald-50 rounded-2xl font-medium">Close Assistant</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
