@@ -34,13 +34,6 @@ interface ScheduleSlot {
     roomId: string;
 }
 
-interface FixedBlock {
-    id: string;
-    day: string;
-    period: number;
-    name: string; // e.g. "Chapel", "Lunch", "Bible"
-}
-
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const defaultPeriods = 7;
 
@@ -52,7 +45,6 @@ export default function MasterScheduleBuilder() {
     const [sections, setSections] = useState<Section[]>([]);
     const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
     const [conflicts, setConflicts] = useState<string[]>([]);
-    const [fixedBlocks, setFixedBlocks] = useState<FixedBlock[]>([]);
 
     const [saveName, setSaveName] = useState('');
     const [savedScenarios, setSavedScenarios] = useState<any[]>([]);
@@ -87,7 +79,7 @@ export default function MasterScheduleBuilder() {
         const payload = {
             tool: 'master-schedule',
             name: saveName,
-            data: { teachers, rooms, sections, schedule, fixedBlocks },
+            data: { teachers, rooms, sections, schedule },
             user_id: user?.id,
         };
         const { error } = await supabase.from('assessments').insert([payload]);
@@ -105,7 +97,6 @@ export default function MasterScheduleBuilder() {
         setRooms(d.rooms || []);
         setSections(d.sections || []);
         setSchedule(d.schedule || []);
-        setFixedBlocks(d.fixedBlocks || []);
         setConflicts([]);
         showNotification(`Loaded: ${scenario.name}`);
     };
@@ -113,7 +104,6 @@ export default function MasterScheduleBuilder() {
     const addTeacher = () => setTeachers([...teachers, { id: Date.now().toString(), name: '', maxPeriods: 5, notes: '' }]);
     const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
     const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
-    const addFixedBlock = () => setFixedBlocks([...fixedBlocks, { id: Date.now().toString(), day: 'Monday', period: 1, name: 'Chapel' }]);
 
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
@@ -139,10 +129,6 @@ export default function MasterScheduleBuilder() {
 
             for (let pass = 0; pass < 8 && !assigned; pass++) {
                 for (const day of days) {
-                    // Skip if this day/period is blocked by fixed block
-                    const isBlocked = fixedBlocks.some(block => block.day === day && block.period === 1); // simplified for now
-                    if (isBlocked) continue;
-
                     for (let p = 1; p <= defaultPeriods; p++) {
                         const availableTeacher = possibleTeachers
                             .filter(t => (teacherLoad[t.id] || 0) < t.maxPeriods)
@@ -204,7 +190,7 @@ export default function MasterScheduleBuilder() {
 
     const exportPDF = async () => {
         const element = document.getElementById('schedule-report');
-        if (!element) return showNotification('Generate a schedule first before downloading PDF', 'error');
+        if (!element) return showNotification('Generate a schedule first', 'error');
 
         try {
             const html2pdf = (await import('html2pdf.js')).default;
@@ -243,7 +229,6 @@ export default function MasterScheduleBuilder() {
                     </div>
                 )}
 
-                {/* Inputs Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     {/* Teachers */}
                     <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
@@ -261,7 +246,7 @@ export default function MasterScheduleBuilder() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Max Periods Per Day</label>
                                     <input type="number" value={teacher.maxPeriods} min="1" max="8" onChange={(e) => { const u = [...teachers]; u[idx].maxPeriods = parseInt(e.target.value) || 5; setTeachers(u); }} className="w-full border rounded-lg p-3" />
                                 </div>
-                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove</button>
+                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Teacher</button>
                             </div>
                         ))}
                     </div>
@@ -278,7 +263,7 @@ export default function MasterScheduleBuilder() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
                                     <input type="text" value={room.name} onChange={(e) => { const u = [...rooms]; u[idx].name = e.target.value; setRooms(u); }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
                                 </div>
-                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove</button>
+                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Room</button>
                             </div>
                         ))}
                     </div>
@@ -295,7 +280,7 @@ export default function MasterScheduleBuilder() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
                                     <input type="text" value={section.courseName} onChange={(e) => { const u = [...sections]; u[idx].courseName = e.target.value; setSections(u); }} placeholder="e.g. Algebra I" className="w-full border rounded-lg p-3" />
                                 </div>
-                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove</button>
+                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Section</button>
                             </div>
                         ))}
                     </div>
@@ -356,32 +341,52 @@ export default function MasterScheduleBuilder() {
                     </div>
                 )}
 
-                {/* Saved Scenarios and 30/60/90 Plan omitted for brevity but included in previous versions */}
-
-                {/* AI Panel */}
-                {showAiPanel && (
-                    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-                            <div className="p-6 border-b flex items-center justify-between">
-                                <h2 className="text-2xl font-semibold text-emerald-700">AI Schedule Assistant</h2>
-                                <button onClick={() => setShowAiPanel(false)} className="text-4xl leading-none text-gray-400 hover:text-gray-600">×</button>
-                            </div>
-                            <div className="flex-1 p-8 overflow-auto text-gray-700 leading-relaxed">
-                                {isAiLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-20">
-                                        <div className="animate-spin h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full mb-6"></div>
-                                        <p>Consulting AI scheduler...</p>
+                {savedScenarios.length > 0 && (
+                    <div className="bg-white rounded-3xl shadow p-8 mb-12">
+                        <h2 className="text-xl font-semibold text-emerald-700 mb-6">Saved Scenarios</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {savedScenarios.map((scen) => (
+                                <div key={scen.id} className="border border-gray-200 p-6 rounded-2xl flex justify-between items-center hover:border-emerald-300 transition">
+                                    <div>
+                                        <div className="font-medium">{scen.name}</div>
+                                        <div className="text-sm text-gray-500 mt-1">{new Date(scen.created_at).toLocaleDateString()}</div>
                                     </div>
-                                ) : (
-                                    <div className="whitespace-pre-wrap">{aiResponse}</div>
-                                )}
-                            </div>
-                            <div className="border-t p-6 text-right">
-                                <button onClick={() => setShowAiPanel(false)} className="px-8 py-3 text-emerald-700 hover:bg-emerald-50 rounded-2xl font-medium">Close</button>
-                            </div>
+                                    <button onClick={() => loadScenario(scen)} className="text-emerald-700 font-medium hover:underline">Load</button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
+
+                <div className="bg-white rounded-3xl shadow p-8">
+                    <h2 className="text-2xl font-bold text-emerald-700 mb-6">Implementation Plan (30/60/90 Days)</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div>
+                            <h3 className="font-semibold text-emerald-600 mb-4">Days 1–30</h3>
+                            <ul className="space-y-3 text-gray-600">
+                                <li>• Finalize teacher availability and room data</li>
+                                <li>• Collect student course requests</li>
+                                <li>• Generate initial draft and fix major conflicts</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-emerald-600 mb-4">Days 31–60</h3>
+                            <ul className="space-y-3 text-gray-600">
+                                <li>• Use AI Assistant for optimization ideas</li>
+                                <li>• Protect chapel, Bible, and spiritual formation blocks</li>
+                                <li>• Share draft with department heads</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-emerald-600 mb-4">Days 61–90</h3>
+                            <ul className="space-y-3 text-gray-600">
+                                <li>• Import final schedule into SIS</li>
+                                <li>• Communicate to staff and families</li>
+                                <li>• Monitor first weeks and adjust as needed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
