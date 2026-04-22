@@ -55,7 +55,7 @@ export default function MasterScheduleBuilder() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [showAiPanel, setShowAiPanel] = useState(false);
 
-    // Simple notification
+    // Notification
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -129,10 +129,10 @@ export default function MasterScheduleBuilder() {
         const teacherLoad: Record<string, number> = {};
         const roomUsage: Record<string, Record<string, number>> = {};
 
-        teachers.forEach(t => teacherLoad[t.id] = 0);
+        teachers.forEach(t => (teacherLoad[t.id] = 0));
         rooms.forEach(r => {
             roomUsage[r.id] = {};
-            days.forEach(d => roomUsage[r.id][d] = 0);
+            days.forEach(d => (roomUsage[r.id][d] = 0));
         });
 
         const sortedSections = [...sections].sort((a, b) => b.periodsPerWeek - a.periodsPerWeek);
@@ -179,8 +179,8 @@ export default function MasterScheduleBuilder() {
 
     const detectConflicts = (currentSchedule: ScheduleSlot[]) => {
         const newConflicts: string[] = [];
-        const teacherDayPeriod = new Map();
-        const roomDayPeriod = new Map();
+        const teacherDayPeriod = new Map<string, boolean>();
+        const roomDayPeriod = new Map<string, boolean>();
 
         currentSchedule.forEach(slot => {
             const tKey = `${slot.teacherId}-${slot.day}-${slot.period}`;
@@ -256,13 +256,19 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
             showNotification('Could not find schedule report for PDF', 'error');
             return;
         }
+
         const opt = {
             margin: 10,
             filename: `Master-Schedule-${new Date().toISOString().slice(0, 10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+            jsPDF: {
+                unit: 'mm' as const,
+                format: 'a4' as const,
+                orientation: 'landscape' as const
+            },
         };
+
         html2pdf().set(opt).from(element).save();
         showNotification('PDF report downloaded successfully');
     };
@@ -279,14 +285,14 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     <div className="flex flex-wrap gap-3">
                         <button
                             onClick={exportPDF}
-                            className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2"
+                            className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-medium"
                         >
                             📄 Download PDF Report
                         </button>
                         <button
                             onClick={getAISuggestions}
                             disabled={isAiLoading || sections.length === 0}
-                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2"
+                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-3 rounded-xl font-medium"
                         >
                             ✨ {isAiLoading ? 'AI is Thinking...' : 'Get AI Suggestions'}
                         </button>
@@ -309,7 +315,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     <div className="bg-white rounded-2xl shadow p-6">
                         <div className="flex justify-between items-center mb-5">
                             <h2 className="text-xl font-semibold text-emerald-700">Teachers</h2>
-                            <button onClick={addTeacher} className="text-3xl text-emerald-700 hover:text-emerald-800 leading-none">+</button>
+                            <button onClick={addTeacher} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
                         {teachers.map((teacher, idx) => (
                             <div key={teacher.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
@@ -360,7 +366,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     <div className="bg-white rounded-2xl shadow p-6">
                         <div className="flex justify-between items-center mb-5">
                             <h2 className="text-xl font-semibold text-emerald-700">Rooms</h2>
-                            <button onClick={addRoom} className="text-3xl text-emerald-700 hover:text-emerald-800 leading-none">+</button>
+                            <button onClick={addRoom} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
                         {rooms.map((room, idx) => (
                             <div key={room.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
@@ -395,7 +401,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                                             updated[idx].type = e.target.value;
                                             setRooms(updated);
                                         }}
-                                        placeholder="Type (Lab, Gym...)"
+                                        placeholder="Type"
                                         className="border rounded-lg p-3"
                                     />
                                 </div>
@@ -413,7 +419,7 @@ and supporting spiritual formation. Be concrete with possible re-assignments whe
                     <div className="bg-white rounded-2xl shadow p-6">
                         <div className="flex justify-between items-center mb-5">
                             <h2 className="text-xl font-semibold text-emerald-700">Sections / Courses</h2>
-                            <button onClick={addSection} className="text-3xl text-emerald-700 hover:text-emerald-800 leading-none">+</button>
+                            <button onClick={addSection} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
                         </div>
                         {sections.map((section, idx) => (
                             <div key={section.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
