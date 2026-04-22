@@ -107,7 +107,6 @@ export default function MasterScheduleBuilder() {
     const addRoom = () => setRooms([...rooms, { id: Date.now().toString(), name: '', capacity: 25, type: 'Classroom' }]);
     const addSection = () => setSections([...sections, { id: Date.now().toString(), courseName: '', teacherId: '', roomId: '', periodsPerWeek: 5 }]);
 
-    // Stronger generation logic
     const generateDraft = () => {
         if (sections.length === 0 || teachers.length === 0 || rooms.length === 0) {
             return showNotification('Please add teachers, rooms, and sections first', 'error');
@@ -130,7 +129,6 @@ export default function MasterScheduleBuilder() {
             const possibleTeachers = section.teacherId ? teachers.filter(t => t.id === section.teacherId) : teachers;
             const possibleRooms = section.roomId ? rooms.filter(r => r.id === section.roomId) : rooms;
 
-            // Multiple aggressive passes
             for (let pass = 0; pass < 15 && !assigned; pass++) {
                 for (const day of days) {
                     for (let p = 1; p <= numPeriods; p++) {
@@ -246,6 +244,7 @@ Conflicts: ${conflicts.length}
                     </div>
                 )}
 
+                {/* Schedule Settings */}
                 <div className="bg-white rounded-2xl shadow p-6 mb-8">
                     <h2 className="text-xl font-semibold text-emerald-700 mb-4">Schedule Settings</h2>
                     <div>
@@ -261,9 +260,94 @@ Conflicts: ${conflicts.length}
                     </div>
                 </div>
 
+                {/* Input Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                    {/* Teachers, Rooms, Sections sections - identical to previous full version with labels and scrollable containers */}
-                    {/* (The input sections are the same as the last full version I sent. To keep this response reasonable, they are unchanged and fully functional.) */}
+                    {/* Teachers */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
+                            <h2 className="text-xl font-semibold text-emerald-700">Teachers</h2>
+                            <button onClick={addTeacher} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
+                        </div>
+                        {teachers.map((teacher, idx) => (
+                            <div key={teacher.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Teacher Name</label>
+                                    <input type="text" value={teacher.name} onChange={(e) => { const u = [...teachers]; u[idx].name = e.target.value; setTeachers(u); }} placeholder="e.g. Mrs. Johnson" className="w-full border rounded-lg p-3" />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Periods Per Day</label>
+                                    <input type="number" value={teacher.maxPeriods} min="1" max="8" onChange={(e) => { const u = [...teachers]; u[idx].maxPeriods = parseInt(e.target.value) || 5; setTeachers(u); }} className="w-full border rounded-lg p-3" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <input type="text" value={teacher.notes} onChange={(e) => { const u = [...teachers]; u[idx].notes = e.target.value; setTeachers(u); }} placeholder="Chapel duty, etc." className="w-full border rounded-lg p-3" />
+                                </div>
+                                <button onClick={() => setTeachers(teachers.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Teacher</button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Rooms */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
+                            <h2 className="text-xl font-semibold text-emerald-700">Rooms</h2>
+                            <button onClick={addRoom} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
+                        </div>
+                        {rooms.map((room, idx) => (
+                            <div key={room.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
+                                    <input type="text" value={room.name} onChange={(e) => { const u = [...rooms]; u[idx].name = e.target.value; setRooms(u); }} placeholder="e.g. Room 101" className="w-full border rounded-lg p-3" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                                        <input type="number" value={room.capacity} onChange={(e) => { const u = [...rooms]; u[idx].capacity = parseInt(e.target.value) || 25; setRooms(u); }} className="w-full border rounded-lg p-3" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                        <input type="text" value={room.type} onChange={(e) => { const u = [...rooms]; u[idx].type = e.target.value; setRooms(u); }} placeholder="Classroom" className="w-full border rounded-lg p-3" />
+                                    </div>
+                                </div>
+                                <button onClick={() => setRooms(rooms.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Room</button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Sections */}
+                    <div className="bg-white rounded-2xl shadow p-6 max-h-[620px] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-5 sticky top-0 bg-white pb-3 border-b">
+                            <h2 className="text-xl font-semibold text-emerald-700">Sections / Courses</h2>
+                            <button onClick={addSection} className="text-3xl text-emerald-700 hover:text-emerald-800">+</button>
+                        </div>
+                        {sections.map((section, idx) => (
+                            <div key={section.id} className="border border-gray-200 p-5 rounded-xl mb-5 bg-gray-50">
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
+                                    <input type="text" value={section.courseName} onChange={(e) => { const u = [...sections]; u[idx].courseName = e.target.value; setSections(u); }} placeholder="e.g. Algebra I" className="w-full border rounded-lg p-3" />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Teacher</label>
+                                    <select value={section.teacherId} onChange={(e) => { const u = [...sections]; u[idx].teacherId = e.target.value; setSections(u); }} className="w-full border rounded-lg p-3">
+                                        <option value="">Any Teacher</option>
+                                        {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Room</label>
+                                    <select value={section.roomId} onChange={(e) => { const u = [...sections]; u[idx].roomId = e.target.value; setSections(u); }} className="w-full border rounded-lg p-3">
+                                        <option value="">Any Room</option>
+                                        {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Periods Per Week</label>
+                                    <input type="number" value={section.periodsPerWeek} onChange={(e) => { const u = [...sections]; u[idx].periodsPerWeek = parseInt(e.target.value) || 5; setSections(u); }} className="w-full border rounded-lg p-3" />
+                                </div>
+                                <button onClick={() => setSections(sections.filter((_, i) => i !== idx))} className="text-red-600 text-sm mt-4 hover:underline">Remove Section</button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex gap-4 mb-10">
